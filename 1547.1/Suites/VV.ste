@@ -1,0 +1,53 @@
+<suite globals="True" name="VV">
+  <members>
+    <member name="VV_1.tst" />
+    <member name="VV_2.tst" />
+    <member name="VV_3.tst" />
+  </members>
+  <params>
+    <param name="eut.q_max_under" type="float">-34500.0</param>
+    <param name="srd.vv_k_var_min" type="float">0.0</param>
+    <param name="eut.v_msa" type="float">1.0</param>
+    <param name="der.sunspec.slave_id" type="int">1</param>
+    <param name="eut.vv_deadband_min" type="float">1.0</param>
+    <param name="eut.vv_t_settling" type="float">2.0</param>
+    <param name="srd.vv_segment_point_count" type="int">3</param>
+    <param name="eut.vv_deadband_max" type="float">10.0</param>
+    <param name="srd.vv_p_min_pct" type="float">20.0</param>
+    <param name="pvsim.typhoon.isc" type="float">50.0</param>
+    <param name="hil.typhoon.eut_nominal_frequency" type="float">50.0</param>
+    <param name="gridsim.typhoon.f_nom" type="float">50.0</param>
+    <param name="srd.vv_p_max_pct" type="float">100.0</param>
+    <param name="eut.v_min" type="float">207.0</param>
+    <param name="gridsim.typhoon.v_nom" type="float">230.0</param>
+    <param name="eut.v_nom" type="float">230.0</param>
+    <param name="hil.typhoon.eut_nominal_voltage" type="float">230.0</param>
+    <param name="eut.v_max" type="float">253.0</param>
+    <param name="eut.var_msa" type="float">500.0</param>
+    <param name="pvsim.typhoon.vmp" type="float">997.0</param>
+    <param name="das.typhoon.sample_interval" type="int">1000</param>
+    <param name="pvsim.typhoon.irr_start" type="float">1000.0</param>
+    <param name="der.sunspec.ipport" type="int">1502</param>
+    <param name="eut.p_rated" type="float">34500.0</param>
+    <param name="eut.var_ramp_max" type="float">34500.0</param>
+    <param name="eut.q_max_over" type="float">34500.0</param>
+    <param name="gridsim.typhoon.p_nom" type="float">34500.0</param>
+    <param name="eut.k_var_max" type="float">34500.0</param>
+    <param name="eut.var_rated" type="float">34500.0</param>
+    <param name="eut.s_rated" type="float">34500.0</param>
+    <param name="der.sunspec.ipaddr" type="string">192.168.0.37</param>
+    <param name="hil.typhoon.model_name" type="string">ASGC</param>
+    <param name="hil.typhoon.auto_config" type="string">Disabled</param>
+    <param name="gridsim.auto_config" type="string">Disabled</param>
+    <param name="pvsim.typhoon.profile_name" type="string">STPsIrradiance</param>
+    <param name="der.mode" type="string">SunSpec</param>
+    <param name="der.sunspec.ifc_type" type="string">TCP</param>
+    <param name="pvsim.mode" type="string">Typhoon</param>
+    <param name="hil.mode" type="string">Typhoon</param>
+    <param name="gridsim.mode" type="string">Typhoon</param>
+    <param name="das.mode" type="string">Typhoon</param>
+    <param name="gridsim.typhoon.waveform_names" type="string">V_source_phase_A, V_source_phase_B, V_source_phase_C</param>
+    <param name="pvsim.typhoon.pv_name" type="string">pv_model4.ipvx</param>
+    <param name="hil.typhoon.setting_name" type="string">settings2.runx</param>
+  </params>
+</suite>

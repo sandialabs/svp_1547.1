@@ -1,0 +1,63 @@
+<suite globals="True" name="PF+VV for Fronius">
+  <members>
+    <member name="SPF.ste" />
+    <member name="VV.ste" />
+  </members>
+  <params>
+    <param name="eut_vv.q_max_under" type="float">-1800.0</param>
+    <param name="eut.pf_min_cap" type="float">-0.85</param>
+    <param name="srd.vv_k_var_min" type="float">0.0</param>
+    <param name="eut.pf_msa" type="float">0.03</param>
+    <param name="eut.pf_min_ind" type="float">0.85</param>
+    <param name="eut_vv.v_msa" type="float">1.0</param>
+    <param name="der.sunspec.slave_id" type="int">1</param>
+    <param name="eut.pf_settling_time" type="int">2</param>
+    <param name="eut_vv.vv_t_settling" type="float">2.0</param>
+    <param name="gridsim.ametek.phases" type="int">2</param>
+    <param name="srd.vv_segment_point_count" type="int">3</param>
+    <param name="eut_vv.vv_deadband_min" type="float">4.8</param>
+    <param name="das.sandia.node" type="int">10</param>
+    <param name="eut_vv.vv_deadband_max" type="float">14.4</param>
+    <param name="srd.vv_p_min_pct" type="float">20.0</param>
+    <param name="gridsim.ametek.freq" type="float">60.0</param>
+    <param name="srd.vv_p_max_pct" type="float">100.0</param>
+    <param name="gridsim.ametek.i_max" type="float">100.0</param>
+    <param name="eut_vv.v_min" type="float">216.0</param>
+    <param name="eut_vv.v_nom" type="float">240.0</param>
+    <param name="gridsim.ametek.v_nom" type="float">241.1</param>
+    <param name="eut_vv.v_max" type="float">264.0</param>
+    <param name="gridsim.ametek.v_max" type="float">300.0</param>
+    <param name="eut_vv.var_msa" type="float">400.0</param>
+    <param name="pvsim.terrasas.vmp" type="float">460.0</param>
+    <param name="eut_vv.var_ramp_max" type="float">600.0</param>
+    <param name="pvsim.terrasas.overvoltage" type="float">660.0</param>
+    <param name="eut_vv.k_var_max" type="float">750.0</param>
+    <param name="das.sandia.sample_interval" type="int">1000</param>
+    <param name="eut_vv.var_rated" type="float">1800.0</param>
+    <param name="eut_vv.q_max_over" type="float">1800.0</param>
+    <param name="eut.p_rated" type="int">3000</param>
+    <param name="eut_vv.s_rated" type="float">3000.0</param>
+    <param name="pvsim.terrasas.pmp" type="float">3000.0</param>
+    <param name="eut_vv.p_rated" type="float">3000.0</param>
+    <param name="der.sunspec.baudrate" type="int">9600</param>
+    <param name="pvsim.terrasas.channel" type="string">10</param>
+    <param name="pvsim.terrasas.ipaddr" type="string">192.168.0.167</param>
+    <param name="gridsim.mode" type="string">Ametek</param>
+    <param name="das.sandia.file_path" type="string">C:\python_dsm</param>
+    <param name="der.sunspec.ifc_name" type="string">COM3</param>
+    <param name="loadsim.mode" type="string">Disabled</param>
+    <param name="hil.mode" type="string">Disabled</param>
+    <param name="gridsim.auto_config" type="string">Disabled</param>
+    <param name="pvsim.terrasas.curve_type" type="string">EN50530</param>
+    <param name="der.sunspec.parity" type="string">N</param>
+    <param name="der.sunspec.ifc_type" type="string">RTU</param>
+    <param name="das.mode" type="string">Sandia DSM</param>
+    <param name="das.sandia.dsm_method" type="string">Sandia LabView DSM</param>
+    <param name="gridsim.ametek.comm" type="string">Serial</param>
+    <param name="eut_vv.phases" type="string">Single Phase</param>
+    <param name="eut.phases" type="string">Single Phase</param>
+    <param name="der.mode" type="string">SunSpec</param>
+    <param name="pvsim.mode" type="string">TerraSAS</param>
+    <param name="gridsim.ametek.serial_port" type="string">com7</param>
+  </params>
+</suite>

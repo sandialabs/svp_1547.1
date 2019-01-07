@@ -1,0 +1,47 @@
+<suite globals="True" name="PF+VV for SMA">
+  <members>
+    <member name="SPF.ste" />
+    <member name="VV.ste" />
+  </members>
+  <params>
+    <param name="eut.pf_min_cap" type="float">-0.85</param>
+    <param name="srd.vv_k_var_min" type="float">0.0</param>
+    <param name="eut.pf_msa" type="float">0.03</param>
+    <param name="eut.pf_min_ind" type="float">0.85</param>
+    <param name="gridsim.ametek.phases" type="int">2</param>
+    <param name="srd.vv_segment_point_count" type="int">3</param>
+    <param name="eut.pf_settling_time" type="int">3</param>
+    <param name="das.sandia.node" type="int">10</param>
+    <param name="srd.vv_p_min_pct" type="float">20.0</param>
+    <param name="gridsim.ametek.freq" type="float">60.0</param>
+    <param name="srd.vv_p_max_pct" type="float">100.0</param>
+    <param name="gridsim.ametek.i_max" type="float">100.0</param>
+    <param name="der.sma.slave_id" type="int">126</param>
+    <param name="gridsim.ametek.v_nom" type="float">240.0</param>
+    <param name="gridsim.ametek.v_max" type="float">300.0</param>
+    <param name="pvsim.terrasas.vmp" type="float">460.0</param>
+    <param name="der.sma.ipport" type="int">502</param>
+    <param name="pvsim.terrasas.overvoltage" type="float">660.0</param>
+    <param name="das.sandia.sample_interval" type="int">1000</param>
+    <param name="eut.p_rated" type="int">3000</param>
+    <param name="pvsim.terrasas.pmp" type="float">3000.0</param>
+    <param name="der.sma.gridguard" type="int">123456789</param>
+    <param name="pvsim.terrasas.channel" type="string">1</param>
+    <param name="pvsim.terrasas.ipaddr" type="string">192.168.0.167</param>
+    <param name="der.sma.ipaddr" type="string">192.168.0.170</param>
+    <param name="gridsim.mode" type="string">Ametek</param>
+    <param name="das.sandia.file_path" type="string">C:\python_dsm</param>
+    <param name="hil.mode" type="string">Disabled</param>
+    <param name="loadsim.mode" type="string">Disabled</param>
+    <param name="pvsim.terrasas.curve_type" type="string">EN50530</param>
+    <param name="gridsim.auto_config" type="string">Enabled</param>
+    <param name="der.mode" type="string">SMA</param>
+    <param name="das.mode" type="string">Sandia DSM</param>
+    <param name="das.sandia.dsm_method" type="string">Sandia LabView DSM</param>
+    <param name="gridsim.ametek.comm" type="string">Serial</param>
+    <param name="eut.phases" type="string">Single Phase</param>
+    <param name="pvsim.mode" type="string">TerraSAS</param>
+    <param name="der.sma.confgridguard" type="string">True</param>
+    <param name="gridsim.ametek.serial_port" type="string">com7</param>
+  </params>
+</suite>

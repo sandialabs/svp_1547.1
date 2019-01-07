@@ -1,0 +1,44 @@
+<scriptConfig name="SPF_min_ind" script="SA12_power_factor">
+  <params>
+    <param name="eut.pf_min_ind" type="float">-0.85</param>
+    <param name="eut.pf_min_cap" type="float">0.85</param>
+    <param name="eut.pf_settling_time" type="int">1</param>
+    <param name="gridsim.ametek.phases" type="int">1</param>
+    <param name="spf.n_r" type="int">3</param>
+    <param name="gridsim.ametek.freq" type="float">60.0</param>
+    <param name="gridsim.ametek.i_max" type="float">60.0</param>
+    <param name="gridsim.ametek.v_nom" type="float">120.0</param>
+    <param name="gridsim.ametek.v_max" type="float">150.0</param>
+    <param name="pvsim.terrasas.vmp" type="float">350.0</param>
+    <param name="das.px8000.sample_interval" type="int">500</param>
+    <param name="eut.p_rated" type="int">5000</param>
+    <param name="pvsim.terrasas.pmp" type="float">5000.0</param>
+    <param name="gridsim.ametek.ip_port" type="int">5025</param>
+    <param name="das.px8000.chan_3_label" type="string">1</param>
+    <param name="das.px8000.chan_1_label" type="string">1</param>
+    <param name="pvsim.terrasas.channel" type="string">1,2</param>
+    <param name="das.px8000.ip_addr" type="string">192.168.0.10</param>
+    <param name="gridsim.ametek.ip_addr" type="string">192.168.0.11</param>
+    <param name="pvsim.terrasas.ipaddr" type="string">192.168.0.2</param>
+    <param name="das.px8000.chan_4_label" type="string">2</param>
+    <param name="das.px8000.chan_1" type="string">AC</param>
+    <param name="das.px8000.chan_4" type="string">DC</param>
+    <param name="das.px8000.chan_3" type="string">DC</param>
+    <param name="spf.pf_min_cap" type="string">Disabled</param>
+    <param name="pvsim.mode" type="string">Disabled</param>
+    <param name="loadsim.mode" type="string">Disabled</param>
+    <param name="gridsim.mode" type="string">Disabled</param>
+    <param name="spf.pf_mid_ind" type="string">Disabled</param>
+    <param name="das.mode" type="string">Disabled</param>
+    <param name="der.mode" type="string">Disabled</param>
+    <param name="spf.pf_mid_cap" type="string">Disabled</param>
+    <param name="gridsim.auto_config" type="string">Disabled</param>
+    <param name="spf.p_20" type="string">Enabled</param>
+    <param name="spf.pf_min_ind" type="string">Enabled</param>
+    <param name="spf.p_100" type="string">Enabled</param>
+    <param name="spf.p_50" type="string">Enabled</param>
+    <param name="das.px8000.comm" type="string">Network</param>
+    <param name="gridsim.ametek.comm" type="string">TCP/IP</param>
+    <param name="das.px8000.chan_2" type="string">Unused</param>
+  </params>
+</scriptConfig>
