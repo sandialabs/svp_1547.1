@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Copyright (c) 2017, Sandia National Labs, SunSpec Alliance and CanmetENERGY
 All rights reserved.
@@ -33,7 +34,7 @@ Questions can be directed to support@sunspec.org
 import sys
 import os
 import traceback
-from  import gridsim
+from svpelab import gridsim
 from svpelab import pvsim
 from svpelab import das
 from svpelab import der
@@ -44,99 +45,131 @@ import numpy as np
 import collections
 
 
-
-def p_target(f, f_nom, fw_pairs, pwr):
+def interpolation_f_p(f, f_nom, fw_pairs):
     """
     Interpolation function to find the target power (using the FW parameter definition)
     :param f: FW freq target point (Hz)
     :param f_nom: Nominal Frequency (Hz)
-    :param fw_pairs: Dictionnary with FW pairs of characterstic curve
+    :param fw_pairs: Dictionnary with FW (Hz and %) pairs of characterstic curve
     :param pwr: Power level (p.u.)
 
     :return: Power test target point (%)
     """
     f_pct = 100.*(f/f_nom)
-    hz_start_pct = 100.*(fw_pairs['F1']/f_nom)
-    hz_stop_pct = 100.*(fw_pairs['F2']/f_nom)
-    if f_pct < hz_start_pct:
-        p_targ = fw_pairs['P1'].*pwr
-    elif f_pct > hz_stop_pct:
+    f1_pct = 100.*(fw_pairs['F1']/f_nom)
+    f2_pct = 100.*(fw_pairs['F2']/f_nom)
+
+    if f_pct < f1_pct:
+        p_targ = fw_pairs['P1']
+    elif f2_pct <= f_pct:
         p_targ = fw_pairs['P2']
     else:
-        p_targ = (pwr - pwr*((f_pct-hz_start_pct)/(hz_stop_pct-hz_start_pct)))*100
+        #p_targ = fw_pairs['P1']+f_pct*((fw_pairs['P2']-fw_pairs['P1'])/(f2_pct-f1_pct))
+        p_targ = (fw_pairs['P1'] - fw_pairs['P1']*((f_pct-f1_pct)/(f2_pct-f1_pct)))
+
+
     return float(p_targ)
 
 
-
-
-
-def p_msa_range(f_target, f_nom, a_v, a_p, fw_pairs, pwr):
+def fw_passfail(phases, f_nom, fw_pairs, a_f, a_p, daq=None, data=None):
     """
-    Determine power target and the min/max p values for pass/fail acceptance based on manufacturer's specified
-    accuracies (MSAs).
+    Determine reactive power target and the min/max q values for pass/fail acceptance based on manufacturer's specified
+    accuracies (MSAs)
 
-    :param f_target: measured freq value (Hz)
-    :param f_nom: EUT nominal freq (Hz)
-    :param a_v: manufacturer's specified accuracy of freq (Hz)
-    :param a_p: manufacturer's specified accuracy of power (%)
-    :param fw_pairs: Dictionnary with FW pairs of characterstic curve
-    :param pwr: power level (p.u.)
-
-    :return: points for p_target, p_target_min, p_target_max
+    :param phases: number of phases of systems
+    :param v_value: measured voltage value
+    :param a_f: (Hz)
+    :param a_p: (%)
+    :param v: VW voltage points (volts)
+    :param p: VW reactive power points (W)
+    :return: passfail for p(v)
     """
+    p_rated = ts.param_value('eut_fw.p_rated')
 
-    p_targ = p_target(f_value, f_nom, fw_pairs, pwr)      # target power for freq
-    p1 = p_target(f_value - f_msa, f_nom, fw_pairs, pwr)  # power target from the lower freq
-    p2 = p_target(f_value + f_msa, f_nom, fw_pairs, pwr)  # power target from the upper freq
-    if p1 >= p_targ:
-        # if the FW curve has a negative slope
-        # add the power MSA to the high side (left point, p1)
-        # subtract the power MSA from the low side (right point, p2)
-        #
-        #                          \ * (f_value - f_msa, p_upper)
-        #                           \
-        #                            . (f_value - f_msa, p1)
-        #                             \
-        #                              x (f_value, p_target)
-        #                               \
-        #                                . (f_value + f_msa, p2)
-        #                                 \
-        #     (f_value + f_msa, p_lower) * \
+    try:
+        daq.sc['F_MEAS'] = measurement_total(data=data, phases=phases, type_meas='F')
+        daq.sc['P_MEAS'] = round((measurement_total(data=data, phases=phases, type_meas='P')/p_rated)*100.0,2)
 
-        p_upper = round(p1 + a_p, 1)
-        p_lower = round(p2 - a_p, 1)
-        return p_targ, p_lower, p_upper
-    else:
-        p_lower = round(p1 - a_p, 1)
-        p_upper = round(p2 + a_p, 1)
-        return p_targ, p_lower, p_upper
+        # To calculate the min/max, you need the measured value
+        # Active power target from the lower frequency limit
+        daq.sc['P_TARGET_MIN'] = interpolation_f_p(f=daq.sc['F_MEAS'] + a_f, f_nom=f_nom, fw_pairs=fw_pairs) - a_p
+        # Active power target from the upper frequency limit
+        daq.sc['P_TARGET_MAX'] = interpolation_f_p(f=daq.sc['F_MEAS'] - a_f, f_nom=f_nom, fw_pairs=fw_pairs) + a_p
 
-def power_total(data, phases):
+        ts.log('        P actual, min, max: %s, %s, %s' % (
+        daq.sc['P_MEAS'], daq.sc['P_TARGET_MIN'], daq.sc['P_TARGET_MAX']))
+
+        if daq.sc['P_TARGET_MIN'] <= daq.sc['P_MEAS'] <= daq.sc['P_TARGET_MAX']:
+            passfail = 'Pass'
+        else:
+            passfail = 'Fail'
+
+        ts.log('        Passfail: %s' % (passfail))
+
+        return passfail
+
+    except:
+        daq.sc['F_MEAS'] = 'No Data'
+        daq.sc['P_MEAS'] = 'No Data'
+        passfail = 'Fail'
+        daq.sc['P_TARGET_MIN'] = 'No Data'
+        daq.sc['P_TARGET_MAX'] = 'No Data'
+
+        return passfail
+
+
+def measurement_total(data, phases, type_meas):
     """
-    Sum the EUT power from all phases
+    Sum the EUT reactive power from all phases
     :param data: dataset
     :param phases: number of phases in the EUT
-    :return: total EUT power
+    :param choice: Either V,P or Q
+    :return: either total EUT reactive power, total EUT active power or average V
     """
+    if type_meas == 'F':
+        meas = 'FREQ'
+        log_meas = 'Frequency'
+    elif type_meas == 'P':
+        meas = 'P'
+        log_meas = 'Active powers'
+    else:
+        meas = 'Q'
+        log_meas = 'Reactive powers'
+
+    # ts.log_debug('%s' % type_meas)
+    # ts.log_debug('%s' % log_meas)
+
     if phases == 'Single phase':
-        ts.log_debug('Powers are: %s' % (data.get('AC_P_1')))
-        power = data.get('AC_P_1')
+        ts.log_debug('        %s are: %s' % (log_meas, data.get('AC_{}_1'.format(meas))))
+        value = data.get('AC_{}_1')
+        phase = 1
 
     elif phases == 'Split phase':
-        ts.log_debug('Powers are: %s, %s' % (data.get('AC_P_1'),
-                                             data.get('AC_P_2')))
-        power = data.get('AC_P_1') + data.get('AC_P_2')
-
+        ts.log_debug('        %s are: %s, %s' % (log_meas, data.get('AC_{}_1'.format(meas)),
+                                                 data.get('AC_{}_2'.format(meas))))
+        value = data.get('AC_{}_1'.format(meas)) + data.get('AC_{}_2'.format(meas))
+        phase = 2
     elif phases == 'Three phase':
-        ts.log_debug('Powers are: %s, %s, %s' % (data.get('AC_P_1'),
-                                                 data.get('AC_P_2'),
-                                                 data.get('AC_P_3')))
-        power = data.get('AC_P_1') + data.get('AC_P_2') + data.get('AC_P_3')
+        ts.log_debug('        %s are: %s, %s, %s' % (log_meas,
+                                                     data.get('AC_{}_1'.format(meas)),
+                                                     data.get('AC_{}_2'.format(meas)),
+                                                     data.get('AC_{}_3'.format(meas))))
+        value = data.get('AC_{}_1'.format(meas)) + data.get('AC_{}_2'.format(meas)) + data.get('AC_{}_3'.format(meas))
+        phase = 3
     else:
         ts.log_error('Inverter phase parameter not set correctly.')
+        raise
+
+    if type_meas == 'F':
+        # average value of V
+        value /= phase
+
+    elif type_meas == 'P':
+        return abs(value)
+
+    return value
 
 
-    return abs(power)
 def f_mean(data, phases):
     """
     Average the EUT frequency from all phases
@@ -155,7 +188,7 @@ def f_mean(data, phases):
 
 
     return freq
-def fw_pairs(curve_number,f_nom,fw_params):
+def fw_pairs(curve_number,f_nom,fw_params,power):
     """
     TODO: make f and p vector for specified curve
     :param curve_number: VV characteristic curve desired
@@ -164,101 +197,111 @@ def fw_pairs(curve_number,f_nom,fw_params):
     :return: FW curve point as F1 is frequency start and F2 is frequency stop
     """
     fw_pairs={}
-
-    fw_pairs[curve_number] = {
-        'F1' = round(f_nom + fw_params['dbf'],3),
-        'F2' = round((f_nom + fw_params['dbf'])*(1.+fw_params['kf']),3),
-        'P1' = 100.0,
-        'P2' = 0.0
-        }
+    f1 = round((f_nom + fw_params['dbf']),3)
+    f2 = round((f_nom + fw_params['dbf']+(f_nom*fw_params['kf'])),3)
+    p1 = 100.0
+    p2 = 0
+    slope = round(abs((p2-p1)/(f2-f1)),3)
+    fw_pairs[curve_number] = {  'F1' : f1,
+                                'F2' : round(f1 + (power*100.)/slope,3),
+                                'P1' : power*100.0,
+                                'P2' : 0.0,
+                                'slope' : slope
+                                }
     return fw_pairs
 
 
-    def frequency_steps(f_nom, f_small, dbf, a_f, mode):
-    """"
+def frequency_steps(f_nom, f_small, dbf, a_f, mode):
+    """
     :param f_nom: Nominal frequency (Hz)
     :param f_small: Small-signal performance (Hz)
     :param dbof: Deadband frequency (Hz)
     :param a_f: minimum required measurement accuracy (MRA) for frequency (Hz)
     :param mode: Test for frequency can be above or below nominal frequency
     """
-    f_min = ts.param_value('eut_fw.f_max')
-    f_max = ts.param_value('eut_fw.f_min')
+    f_steps_dic = collections.OrderedDict()
+
+    f_max = ts.param_value('eut_fw.f_max')
+    f_min = ts.param_value('eut_fw.f_min')
 
     if mode == 'Above':                                 # 1547.1 (5.15.2.2) :
         f_steps_above = [f_nom, (f_nom + dbf) - a_f,    #  h) Begin the adjustment to fH . Ramp the frequency to af below (fN + dbOF )
                         (f_nom + dbf) + a_f,            #  i) Ramp the frequency to af above (fn + dbOF )
-                        f_small + f_nom + dbf,          #  j) Ramp the frequency to Δfsmall + f N + dbOF
+                        f_small + f_nom + dbf,          #  j) Ramp the frequency to fsmall + f N + dbOF
                         f_max,                          #  k) Ramp the frequency to fH
-                        f_max - f_small,                #  l) Ramp the frequency to fH – Δfsmall
+                        f_max - f_small,                #  l) Ramp the frequency to fH – fsmall
                         (f_nom + dbf) + a_f,            #  m) Ramp the frequency to af above(fN + dbOF)
-                        (f_nom + dbf) - a_f),           #  n) Ramp the frequency to af below(fN + dbOF)
+                        (f_nom + dbf) - a_f,            #  n) Ramp the frequency to af below(fN + dbOF)
                         f_nom ]                         #  o) Ramp the frequency to fN.
-        f_steps_dict[mode] = np.around(f_steps_above, decimals=3)
-        ts.log('Testing FW function at the following frequency({0}) points {1}'.format(mode,f_steps_dict[mode]))
+        f_steps_dic[mode] = np.around(f_steps_above, decimals=3)
+        ts.log('Testing FW function at the following frequency ({0}) points:\n {1}'.format(mode,f_steps_dic[mode]))
 
     elif mode == 'Below':                               # 1547.1 (5.15.3.2) :
         f_steps_below = [f_nom, (f_nom + dbf) - a_f,    #  g) Begin the adjustment to fL . Ramp the frequency to af below (fN + dbuf)
                         (f_nom - dbf) - a_f,            #  h) Ramp the frequency to af below (fN – dbUF).
-                        f_nom - f_small - dbf,          #  i) Ramp the frequency to fN - Δfsmall – dbUF.
+                        f_nom - f_small - dbf,          #  i) Ramp the frequency to fN - fsmall – dbUF.
                         f_min,                          #  j) Ramp the frequency to fL.
-                        f_min + f_small,                #  k) Ramp the frequency to fL + Δfsmall.
+                        f_min + f_small,                #  k) Ramp the frequency to fL + fsmall.
                         (f_nom - dbf) - a_f,            #  l) Ramp the frequency to af below (fN – dbUF).
                         (f_nom - dbf) + a_f,            #  m) Ramp the frequency to af above (fN – dbUF).
                         f_nom ]                         #  n) Ramp the frequency to fN.
-        f_steps_dict[mode] = np.around(f_steps_below, decimals=3)
-        ts.log('Testing FW function at the following frequency({0}) points {1}'.format(mode,f_steps_dict[mode]))
+        f_steps_dic[mode] = np.around(f_steps_below, decimals=3)
+        ts.log('Testing FW function at the following frequency ({0}) points:\n {1}'.format(mode,f_steps_dic[mode]))
 
 
-    return f_steps_dict
+    return f_steps_dic
 
 def normal_curve_test(mode,fw_curve,fw_params,power,daq,eut,grid,result_summary):
-    phases = ts.param_value('eut.phases')
-    f_nom = ts.param_value('eut.f_nom')
-    # 1547.1: 'af' The term a f, is 150% of the minimum
+    phases = ts.param_value('eut_fw.phases')
+    f_nom = ts.param_value('eut_fw.f_nom')
+    # 1547.1: 'af' The term af, is 150% of the minimum
     #  required measurement accuracy for frequency, as specified in
     #  Table 3 of IEEE Std 1547-2018 for steady-state conditions.
-    a_f = round(1.5 * 0.01 * f_nom, 2)
-    dataset_filename = 'VW_curve_{0}_pwr_{1}_{2}.csv'.format(vw_curve, power ,mode)
+    a_f = round(1.5 * 0.01 * f_nom, 3)
+    a_p = round(1.5 * 0.05 * 100, 2)
+    dataset_filename = 'FW_curve_{0}_pwr_{1}_{2}.csv'.format(fw_curve, power ,mode)
+
     # 1547.1 : Parameters name from Table 51 - SunSpec Frequency Droop
     # Notes : dbf and kf don't exist but dbof=dbuf and kof=kuf was the point of having two?
     if eut is not None:
-        eut.freq_watt_param(params={'Ena': True,
-                                    'curve' = curve,
-                                    'dbf': fw_params['dbf'],
-                                    'kf': fw_params['dbf'],
-                                    'RspTms': fw_params['tr']
-                                    })
+        eut.freq_watt_param(params={
+            'Ena': True,
+            'curve' : curve,
+            'dbf': fw_params['dbf'],
+            'kf': fw_params['dbf'],
+            'RspTms': fw_params['tr']
+            })
         ts.log_debug('Initial EUT FW settings are %s' % eut.freq_watt())
-    fw_pairs = fw_pairs(curve, f_nom, fw_params)
+    fw_pairs_dic = fw_pairs(fw_curve, f_nom, fw_params,power)
+    ts.log_debug('FW pairs are : %s' % fw_pairs_dic)
+
     f_steps_dic = frequency_steps(f_nom, fw_params['f_small'], fw_params['dbf'], a_f, mode)
     # Start acquisition
     daq.data_capture(True)
-    for f_step in f_steps_dic[mode].iteritems():
-        ts.log('        Recording power at voltage %0.3f V for 2*t_settling = %0.1f sec.' %
+    for f_step in f_steps_dic[mode]:
+        ts.log('        Recording power at frequnecy %0.3f Hz for 4*t_settling = %0.1f sec.' %
                (f_step, 4 * fw_params['tr']))
         daq.sc['F_TARGET'] = f_step
         daq.sc['event'] = 'f_step_{}'.format(mode)
+        p_targ = interpolation_f_p(f=f_step,
+                                   f_nom=f_nom,
+                                   fw_pairs=fw_pairs_dic[fw_curve])
 
-        p_targ = p_msa_range(f_target=f_step,
-                             f_nom=f_nom,
-                             a_f=a_f,
-                             a_p=250/10000,
-                             fw_pairs=fw_pairs,
-                             pwr=power)
-        grid.frequency(f_step)
-        ts.sleep(4 * t_settling)
-        daq.data_sample()
-        data = daq.data_capture_read()
-
+        grid.freq(f_step)
         daq.sc['P_TARGET'] = p_targ
-    
+        for i in range(4):
+            ts.sleep(1 * fw_params['tr'])
+            daq.sc['event'] = 'TR_{}_done'.format(i+1)
+            daq.data_sample()
+            data = daq.data_capture_read()
+
         # Test result accuracy requirements per IEEE1547-4.2 for Q(V)
-        pv_passfail = p_v_passfail(phases=phases,
-                                   v=v,
-                                   p=p,
-                                   a_v=a_v,
-                                   p_mra=p_mra,
+
+        fw_passfail_res = fw_passfail(phases=phases,
+                                   f_nom=f_nom,
+                                   fw_pairs=fw_pairs_dic[fw_curve],
+                                   a_f=a_f,
+                                   a_p=a_p,
                                    daq=daq,
                                    data=data)
 
@@ -268,29 +311,41 @@ def normal_curve_test(mode,fw_curve,fw_params,power,daq,eut,grid,result_summary)
         ts.log('        Powers targ, min, max: %s, %s, %s' % (
         daq.sc['P_TARGET'], daq.sc['P_TARGET_MIN'], daq.sc['P_TARGET_MAX']))
 
-        daq.sc['event'] = 'T_settling_done_{}'.format(direction)
+        daq.sc['event'] = 'TR_F_TARGET_{}_done'.format(f_step)
         daq.data_sample()
 
-        result_summary.write('%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s \n' %
-                             (pv_passfail,
+        result_summary.write('%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s \n' %
+                             (fw_passfail_res,
                               ts.config_name(),
                               power * 100.,
-                              n_iter + 1,
-                              direction,
-                              daq.sc['V_TARGET'],
-                              daq.sc['V_MEAS'],
+                              mode,
+                              daq.sc['F_TARGET'],
+                              daq.sc['F_MEAS'],
                               daq.sc['P_TARGET'],
                               daq.sc['P_MEAS'],
                               daq.sc['P_TARGET_MIN'],
                               daq.sc['P_TARGET_MAX'],
                               dataset_filename))
 
+    result_params = {
+    'plot.title': 'title_name',
+    'plot.x.title': 'Time (sec)',
+    'plot.x.points': 'TIME',
+    'plot.y.points': 'F_TARGET,F_MEAS',
+    'plot.y.title': 'Frequency (Hz)',
+    'plot.F_TARGET.point': 'True',
+    'plot.y2.points': 'P_TARGET,P_MEAS',                    
+    'plot.P_TARGET.point': 'True',
+    'plot.P_TARGET.min_error': 'P_TARGET_MIN',
+    'plot.P_TARGET.max_error': 'P_TARGET_MAX',
+    }
+
     daq.data_capture(False)
     ds = daq.data_capture_dataset()
     ts.log('Saving file: %s' % dataset_filename)
     ds.to_csv(ts.result_file_path(dataset_filename))
-    # result_params['plot.title'] = os.path.splitext(dataset_filename)[0]
-    ts.result_file(dataset_filename)
+    result_params['plot.title'] = os.path.splitext(dataset_filename)[0]
+    ts.result_file(dataset_filename,params=result_params)
 
     result = script.RESULT_COMPLETE
 
@@ -306,7 +361,6 @@ def test_run():
     eut = None
     chil = None
     result_summary = None
-    f_steps_dic = collections.OrderedDict()
     fw_curves = collections.OrderedDict()
 
     try:
@@ -327,7 +381,7 @@ def test_run():
         eff = {
                 1.0 : ts.param_value('eut_fw.efficiency_100')/100,
                 0.66:ts.param_value('eut_fw.efficiency_66')/100,
-                0.33:ts.param_value('eut_fw.efficiency_33')/100,
+                0.2:ts.param_value('eut_fw.efficiency_20')/100,
         }
         # Test Parameters
         mode = ts.param_value('fw.mode')
@@ -396,15 +450,15 @@ def test_run():
             fw_curves[1] = {
                             'dbf' : 0.036 ,
                             'kf' : 0.05,
-                            'tr' = 5,
-                            'f_small' = p_small * f_nom * 0.05
+                            'tr' : 5,
+                            'f_small' : p_small * f_nom * 0.05
                             }
         if curves == 'Characteristic Curve 2' or curves == 'Both':
             fw_curves[2] = {
                             'dbf': 0.017,
                             'kf': 0.02,
-                            'tr' = 0.2,
-                            'f_small' = p_small * f_nom * 0.02
+                            'tr' : 0.2,
+                            'f_small' : p_small * f_nom * 0.02
                             }
 
         if irr == 'All':
@@ -425,25 +479,24 @@ def test_run():
         result_summary.write('Result,'
                              'Test Name,'
                              'Power Level,'
-                             'Iteration,'
-                             'direction,'
+                             'Mode,'
                              'Freq_target,'
                              'Freq_actual,'
                              'Power_target,'
                              'Power_actual,'
-                             'P_min,P_max,'
+                             'P_min,'
+                             'P_max,'
                              'Dataset File\n')
         """
         Test start
         """
         for mode in modes:
             for fw_curve ,fw_params in fw_curves.iteritems():
-                for power in pwr_lvls:
+                for power in pv_powers:
                     # Notes: Efficiency is consider... still ok ?
                     pv_power_setting = (p_rated * power) / eff[power]
                     ts.log('Set PV simulator power to {} with efficiency at {} %'.format(p_rated * power, eff[power] * 100.))
                     pv.power_set(pv_power_setting)
-
 
                     result = normal_curve_test(mode=mode,
                                                fw_curve=fw_curve,
@@ -517,19 +570,15 @@ info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.0.
 
 der.params(info)
 # EUT FW parameters
-info.param_group('eut_fw', label='FW Configuration',glob=True)
+info.param_group('eut_fw', label='EUT FW Configuration',glob=True)
 info.param('eut_fw.p_rated', label='Output Power Rating (W)', default=10000.)
 info.param('eut_fw.f_nom', label='Nominal AC frequency (Hz)', default=60.)
 info.param('eut_fw.f_max', label='Maximum frequency in the continuous operating region (Hz)', default=66.)
 info.param('eut_fw.f_min', label='Minimum frequency in the continuous operating region (Hz)', default=56.)
 # TODO: Check about this two parameters p_small and p_large since it is normally provided by the inverter model
-info.param('eut_fw.p_small', label='Small-signal performance (W)', default=0.1)
-info.param('eut_fw.p_large', label='Large-signal performance in % of rated power per minute', default=10.)
-info.param('eut_fw.tr', label='Response time (s)', default=1.)
-#info.param('eut_fw.dbof', label='Overfrequency deadband (Hz)', default=20.)
-#info.param('eut_fw.dbuf', label='Underfrequency deadband (Hz)', default=50.)
-info.param('eut_fw.kof', label='Overfrequency droop', default=20.)
-info.param('eut_fw.kuf', label='Underfrequency droop', default=50.)
+info.param('eut_fw.p_small', label='Small-signal performance (%)', default=0.05)
+# Notes:eut_fw.p_large is not use the standard
+#info.param('eut_fw.p_large', label='Large-signal performance in % of rated power per minute', default=10.)
 info.param('eut_fw.phases', label='Phases', default='Single Phase', values=['Single phase', 'Split phase', 'Three phase'])
 # TODO: Do we keep the same approach with effiency ?
 info.param('eut_fw.efficiency_20', label='CEC Efficiency list for power level = 20% at nominal VDC', default=97.0)
