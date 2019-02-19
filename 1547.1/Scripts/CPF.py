@@ -72,7 +72,7 @@ def sequence012_to_abc(params=None):
     for phase,value in vector.iteritems():        
         magnitudes[phase],angles[phase]=cmath.polar(value)
         #Rounding up values
-        magnitudes[phase]=round(magnitudes[phase],2)
+        magnitudes[phase]=round(magnitudes[phase]*ts.param_value('eut.v_nom'),2)
         #convert into degrees
         angles[phase]=str(round(angles[phase]*180/math.pi,3))+'DEGree'
     return magnitudes, angles
@@ -145,7 +145,7 @@ def constant_pf_test(pf, MSA_P, MSA_Q,v_nom,grid, daq, result_summary,dataset_fi
                       daq.sc['Q_TARGET_MIN'],
                       daq.sc['Q_TARGET_MAX'],
                       dataset_filename))
-    return 1
+    return script.RESULT_COMPLETE
 
 def q_p_criteria(data, pf, MSA_P, MSA_Q, daq):
     """
@@ -391,78 +391,36 @@ def test_run():
                     ts.log('PF setting read: %s' % (pf_setting))
                 ts.log('Starting data capture for pf = %s' % (pf))
 
-                constant_pf_test(pf=pf,
-                                 MSA_P=MSA_P,
-                                 MSA_Q=MSA_Q,
-                                 v_nom=v_nom_in,
-                                 grid=grid,
-                                 daq=daq,
-                                 result_summary=result_summary,
-                                 dataset_filename=dataset_filename)
-                """
-                # create result summary entry
-                pf_points = ['AC_PF']
-                va_points = ['AC_S']
-                p_points = ['AC_P']
-                q_points = ['AC_Q']
+                result = constant_pf_test(   pf=pf,
+                                             MSA_P=MSA_P,
+                                             MSA_Q=MSA_Q,
+                                             v_nom=v_nom_in,
+                                             grid=grid,
+                                             daq=daq,
+                                             result_summary=result_summary,
+                                             dataset_filename=dataset_filename)
 
-                pf_act = []
-                va_act = []
-                p_act = []  # Used for plotting results on P-Q plane
-                q_act = []  # Used for plotting results on P-Q plane
-                """
+                result_params = {
+                    'plot.title': 'title_name',
+                    'plot.x.title': 'Time (sec)',
+                    'plot.x.points': 'TIME',
+                    'plot.y.points': 'Q_TARGET,V_MEAS',
+                    'plot.y.title': 'Reactive power (Vars)',
+                    'plot.Q_TARGET.point': 'True',
+                    'plot.y2.points': 'Q_TARGET,Q_MEAS',
+                    'plot.Q_TARGET.point': 'True',
+                    'plot.Q_TARGET.min_error': 'Q_TARGET_MIN',
+                    'plot.Q_TARGET.max_error': 'Q_TARGET_MAX',
+                }
 
                 ts.log('Sampling complete')
                 daq.data_capture(False)
                 ds = daq.data_capture_dataset()
-                data = daq.data_capture_read()
                 ts.log('Saving file: %s' % dataset_filename)
                 ds.to_csv(ts.result_file_path(dataset_filename))
                 result_params['plot.title'] = os.path.splitext(dataset_filename)[0]
                 ts.result_file(dataset_filename, params=result_params)
-                
-                """
-                # create result summary entry
-                pf_act = []
-                va_act = []
-                p_act = []  # Used for plotting results on P-Q plane
-                q_act = []  # Used for plotting results on P-Q plane
-                va_nameplate_per_phase = p_rated/len(pf_points)  # assume VA_nameplate and P_rated are the same
 
-                p_target_at_rated = np.fabs(pf) * power
-                if pf < 0:
-                    q_target_at_rated = np.sin(np.arccos(pf)) * power  # PF < 0, +Q
-                else:
-                    q_target_at_rated = -np.sin(np.arccos(pf)) * power  # PF > 0, -Q
-                
-                result_summary.write('%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s \n' %
-                                     (passfail,
-                                      ts.config_name(),
-                                      power * 100,
-                                      count,
-                                      pf_act,
-                                      pf,
-                                      pf_msa,
-                                      pf_lower,
-                                      pf_upper,
-                                      filename,
-                                      p_act,
-                                      q_act,
-                                      p_target_at_rated,
-                                      q_target_at_rated))
-                """
-                '''
-                8) Repeat steps (6) - (8) for two additional times for a total of three repetitions.
-                '''
-            '''
-            9) Repeat steps (5) - (7) at two additional power levels. One power level shall be a Pmin or 20% of
-            Prated and the second at any power level between 33% and 66% of Prated.
-            '''
-        '''
-        10) Repeat Steps (6) - (9) for Tests 2 - 5 in Table SA12.1
-        '''
-
-        result = script.RESULT_COMPLETE
 
     except script.ScriptFail, e:
         reason = str(e)
