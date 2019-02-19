@@ -85,12 +85,21 @@ def sequence012_to_abc(params=None):
     for phase,value in vector.iteritems():        
         magnitudes[phase],angles[phase]=cmath.polar(value)
         #Rounding up values
-        magnitudes[phase]=round(magnitudes[phase],2)
+        magnitudes[phase]=round(magnitudes[phase]*ts.param_value('eut_vv.v_nom'),2)
         #convert into degrees
         angles[phase]=str(round(angles[phase]*180/math.pi,3))+'DEGree'
     return magnitudes, angles
 
-def imbalanced_grid_test(a_v, MSA_Q,v_nom, v, q, grid, daq, result_summary,dataset_filename):
+def imbalanced_grid_test( v, q, grid, daq, result_summary,dataset_filename):
+    """
+    TODO: Function that execute test in mode imbalanced grid
+
+    :param curve_number: VV characteristic curve desired
+    :param v_nom: VV nominal voltage output
+    :param s_rated: VV apparent power output
+    :return: curve tests vector
+    """
+
     seq012 =  ([0,   1.0,   0.10,   60],\
                [0,   1.0,   0.05,   300],\
                [0,   1.0,   0.03,   300],\
@@ -100,8 +109,10 @@ def imbalanced_grid_test(a_v, MSA_Q,v_nom, v, q, grid, daq, result_summary,datas
                [0,   1.0,   -0.03,  300],\
                [0,   1.0,   0,      30])
 
+    v_nom=ts.param_value('eut_vv.v_nom')
     mag={}
     angle={}
+
     phases=ts.param_value('eut_vv.phases')
     mode = ts.param_value('vv.mode')
     daq.data_capture(True)
@@ -119,7 +130,7 @@ def imbalanced_grid_test(a_v, MSA_Q,v_nom, v, q, grid, daq, result_summary,datas
             grid.voltage(mag)
             grid.phases_angles(params=angle)    
 
-        Q_V_passfail=q_msa_range(data=data, phases=phases,a_v=a_v, msa_q=MSA_Q, v=v, q=q,daq=daq)
+        Q_V_passfail=q_v_passfail(data=data, phases=phases, v=v, q=q,daq=daq)
 
         ts.sleep(steps[3])
         #ts.sleep(1)
@@ -129,7 +140,7 @@ def imbalanced_grid_test(a_v, MSA_Q,v_nom, v, q, grid, daq, result_summary,datas
         #Still needs to be implemented
         
         #Test result accuracy requirements per IEEE1547-4.2 for Q(V)
-        #Q_V_passfail=q_msa_range(data=data, phases=phases,a_v=a_v, msa_q=MSA_Q, v=v, q=q,daq=daq)
+        #Q_V_passfail=q_v_passfail(data=data, phases=phases,a_v=a_v, msa_q=MSA_Q, v=v, q=q,daq=daq)
 
         daq.data_sample()
         data = daq.data_capture_read()
@@ -139,7 +150,7 @@ def imbalanced_grid_test(a_v, MSA_Q,v_nom, v, q, grid, daq, result_summary,datas
                       dataset_filename))
     return None
 
-def voltage_steps(v,v_low,v_high,v_ref,a_v, mode):
+def voltage_steps(v, v_ref, mode):
     """
     TODO: make v steps vector for desired test (Normal or Vref test)
 
@@ -149,6 +160,9 @@ def voltage_steps(v,v_low,v_high,v_ref,a_v, mode):
     :return: curve tests vector
     """
     v_steps_dict=dict()
+    v_low = ts.param_value('eut_vv.v_low')
+    v_high= ts.param_value('eut_vv.v_high')
+    a_v=round(1.5*0.01*ts.param_value('eut_vv.v_nom'),2)
     
     #Establishing V step depending on mode Normal or Vref 
     if mode == 'Vref-test':
@@ -160,8 +174,7 @@ def voltage_steps(v,v_low,v_high,v_ref,a_v, mode):
 
     else:
                                         #Per standard 1547.1 december 2018 version
-        v_steps_cap=[v_high,            #step f1
-                    (v[2]-a_v),         #step f2
+        v_steps_cap=[(v[2]-a_v),         #step f
                     (v[2]+a_v),         #step g
                     (v[2]+v[3])/2,      #step h
                     v[3]-a_v,           #step i only if V4<V_h
@@ -185,8 +198,7 @@ def voltage_steps(v,v_low,v_high,v_ref,a_v, mode):
         """
         This section will need to be reviewed. As it is, it seems there are a few typos with this draft
         """
-        v_steps_ind=[v_low,             #step q1
-                    (v[1]+a_v),         #step q2
+        v_steps_ind=[(v[1]+a_v),         #step q
                     (v[1]-a_v),         #step r
                     (v[0]+v[1])/2,      #step s
                     v[0]+a_v,           #step t only if V1>V_low
@@ -261,7 +273,7 @@ def curve_v_q(curve_number,param_value,spec_curve_q=None,spec_curve_v=None):
     ts.log('q points= %s' % (q))
     return v,q
     
-def v_q(value, v, q):
+def interpolation_v_q(value, v, q):
     """
     Interpolation function to find the target reactive power based on a 4 point VV curve
 
@@ -287,50 +299,52 @@ def v_q(value, v, q):
     return round(q_value, 1)
 
 
-def q_msa_range(data, phases, a_v, msa_q, v, q,daq=None):
+def q_v_passfail(data, phases, v, q,daq=None):
     """
     Determine reactive power target and the min/max q values for pass/fail acceptance based on manufacturer's specified
     accuracies (MSAs)
 
     :param v_value: measured voltage value
     :param v_msa: manufacturer's specified accuracy of voltage
-    :param q_msa: manufacturer's specified accuracy of reactive power
+    :param q_mra: manufacturer's specified accuracy of reactive power
     :param v: VV voltage points
     :param q: VV reactive power points
     :return: points for q_target, q_target_min, q_target_max
     """
+    a_v=round(1.5*0.01*ts.param_value('eut_vv.v_nom'),2)
+    q_mra=round(0.05*ts.param_value('eut_vv.s_rated'),1)
     
-    #q_lower = v_q(v_measured + a_v, v, q)-1.5*q_msa  # reactive power target from the lower voltage limit
-    #q_upper = v_q(v_measured - a_v, v, q)+1.5*q_msa  # reactive power target from the upper voltage limit
+    #try:
+    daq.sc['V_MEAS'] = measurement_total(data=data, phases=phases, type_meas='V')
+    daq.sc['Q_MEAS'] = measurement_total(data=data, phases=phases, type_meas='Q')
 
-    try:
-        daq.sc['V_MEAS'] = measurement_total(data=data, phases=phases, type_meas='V')
-        daq.sc['Q_MEAS'] = measurement_total(data=data, phases=phases, type_meas='Q')
+    #To calculate the min/max, you need the measured value
+    if daq.sc['V_MEAS'] != 'No Data':
+        daq.sc['Q_TARGET_MIN']= interpolation_v_q(daq.sc['V_MEAS'] + a_v, v, q)-q_mra  # reactive power target from the lower voltage limit
+        daq.sc['Q_TARGET_MAX']= interpolation_v_q(daq.sc['V_MEAS'] - a_v, v, q)+q_mra  # reactive power target from the upper voltage limit
 
-        #To calculate the min/max, you need the measured value
-
-        daq.sc['Q_TARGET_MIN']= v_q(daq.sc['V_MEAS'] + a_v, v, q)-1.5*q_msa  # reactive power target from the lower voltage limit
-        daq.sc['Q_TARGET_MAX']= v_q(daq.sc['V_MEAS'] - a_v, v, q)+1.5*q_msa  # reactive power target from the upper voltage limit
-
-        ts.log('        Q actual, min, max: %s, %s, %s' % (q_final, daq.sc['Q_TARGET_MIN'], daq.sc['Q_TARGET_MAX']))
+        ts.log('        Q actual, min, max: %s, %s, %s' % (daq.sc['Q_MEAS'], daq.sc['Q_TARGET_MIN'], daq.sc['Q_TARGET_MAX']))
         
-        if daq.sc['Q_TARGET_MIN'] <= AC_Q <= daq.sc['Q_TARGET_MAX']:
+        if daq.sc['Q_TARGET_MIN'] <= daq.sc['Q_MEAS'] <= daq.sc['Q_TARGET_MAX']:
             passfail = 'Pass'
         else:
             passfail = 'Fail'
-
-        ts.log('        Passfail: %s' % (passfail))
-
-        return passfail
-    
-    except:
-        daq.sc['V_MEAS'] = 'No Data'
-        daq.sc['V_MEAS'] = 'No Data'
-        passfail = 'Fail'
+    else:
         daq.sc['Q_TARGET_MIN']='No Data'
         daq.sc['Q_TARGET_MAX']='No Data'
+        passfail = 'Fail'
+    ts.log('        Passfail: %s' % (passfail))
 
-        return passfail
+    return passfail
+    
+##    except:
+##        daq.sc['V_MEAS'] = 'No Data'
+##        daq.sc['V_MEAS'] = 'No Data'
+##        passfail = 'Fail'
+##        daq.sc['Q_TARGET_MIN']='No Data'
+##        daq.sc['Q_TARGET_MAX']='No Data'
+##
+##        return passfail
 
 def measurement_total(data, phases, type_meas):
     """
@@ -349,30 +363,38 @@ def measurement_total(data, phases, type_meas):
     else:
         meas='Q'
         log_meas='Reactive powers'
-    ts.log_debug('%s' % type_meas)
-    ts.log_debug('%s' % log_meas)
+
+    #ts.log_debug('%s' % type_meas)
+    #ts.log_debug('%s' % log_meas)
+    
     if phases == 'Single phase':
         ts.log_debug('        %s are: %s' % (log_meas, data.get('AC_{}_1'.format(meas))))
         value = data.get('AC_{}_1')
+        phase=1
 
     elif phases == 'Split phase':
         ts.log_debug('        %s are: %s, %s' % (log_meas,data.get('AC_{}_1'.format(meas)),
                                                     data.get('AC_{}_2'.format(meas))))
         value = data.get('AC_{}_1'.format(meas)) + data.get('AC_{}_2'.format(meas))
-
+        phase=2
     elif phases == 'Three phase':
         ts.log_debug('        %s are: %s, %s, %s' % (log_meas,
                                                         data.get('AC_{}_1'.format(meas)),
                                                         data.get('AC_{}_2'.format(meas)),
                                                         data.get('AC_{}_3'.format(meas))))
         value = data.get('AC_{}_1'.format(meas)) + data.get('AC_{}_2'.format(meas)) + data.get('AC_{}_3'.format(meas))
+        phase=3
     else:
         ts.log_error('Inverter phase parameter not set correctly.')
         raise
 
     if type_meas == 'V':
         #average value of V
-        value=value/3
+        if value is not None:
+            value=value/phase
+        else:
+            value='No Data'
+            return value
         
     elif type_meas == 'P':
         return abs(value)
@@ -392,25 +414,6 @@ def test_run():
     eut = None
     v_steps_dic = collections.OrderedDict()
 
-    """
-    Plotting still in work
-    """
-    result_params = {
-        'plot.title': 'title_name',
-        'plot.x.title': 'Time (secs)',
-        'plot.x.points': 'TIME',
-        'plot.y.points': 'AC_Q_1, Q_TARGET',
-        'plot.Q_ACT.point': 'True',
-        'plot.Q_TARGET.point': 'True',
-        'plot.Q_TARGET.min_error': 'Q_MIN_ERROR',
-        'plot.Q_TARGET.max_error': 'Q_MAX_ERROR',
-        'plot.Q_MIN.point': 'True',
-        'plot.Q_MAX.point': 'True',
-        'plot.V_TARGET.point': 'True',
-        'plot.y.title': 'Reactive Power (var)',
-        'plot.y2.points': 'AC_VRMS_1, V_TARGET',
-        'plot.y2.title': 'Voltage (V)'
-    }
 
     try:
 	"""
@@ -426,10 +429,6 @@ def test_run():
         v_nom = ts.param_value('eut_vv.v_nom')
         v_low = ts.param_value('eut_vv.v_low')
         v_high= ts.param_value('eut_vv.v_high')
-
-	MSA_V= ts.param_value('eut_vv.v_msa')
-	a_v=round(1.5*MSA_V,2)
-        MSA_Q= ts.param_value('eut_vv.q_msa')
 		
 	q_max_over = ts.param_value('eut_vv.q_max_over')
         q_max_under = ts.param_value('eut_vv.q_max_under')
@@ -616,27 +615,21 @@ def test_run():
                     # create voltage settings along all segments of the curve
                     if not(mode == 'Imbalanced grid'):
                         v_steps_dic=voltage_steps(  v=v,
-                                                    v_low=v_low,
-                                                    v_high=v_high,
                                                     v_ref=v_ref,
-                                                    a_v=a_v,
                                                     mode=mode)
                     
                         daq.data_capture(True)
                        
                         for test,v_steps in v_steps_dic.iteritems():
                             ts.log('With v_steps_dict at - %s' % (v_steps))
-                            daq.data_sample()
-                            data = daq.data_capture_read()
+                            
                             for v_step in v_steps:
                                 ts.log('        Recording Q(vars) at voltage %0.2f V for 4*t_settling = %0.1f sec. %s' %
                                    (v_step, 4*t_r[vv_curve-1], test))
 
-                                q_targ = v_q(value=v_step, v=v, q=q)    # target reactive power for the voltage measurement
+                                q_targ = interpolation_v_q(value=v_step, v=v, q=q)    # target reactive power for the voltage measurement
                                 ts.log('        Q target: %s' % (q_targ))
                               
-                                daq.sc['V_TARGET'] = v_step
-                                daq.sc['Q_TARGET'] = q_targ
                                 daq.sc['event'] = 'v_Step_{}'.format(test)
  
                                 if grid is not None:
@@ -644,35 +637,51 @@ def test_run():
 
                                 ts.sleep(4 * t_r[vv_curve-1])
                                 #ts.sleep(1)
-                                daq.sc['event'] = 'T_settling_done_{}'.format(test)
-                                
+                                daq.data_sample()
+                                data = daq.data_capture_read()
+
+                                daq.sc['V_TARGET'] = v_step
+                                daq.sc['Q_TARGET'] = q_targ
                                 #Test result accuracy requirements per IEEE1547-4.2 for Q(t)
                                 #Still needs to be implemented
 
                                 #Test result accuracy requirements per IEEE1547-4.2 for Q(V)
+                                Q_V_passfail=q_v_passfail(data=data, phases=phases, v=v, q=q,daq=daq)
 
-                                Q_V_passfail=q_msa_range(data=data, phases=phases,a_v=a_v, msa_q=MSA_Q, v=v, q=q,daq=daq)
+                                daq.sc['event'] = 'T_settling_done_{}'.format(test)
                                 daq.data_sample()
-                                data = daq.data_capture_read()
+                                #data = daq.data_capture_read()
                                 result_summary.write('%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s \n' %
                                              (Q_V_passfail, ts.config_name(), pwr_lvl*100., v_ref, '%s-%s' % (mode,test),
                                               v_step, daq.sc['V_MEAS'],daq.sc['Q_MEAS'], daq.sc['Q_TARGET'], daq.sc['Q_TARGET_MIN'], daq.sc['Q_TARGET_MAX'],
                                               dataset_filename))
                                 
                     else:
-                        Q_V_passfail=imbalanced_grid_test(a_v=a_v, MSA_Q=MSA_Q, v_nom=v_nom,
-                                                          v=v, q=q,grid=grid,
+                        Q_V_passfail=imbalanced_grid_test(v=v,
+                                                          q=q,
+                                                          grid=grid,
                                                           daq=daq,
                                                           result_summary=result_summary,
                                                           dataset_filename=dataset_filename)
+                    result_params = {
+                        'plot.title': 'title_name',
+                        'plot.x.title': 'Time (sec)',
+                        'plot.x.points': 'TIME',
+                        'plot.y.points': 'Q_TARGET,V_MEAS',
+                        'plot.y.title': 'Reactive power (Vars)',
+                        'plot.Q_TARGET.point': 'True',
+                        'plot.y2.points': 'Q_TARGET,Q_MEAS',                    
+                        'plot.Q_TARGET.point': 'True',
+                        'plot.Q_TARGET.min_error': 'Q_TARGET_MIN',
+                        'plot.Q_TARGET.max_error': 'Q_TARGET_MAX',
+                        }
                         
-        daq.data_capture(False)
-        ds = daq.data_capture_dataset()
-        data = daq.data_capture_read()
-        ts.log('Saving file: %s' % dataset_filename)
-        ds.to_csv(ts.result_file_path(dataset_filename))
-        result_params['plot.title'] = os.path.splitext(dataset_filename)[0]
-        ts.result_file(dataset_filename, params=result_params)
+                    daq.data_capture(False)
+                    ds = daq.data_capture_dataset()
+                    ts.log('Saving file: %s' % dataset_filename)
+                    ds.to_csv(ts.result_file_path(dataset_filename))
+                    result_params['plot.title'] = os.path.splitext(dataset_filename)[0]
+                    ts.result_file(dataset_filename, params=result_params)
 			
         result = script.RESULT_COMPLETE
 
@@ -680,11 +689,6 @@ def test_run():
         reason = str(e)
         if reason:
             ts.log_error(reason)
-            daq.data_capture(False)
-            ds = daq.data_capture_dataset()
-            ds.to_csv(ts.result_file_path(dataset_filename))
-            ts.result_file(dataset_filename)
-
     finally:
 
         if daq is not None:
@@ -703,6 +707,8 @@ def test_run():
             eut.close()
         if result_summary is not None:
             result_summary.close()
+
+
 
         # create result workbook
         xlsxfile = ts.config_name() + '.xlsx'
@@ -745,15 +751,11 @@ info.param_group('vv', label='Test Parameters')
 info.param('vv.mode', label='Volt-Var mode', default='Normal', values=['Normal', 'Vref-test', 'Imbalanced grid'])
 info.param('vv.vref_t_r_1', label='T ref value (t)', default=300,\
            active='vv.mode', active_value=['Vref-test'])
-"""
-info.param('vv.vref_t_r_2', label='T ref value (t) for iteration 2', default=5000,\
-           active='vv.mode', active_value=['Vref-test'])
-"""
+
 info.param('vv.test_1', label='Characteristic 1 curve', default='Enabled', values=['Disabled', 'Enabled'],\
            active='vv.mode', active_value=['Normal'])
 info.param('vv.test_1_t_r', label='Settling time (t) for curve 1', default=5.0,\
            active='vv.test_1', active_value=['Enabled'])
-
 
 info.param('vv.test_2', label='Characteristic 2 curve', default='Enabled', values=['Disabled', 'Enabled'],\
            active='vv.mode', active_value=['Normal'])
@@ -771,8 +773,6 @@ info.param('vv.spec_curve_v', label='Specified curve V points in PU(v1,...,v4)',
            active='vv.spec_curve', active_value=['Enabled'])
 info.param('vv.spec_curve_q', label='Specified curve Q points in PU(q1,...,q4)', default='',\
            active='vv.spec_curve', active_value=['Enabled'])
-#info.param('vv.spec_curve_unit', label='Units in', default='pu',values=['pu', 'Volt-Vars'],\
-#           active='vv.spec_curve', active_value=['Enabled'])
 info.param('vv.test_4_t_r', label='Settling time (t) for specified curve', default=5.0,\
            active='vv.spec_curve', active_value=['Enabled'])
 
@@ -788,8 +788,8 @@ info.param('eut_vv.var_rated', label='Output var rating (vars)', default=0.0)
 info.param('eut_vv.v_nom', label='Nominal AC voltage (V)', default=120.0, desc='Nominal voltage for the AC simulator.')
 info.param('eut_vv.v_low', label='Minimum AC voltage (V)', default=0.0)
 info.param('eut_vv.v_high', label='Maximum AC voltage (V)', default=0.0)
-info.param('eut_vv.v_msa', label='AC voltage manufacturers stated accuracy (V)', default=0.0)
-info.param('eut_vv.q_msa', label='Reactive power manufacturers stated accuracy (Var)', default=0.0)
+#info.param('eut_vv.v_msa', label='AC voltage manufacturers stated accuracy (V)', default=0.0)
+#info.param('eut_vv.q_mra', label='Reactive power manufacturers stated accuracy (Var)', default=0.0)
 
 info.param('eut_vv.q_max_over', label='Maximum reactive power production (over-excited) (VAr)', default=0.0)
 info.param('eut_vv.q_max_under', label='Maximum reactive power absorbtion (under-excited) (VAr)(-)', default=0.0)
