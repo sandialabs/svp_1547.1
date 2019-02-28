@@ -190,7 +190,6 @@ def f_mean(data, phases):
     return freq
 def fw_pairs(curve_number,f_nom,fw_params,power):
     """
-    TODO: make f and p vector for specified curve
     :param curve_number: VV characteristic curve desired
     :param f_nom: nominal frequency
     :param fw_params: FW parameters
@@ -224,7 +223,7 @@ def frequency_steps(f_nom, f_small, dbf, a_f, mode):
     f_max = ts.param_value('eut_fw.f_max')
     f_min = ts.param_value('eut_fw.f_min')
 
-    if mode == 'Above':                                 # 1547.1 (5.15.2.2) :
+    if mode == 'Above':                                 # 1547.1 (5.15.2.2):
         f_steps_above = [f_nom, (f_nom + dbf) - a_f,    #  h) Begin the adjustment to fH . Ramp the frequency to af below (fN + dbOF )
                         (f_nom + dbf) + a_f,            #  i) Ramp the frequency to af above (fn + dbOF )
                         f_small + f_nom + dbf,          #  j) Ramp the frequency to fsmall + f N + dbOF
@@ -236,7 +235,7 @@ def frequency_steps(f_nom, f_small, dbf, a_f, mode):
         f_steps_dic[mode] = np.around(f_steps_above, decimals=3)
         ts.log('Testing FW function at the following frequency ({0}) points:\n {1}'.format(mode,f_steps_dic[mode]))
 
-    elif mode == 'Below':                               # 1547.1 (5.15.3.2) :
+    elif mode == 'Below':                               # 1547.1 (5.15.3.2):
         f_steps_below = [f_nom, (f_nom + dbf) - a_f,    #  g) Begin the adjustment to fL . Ramp the frequency to af below (fN + dbuf)
                         (f_nom - dbf) - a_f,            #  h) Ramp the frequency to af below (fN – dbUF).
                         f_nom - f_small - dbf,          #  i) Ramp the frequency to fN - fsmall – dbUF.
@@ -251,7 +250,7 @@ def frequency_steps(f_nom, f_small, dbf, a_f, mode):
 
     return f_steps_dic
 
-def normal_curve_test(mode,fw_curve,fw_params,power,daq,eut,grid,result_summary):
+def normal_curve_test(mode,fw_curve,fw_params,power,daq,eut,grid,result_summary,absorb_power):
     phases = ts.param_value('eut_fw.phases')
     f_nom = ts.param_value('eut_fw.f_nom')
     # 1547.1: 'af' The term af, is 150% of the minimum
@@ -259,19 +258,37 @@ def normal_curve_test(mode,fw_curve,fw_params,power,daq,eut,grid,result_summary)
     #  Table 3 of IEEE Std 1547-2018 for steady-state conditions.
     a_f = round(1.5 * 0.01 * f_nom, 3)
     a_p = round(1.5 * 0.05 * 100, 2)
-    dataset_filename = 'FW_curve_{0}_pwr_{1}_{2}.csv'.format(fw_curve, power ,mode)
+    dataset_filename = 'FW_curve_{0}_pwr_{1}_{2}_abs_{3}.csv'.format(fw_curve, power ,mode,absorb_power)
 
     # 1547.1 : Parameters name from Table 51 - SunSpec Frequency Droop
     # Notes : dbf and kf don't exist but dbof=dbuf and kof=kuf was the point of having two?
     if eut is not None:
         eut.freq_watt_param(params={
             'Ena': True,
-            'curve' : curve,
+            'curve' : fw_curve,
             'dbf': fw_params['dbf'],
             'kf': fw_params['dbf'],
             'RspTms': fw_params['tr']
             })
         ts.log_debug('Initial EUT FW settings are %s' % eut.freq_watt())
+        # 1547.1 : Set the EUT’s output power to 50% of Prated
+        if mode == 'Below':
+            p_rated = ts.param_value('eut_fw.p_rated')
+            # 1547.1 :  5.15.2.2 r) & 5.15.3.2 p)
+            #           For EUT’s that can absorb power, allowing the
+            #           unit to absorb power by programing a negative P min .
+            #           Set the unit to absorb power at –50% of P rated .
+            if absorb_power :
+                p_min = round((power/2.0)*p_rated,2) * (-1.0)
+            else:
+                p_min = round((power/2.0)*p_rated,2)
+            eut.setting(params={
+                'MaxLimWEna' : True,
+                'MaxLimW' : round((power/2.0)*p_rated,2)
+            })
+            ts.log_debug('In below nominal frequency test, the EUT’s output power is set to {} W (50% Prated)'.format(eut.measurements()['W']))
+
+
     fw_pairs_dic = fw_pairs(fw_curve, f_nom, fw_params,power)
     ts.log_debug('FW pairs are : %s' % fw_pairs_dic)
 
@@ -375,8 +392,7 @@ def test_run():
         p_small = ts.param_value('eut_fw.p_small')
         p_large = ts.param_value('eut_fw.p_large')
         phases = ts.param_value('eut_fw.phases')
-
-        # TODO: Check the effiency at 20% for fronius
+        eut_absorb = ts.param_value('eut_fw.absorb')
 
         eff = {
                 1.0 : ts.param_value('eut_fw.efficiency_100')/100,
@@ -445,19 +461,19 @@ def test_run():
         elif mode == 'Below' :
             modes = ['Below']
 
-        # 1547.1 : Using Category III as specified in Table B.1
+        # 1547.2018 : Using Category III as specified in Table B.1
         if curves == 'Characteristic Curve 1' or curves == 'Both':
             fw_curves[1] = {
                             'dbf' : 0.036 ,
                             'kf' : 0.05,
-                            'tr' : 5,
+                            'tr' : ts.param_value('fw.tr_1'),
                             'f_small' : p_small * f_nom * 0.05
                             }
         if curves == 'Characteristic Curve 2' or curves == 'Both':
             fw_curves[2] = {
                             'dbf': 0.017,
                             'kf': 0.02,
-                            'tr' : 0.2,
+                            'tr' : ts.param_value('fw.tr_2'),
                             'f_small' : p_small * f_nom * 0.02
                             }
 
@@ -471,6 +487,10 @@ def test_run():
             pv_powers = [0.2]
         ts.log_debug("Power level tested : {}".format(pv_powers))
 
+        if eut_absorb == "Yes" :
+            absorb_powers = [False,True]
+        else:
+            absorb_powers = [False]
 
         # open result summary file
         result_summary_filename = 'result_summary.csv'
@@ -491,21 +511,34 @@ def test_run():
         Test start
         """
         for mode in modes:
-            for fw_curve ,fw_params in fw_curves.iteritems():
-                for power in pv_powers:
-                    # Notes: Efficiency is consider... still ok ?
-                    pv_power_setting = (p_rated * power) / eff[power]
-                    ts.log('Set PV simulator power to {} with efficiency at {} %'.format(p_rated * power, eff[power] * 100.))
-                    pv.power_set(pv_power_setting)
+            if mode == 'Below' :
+                # 1547.1 :  [5.15.3.2 Procedure] Remove the 66% and 20% power level since not required in 'Below' mode
+                #           Set the unit to absorb power at –50% of P rated
+                pv_powers = [1.]
+                # 1547.1 :  [5.15.3.2 Procedure] Frequency is ramped at the ROCOF for the category of the EUT.
+                #           In this case the ROCOF is based on table 21 of 1547.2018
+                #           (Category III is use because of table B.1 of 1547.2018)
+                #           The ROCOF unit : Hz/s
+                ts.log('Set Grid simulator power to 3 Hz/s')
+                grid.rocof(3.0)
 
-                    result = normal_curve_test(mode=mode,
-                                               fw_curve=fw_curve,
-                                               fw_params=fw_params,
-                                               power=power,
-                                               daq=daq,
-                                               eut=eut,
-                                               grid=grid,
-                                               result_summary=result_summary)
+
+            for absorb_power in absorb_powers:
+                for fw_curve ,fw_params in fw_curves.iteritems():
+                    for power in pv_powers:
+                        pv_power_setting = (p_rated * power) / eff[power]
+                        ts.log('Set PV simulator power to {} with efficiency at {} %'.format(p_rated * power, eff[power] * 100.))
+                        pv.power_set(pv_power_setting)
+
+                        result = normal_curve_test(mode=mode,
+                                                   fw_curve=fw_curve,
+                                                   fw_params=fw_params,
+                                                   power=power,
+                                                   daq=daq,
+                                                   eut=eut,
+                                                   grid=grid,
+                                                   result_summary=result_summary,
+                                                   absorb_power=absorb_power)
 
 
 
@@ -575,19 +608,20 @@ info.param('eut_fw.p_rated', label='Output Power Rating (W)', default=10000.)
 info.param('eut_fw.f_nom', label='Nominal AC frequency (Hz)', default=60.)
 info.param('eut_fw.f_max', label='Maximum frequency in the continuous operating region (Hz)', default=66.)
 info.param('eut_fw.f_min', label='Minimum frequency in the continuous operating region (Hz)', default=56.)
-# TODO: Check about this two parameters p_small and p_large since it is normally provided by the inverter model
 info.param('eut_fw.p_small', label='Small-signal performance (%)', default=0.05)
 # Notes:eut_fw.p_large is not use the standard
-#info.param('eut_fw.p_large', label='Large-signal performance in % of rated power per minute', default=10.)
 info.param('eut_fw.phases', label='Phases', default='Single Phase', values=['Single phase', 'Split phase', 'Three phase'])
-# TODO: Do we keep the same approach with effiency ?
 info.param('eut_fw.efficiency_20', label='CEC Efficiency list for power level = 20% at nominal VDC', default=97.0)
 info.param('eut_fw.efficiency_66', label='CEC Efficiency list for power level = 66% at nominal VDC', default=97.1)
 info.param('eut_fw.efficiency_100', label='CEC Efficiency list for power level = 100% at nominal VDC', default=96.9)
+info.param('eut_fw.absorb', label='Can the EUT absorb ?', default='No',values=['Yes', 'No'])
+
 info.param_group('fw', label='Test Parameters')
 info.param('fw.mode', label='Frequency Watt test mode', default='Both',values=['Above', 'Below', 'Both'])
 info.param('fw.curves', label='Curves to Evaluate', default='Both',values=['Characteristic Curve 1', 'Characteristic Curve 2', 'Both'])
-info.param('fw.irr', label='Power Levels', default='All',values=['100%', '66%', '20%', 'All'])
+info.param('fw.tr_1', label='Time response for curve 1', default= 5.0 , active='fw.curves', active_value=['Characteristic Curve 1', 'Both'])
+info.param('fw.tr_2', label='Time response for curve 2', default= 0.2 , active='fw.curves', active_value=['Characteristic Curve 2', 'Both'])
+info.param('fw.irr', label='Power Levels', default='All',values=['100%', '66%', '20%', 'All'],active='fw.mode', active_value=['Above','Both'])
 
 gridsim.params(info)
 pvsim.params(info)
