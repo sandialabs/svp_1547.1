@@ -127,7 +127,7 @@ def constant_pf_test(pf, MSA_P, MSA_Q,v_nom,grid, daq, result_summary,dataset_fi
             daq.sc['event'] = 'T_settling_done_{}'.format(step[1])
 
         #Test result accuracy requirements per IEEE1547-4.2 for Q(P)
-        Q_P_passfail=q_p_criteria(data=data,
+        qp_passfail=q_p_criteria( data=data,
                                   pf=pf,
                                   MSA_P=MSA_P,
                                   MSA_Q=MSA_Q,
@@ -136,7 +136,7 @@ def constant_pf_test(pf, MSA_P, MSA_Q,v_nom,grid, daq, result_summary,dataset_fi
         daq.data_sample()
         data = daq.data_capture_read()
         result_summary.write('%s, %s, %s, %s, %s, %s, %s, %s, %s \n' %
-                     (Q_P_passfail,
+                     (qp_passfail,
                       ts.config_name(),
                       mode,
                       daq.sc['V_MEAS'],
@@ -145,6 +145,27 @@ def constant_pf_test(pf, MSA_P, MSA_Q,v_nom,grid, daq, result_summary,dataset_fi
                       daq.sc['Q_TARGET_MIN'],
                       daq.sc['Q_TARGET_MAX'],
                       dataset_filename))
+
+    result_params = {
+        'plot.title': 'title_name',
+        'plot.x.title': 'Time (sec)',
+        'plot.x.points': 'TIME',
+        'plot.y.points': 'Q_TARGET,V_MEAS',
+        'plot.y.title': 'Reactive power (Vars)',
+        'plot.Q_TARGET.point': 'True',
+        'plot.y2.points': 'Q_TARGET,Q_MEAS',
+        'plot.Q_TARGET.point': 'True',
+        'plot.Q_TARGET.min_error': 'Q_TARGET_MIN',
+        'plot.Q_TARGET.max_error': 'Q_TARGET_MAX',
+    }
+
+    ts.log('Sampling complete')
+    daq.data_capture(False)
+    ds = daq.data_capture_dataset()
+    ts.log('Saving file: %s' % dataset_filename)
+    ds.to_csv(ts.result_file_path(dataset_filename))
+    result_params['plot.title'] = os.path.splitext(dataset_filename)[0]
+    ts.result_file(dataset_filename, params=result_params)
     return script.RESULT_COMPLETE
 
 def q_p_criteria(data, pf, MSA_P, MSA_Q, daq):
@@ -156,11 +177,11 @@ def q_p_criteria(data, pf, MSA_P, MSA_Q, daq):
     :param q_msa: manufacturer's specified accuracy of reactive power
     :return: passfail value
     """
-
+    phases=ts.param_value('eut.phases')
     try:
-        daq.sc['V_MEAS'] = measurement_total(data=data, type_meas='V')
-        daq.sc['Q_MEAS'] = measurement_total(data=data, type_meas='Q')
-        daq.sc['P_MEAS'] = measurement_total(data=data, type_meas='P')
+        daq.sc['V_MEAS'] = measurement_total(data=data, phases=phases, type_meas='V')
+        daq.sc['Q_MEAS'] = measurement_total(data=data, phases=phases, type_meas='Q')
+        daq.sc['P_MEAS'] = measurement_total(data=data, phases=phases, type_meas='P')
         
         #To calculate the min/max, you need the measured value
         p_min=daq.sc['P_MEAS']+1.5*MSA_P
@@ -189,50 +210,65 @@ def q_p_criteria(data, pf, MSA_P, MSA_Q, daq):
 
         return passfail
 
-def measurement_total(data, type_meas):
+def measurement_total(data, phases, type_meas):
     """
     Sum the EUT reactive power from all phases
     :param data: dataset
     :param phases: number of phases in the EUT
-    :param choice: Either V,P or Q 
+    :param choice: Either V,P or Q
     :return: either total EUT reactive power, total EUT active power or average V
     """
-    phases=ts.param_value('eut.phases')
     if type_meas == 'V':
-        meas='VRMS'
-        log_meas='Voltages'
+        meas = 'VRMS'
+        log_meas = 'Voltages'
     elif type_meas == 'P':
-        meas='P'
-        log_meas='Active powers'
+        meas = 'P'
+        log_meas = 'Active powers'
     else:
-        meas='Q'
-        log_meas='Reactive powers'
-    ts.log_debug('%s' % type_meas)
-    ts.log_debug('%s' % log_meas)
+        meas = 'Q'
+        log_meas = 'Reactive powers'
+
     if phases == 'Single phase':
-        ts.log_debug('        %s are: %s' % (log_meas, data.get('AC_{}_1'.format(meas))))
-        value = data.get('AC_{}_1')
+        try:
+            ts.log_debug('        %s are: %s' % (log_meas, data.get('AC_{}_1'.format(meas))))
+            value = data.get('AC_{}_1')
+        except:
+            value = 'No Data'
+            return value
+        phase = 1
 
     elif phases == 'Split phase':
-        ts.log_debug('        %s are: %s, %s' % (log_meas,data.get('AC_{}_1'.format(meas)),
-                                                    data.get('AC_{}_2'.format(meas))))
-        value = data.get('AC_{}_1'.format(meas)) + data.get('AC_{}_2'.format(meas))
-
+        try:
+            ts.log_debug('        %s are: %s, %s' % (log_meas, data.get('AC_{}_1'.format(meas)),
+                                                     data.get('AC_{}_2'.format(meas))))
+            value = data.get('AC_{}_1'.format(meas)) + data.get('AC_{}_2'.format(meas))
+        except:
+            value = 'No Data'
+            return value
+        phase = 2
     elif phases == 'Three phase':
-        ts.log_debug('        %s are: %s, %s, %s' % (log_meas,
-                                                        data.get('AC_{}_1'.format(meas)),
-                                                        data.get('AC_{}_2'.format(meas)),
-                                                        data.get('AC_{}_3'.format(meas))))
-        value = data.get('AC_{}_1'.format(meas)) + data.get('AC_{}_2'.format(meas)) + data.get('AC_{}_3'.format(meas))
+        try:
+            ts.log_debug('        %s are: %s, %s, %s' % (log_meas,
+                                                         data.get('AC_{}_1'.format(meas)),
+                                                         data.get('AC_{}_2'.format(meas)),
+                                                         data.get('AC_{}_3'.format(meas))))
+            value = data.get('AC_{}_1'.format(meas)) + data.get('AC_{}_2'.format(meas)) + data.get('AC_{}_3'.format(meas))
+        except:
+            value = 'No Data'
+            return value
+        phase = 3
     else:
         ts.log_error('Inverter phase parameter not set correctly.')
-        ts.log_error('phases=%s' % phases)
         raise
 
     if type_meas == 'V':
-        #average value of V
-        value=value/3
-        
+        # average value of V
+        if value is not None:
+            value = value / phase
+        else:
+            value = 'No Data'
+            return value
+
     elif type_meas == 'P':
         return abs(value)
 
@@ -251,17 +287,6 @@ def test_run():
 
     #sc_points = ['PF_TARGET', 'PF_MAX', 'PF_MIN']
 
-    # result params
-    result_params = {
-        'plot.title': ts.name,
-        'plot.x.title': 'Time (sec)',
-        'plot.x.points': 'TIME',
-        'plot.y.points': 'AC_PF_1, PF_TARGET',
-        'plot.y.title': 'Power Factor',
-        'plot.y2.points': 'AC_IRMS_1',
-        'plot.y2.title': 'Current (A)'
-    }
-
     try:
         p_rated = ts.param_value('eut.p_rated')
         p_min = ts.param_value('eut.p_min')
@@ -273,6 +298,8 @@ def test_run():
         MSA_Q=ts.param_value('eut.q_msa')
         MSA_P=ts.param_value('eut.p_msa')
         v_nom_in=ts.param_value('eut.v_in_nom')
+        v_in_min = ts.param_value('eut.v_in_min')
+        v_in_max = ts.param_value('eut.v_in_max')
         #pf_mid_ind = (1. + pf_min_ind)/2.
         #pf_mid_cap = -(1. - pf_min_cap)/2.
 
@@ -336,6 +363,11 @@ def test_run():
         if ts.param_value('cpf.pf_mid_cap') == 'Enabled':
             pf_targets['cpf_mid_cap']=ts.param_value('cpf.pf_mid_cap_value')
 
+        v_in_values = [v_nom_in,
+                           v_in_min,
+                           v_in_max]
+
+
         n_iter = ts.param_value('cpf.n_iter')
         power_levels = ts.param_value('cpf.irr')
 
@@ -347,79 +379,59 @@ def test_run():
         result_summary.write('Result,Test Name,Power Level,Iteration,PF_ACT,PF Target,'
                              'PF MSA,PF Min Allowed,PF Max Allowed,Dataset File,'
                              'AC_P, AC_Q, P_TARGET,Q_TARGET\n')
+        for v_in in v_in_values:
+            ts.log_debug('Set EUT to following Voltage input: %s V' % v_in)
 
-        for test, pf in pf_targets.iteritems():
-            ts.log('Starting test %s at %s' % (test,pf))
+            for test, pf in pf_targets.iteritems():
+                ts.log('Starting test %s at %s' % (test,pf))
 
-            '''
-            5) Set the input source to produce Prated for the EUT.
-            '''
-            if eut is not None:
-                if chil is not None:
-                    eut.fixed_pf(params={'Ena': True, 'PF': round(pf*100,0)})  # HACK for ASGC - To be fixed in firmware
-                else:
-                    eut.fixed_pf(params={'Ena': True, 'PF': pf})
-
-            if grid is not None:
-                grid.voltage(v_nom_in)
-            ts.log('Setting grid at %s%% of p_rated' % (p_min*100))
-            pv.power_set(p_rated * p_min)
-            ts.sleep(4*pf_settling_time)
-            ts.log('Setting grid at 100%% of p_rated: %s' % (p_rated))
-            pv.power_set(p_rated)
-            ts.sleep(4*pf_settling_time)
-
-            for count in range(1, n_iter + 1):
-                ts.log('Starting pass %s' % (count))
                 '''
-                6) Set the EUT power factor to unity. Measure the AC source voltage and EUT current to measure the
-                displacement
+                5) Set the input source to produce Prated for the EUT.
                 '''
-
-                dataset_filename='%s_%d_iter_%d' % (test,pf*100,count)
-                daq.sc['PF_TARGET'] = pf
-
-
                 if eut is not None:
                     if chil is not None:
-                        parameters = {'Ena': True, 'PF': pf*100}  # HACK for ASGC - To be fixed in their firmware
+                        eut.fixed_pf(params={'Ena': True, 'PF': round(pf*100,0)})  # HACK for ASGC - To be fixed in firmware
                     else:
-                        parameters = {'Ena': True, 'PF': pf}
-                    ts.log('PF set: %s' % (parameters))
-                    eut.fixed_pf(params=parameters)
-                    pf_setting = eut.fixed_pf()
-                    ts.log('PF setting read: %s' % (pf_setting))
-                ts.log('Starting data capture for pf = %s' % (pf))
+                        eut.fixed_pf(params={'Ena': True, 'PF': pf})
 
-                result = constant_pf_test(   pf=pf,
-                                             MSA_P=MSA_P,
-                                             MSA_Q=MSA_Q,
-                                             v_nom=v_nom_in,
-                                             grid=grid,
-                                             daq=daq,
-                                             result_summary=result_summary,
-                                             dataset_filename=dataset_filename)
+                if grid is not None:
+                    grid.voltage(v_nom_in)
+                ts.log('Set EUT to Pmin: %s' % (p_min*100))
+                ts.sleep(4*pf_settling_time)
+                ts.log('Setting available power at 100%% of p_rated: %s' % (p_rated))
+                pv.power_set(p_rated)
+                ts.sleep(4*pf_settling_time)
 
-                result_params = {
-                    'plot.title': 'title_name',
-                    'plot.x.title': 'Time (sec)',
-                    'plot.x.points': 'TIME',
-                    'plot.y.points': 'Q_TARGET,V_MEAS',
-                    'plot.y.title': 'Reactive power (Vars)',
-                    'plot.Q_TARGET.point': 'True',
-                    'plot.y2.points': 'Q_TARGET,Q_MEAS',
-                    'plot.Q_TARGET.point': 'True',
-                    'plot.Q_TARGET.min_error': 'Q_TARGET_MIN',
-                    'plot.Q_TARGET.max_error': 'Q_TARGET_MAX',
-                }
+                for count in range(1, n_iter + 1):
+                    ts.log('Starting pass %s' % count)
+                    '''
+                    6) Set the EUT power factor to unity. Measure the AC source voltage and EUT current to measure the
+                    displacement
+                    '''
 
-                ts.log('Sampling complete')
-                daq.data_capture(False)
-                ds = daq.data_capture_dataset()
-                ts.log('Saving file: %s' % dataset_filename)
-                ds.to_csv(ts.result_file_path(dataset_filename))
-                result_params['plot.title'] = os.path.splitext(dataset_filename)[0]
-                ts.result_file(dataset_filename, params=result_params)
+                    dataset_filename='%s_%d_iter_%d' % (test,pf*100,count)
+                    daq.sc['PF_TARGET'] = pf
+
+
+                    if eut is not None:
+                        if chil is not None:
+                            parameters = {'Ena': True, 'PF': pf*100}  # HACK for ASGC - To be fixed in their firmware
+                        else:
+                            parameters = {'Ena': True, 'PF': pf}
+                        ts.log('PF set: %s' % (parameters))
+                        eut.fixed_pf(params=parameters)
+                        pf_setting = eut.fixed_pf()
+                        ts.log('PF setting read: %s' % (pf_setting))
+                    ts.log('Starting data capture for pf = %s' % (pf))
+
+                    result = constant_pf_test(   pf=pf,
+                                                 MSA_P=MSA_P,
+                                                 MSA_Q=MSA_Q,
+                                                 v_nom=v_nom_in,
+                                                 grid=grid,
+                                                 daq=daq,
+                                                 result_summary=result_summary,
+                                                 dataset_filename=dataset_filename)
 
 
     except script.ScriptFail, e:
@@ -504,8 +516,8 @@ info.param('eut.p_min', label='P_min: Minimum active power (PU)', default=0.2)
 info.param('eut.p_msa', label='Active power manufacturers stated accuracy (Var)', default=0.0)
 info.param('eut.q_msa', label='Reactive power manufacturers stated accuracy (Var)', default=0.0)
 info.param('eut.v_in_nom', label='V_in_nom: Nominal voltage output (V)', default=120.0)
-info.param('eut.v_in_min', label='V_in_min: Nominal voltage output (V)', default=0.0)
-info.param('eut.v_in_max', label='V_in_max: Nominal voltage output (V)', default=0.0)
+info.param('eut.v_in_min', label='V_in_min: Nominal voltage output (V)', default=105.4)
+info.param('eut.v_in_max', label='V_in_max: Nominal voltage output (V)', default=132.0)
 info.param('eut.v_nom', label='V_nom: Nominal voltage output (V)', default=120.0)
 info.param('eut.v_low', label='Minimum AC voltage (V)', default=0.0)
 info.param('eut.v_high', label='Maximum AC voltage (V)', default=0.0)

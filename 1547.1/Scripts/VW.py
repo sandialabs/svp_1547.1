@@ -103,7 +103,7 @@ def imbalanced_grid_test(n_iter,power, daq,eut,grid,result_summary):
     #daq.data_sample()
     #data = daq.data_capture_read()
     v_pairs = curve_v_p(    curve_number=1,
-                        power=power)
+                            power=power)
 
     for steps in seq012:
         daq.sc['event'] = 'zero_{}_pos_{}_neg_{}'.format(steps[0],steps[1],steps[2])
@@ -160,8 +160,7 @@ def normal_curve_test(vw_curve,power,n_iter,t_settling,daq,eut,grid,result_summa
     v_min = ts.param_value('eut.v_low')
     v_max= ts.param_value('eut.v_high')
 
-    dataset_filename = 'VW_curve_%s_pwr_%0.2f_iter_%s.csv' % (vw_curve, power, n_iter + 1)                        
-
+    dataset_filename = 'VW_curve_%s_pwr_%0.2f_iter_%s.csv' % (vw_curve, power, n_iter + 1)
 
     if eut is not None:
         vw_curve_params = {'v': [v_start, v_stop], 'w': [100., 0], 'DeptRef': 'W_MAX_PCT'}
@@ -201,12 +200,12 @@ def normal_curve_test(vw_curve,power,n_iter,t_settling,daq,eut,grid,result_summa
             daq.sc['P_TARGET'] = p_targ
 
             #Test result accuracy requirements per IEEE1547-4.2 for Q(V)
-            pv_passfail = p_v_passfail(phases=phases,
-                                           v_pairs=v_pairs,
-                                           a_v=a_v,
-                                           p_mra=p_mra,
-                                           daq=daq,
-                                           data=data)
+            pv_passfail = p_v_passfail( phases=phases,
+                                        v_pairs=v_pairs,
+                                        a_v=a_v,
+                                        p_mra=p_mra,
+                                        daq=daq,
+                                        data=data)
             
             #Test result accuracy requirements per IEEE1547-4.2 for Q(tr)
             #Still needs to be implemented
@@ -229,28 +228,27 @@ def normal_curve_test(vw_curve,power,n_iter,t_settling,daq,eut,grid,result_summa
                                   daq.sc['P_TARGET_MIN'],
                                   daq.sc['P_TARGET_MAX'],
                                   dataset_filename))
-    """
+
     # Parameter for the plotting
     result_params = {
-    'plot.title': 'title_name',
-    'plot.x.title': 'Time (sec)',
-    'plot.x.points': 'TIME',
-    'plot.y.points': 'V_TARGET,V_ACT',
-    'plot.y.title': 'Voltage (V)',
-    'plot.V_TARGET.point': 'True',
-    'plot.y2.points': 'P_TARGET,P_ACT',                    
-    'plot.P_TARGET.point': 'True',
-    'plot.P_TARGET.min_error': 'P_TARGET_MIN',
-    'plot.P_TARGET.max_error': 'P_TARGET_MAX',
+        'plot.title': 'title_name',
+        'plot.x.title': 'Time (sec)',
+        'plot.x.points': 'TIME',
+        'plot.y.points': 'V_TARGET,V_MEAS',
+        'plot.y.title': 'Voltage (V)',
+        'plot.V_TARGET.point': 'True',
+        'plot.y2.points': 'P_TARGET,P_MEAS',
+        'plot.P_TARGET.point': 'True',
+        'plot.P_TARGET.min_error': 'P_TARGET_MIN',
+        'plot.P_TARGET.max_error': 'P_TARGET_MAX',
     }
-    """
+
     daq.data_capture(False)
     ds = daq.data_capture_dataset()
     ts.log('Saving file: %s' % dataset_filename)
     ds.to_csv(ts.result_file_path(dataset_filename))
-    #result_params['plot.title'] = os.path.splitext(dataset_filename)[0]
-    ts.result_file(dataset_filename)
-
+    result_params['plot.title'] = os.path.splitext(dataset_filename)[0]
+    ts.result_file(dataset_filename, params=result_params)
     result = script.RESULT_COMPLETE
 
     return result
