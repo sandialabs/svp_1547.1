@@ -57,6 +57,8 @@ def q_p_criteria(data, pf, MSA_P, MSA_Q, daq, imbalance_resp):
     :return: passfail value
     """
 
+
+    #TODO
     if imbalance_resp == 'individual phase voltages':
         pass
     elif imbalance_resp == 'average of the three-phase effective (RMS)':
@@ -68,7 +70,7 @@ def q_p_criteria(data, pf, MSA_P, MSA_Q, daq, imbalance_resp):
         daq.sc['V_MEAS'] = measurement_total(data=data, type_meas='V')
         daq.sc['Q_MEAS'] = measurement_total(data=data, type_meas='Q')
         daq.sc['P_MEAS'] = measurement_total(data=data, type_meas='P')
-        
+
         # To calculate the min/max, you need the measured value
         p_min = daq.sc['P_MEAS']+1.5*MSA_P
         p_max = daq.sc['P_MEAS']-1.5*MSA_P
@@ -76,16 +78,14 @@ def q_p_criteria(data, pf, MSA_P, MSA_Q, daq, imbalance_resp):
         daq.sc['Q_TARGET_MAX'] = math.sqrt(pow(p_max, 2)*((1/pf)-1))+1.5*MSA_Q  # reactive power target from the upper voltage limit
 
         ts.log('        Q actual, min, max: %s, %s, %s' % (daq.sc['Q_MEAS'], daq.sc['Q_TARGET_MIN'], daq.sc['Q_TARGET_MAX']))
-        
-        if daq.sc['Q_TARGET_MIN'] <= AC_Q <= daq.sc['Q_TARGET_MAX']:
+
+        if daq.sc['Q_TARGET_MIN'] <= daq.sc['Q_MEAS'] <= daq.sc['Q_TARGET_MAX']:
             passfail = 'Pass'
         else:
             passfail = 'Fail'
 
         ts.log('        Q(P) Passfail: %s' % (passfail))
 
-        return passfail
-    
     except:
         daq.sc['V_MEAS'] = 'No Data'
         daq.sc['P_MEAS'] = 'No Data'
@@ -94,14 +94,14 @@ def q_p_criteria(data, pf, MSA_P, MSA_Q, daq, imbalance_resp):
         daq.sc['Q_TARGET_MIN'] = 'No Data'
         daq.sc['Q_TARGET_MAX'] = 'No Data'
 
-        return passfail
+    return passfail
 
 def measurement_total(data, type_meas):
     """
     Sum the EUT reactive power from all phases
     :param data: dataset
     :param phases: number of phases in the EUT
-    :param choice: Either V,P or Q 
+    :param choice: Either V,P or Q
     :return: either total EUT reactive power, total EUT active power or average V
     """
     phases = ts.param_value('eut.phases')
@@ -119,11 +119,13 @@ def measurement_total(data, type_meas):
     if phases == 'Single phase':
         ts.log_debug('        %s are: %s' % (log_meas, data.get('AC_{}_1'.format(meas))))
         value = data.get('AC_{}_1')
+        nb_phases = 1
 
     elif phases == 'Split phase':
         ts.log_debug('        %s are: %s, %s' % (log_meas, data.get('AC_{}_1'.format(meas)),
                                                     data.get('AC_{}_2'.format(meas))))
         value = data.get('AC_{}_1'.format(meas)) + data.get('AC_{}_2'.format(meas))
+        nb_phases = 2
 
     elif phases == 'Three phase':
         ts.log_debug('        %s are: %s, %s, %s' % (log_meas,
@@ -131,6 +133,8 @@ def measurement_total(data, type_meas):
                                                         data.get('AC_{}_2'.format(meas)),
                                                         data.get('AC_{}_3'.format(meas))))
         value = data.get('AC_{}_1'.format(meas)) + data.get('AC_{}_2'.format(meas)) + data.get('AC_{}_3'.format(meas))
+        nb_phases = 3
+
     else:
         ts.log_error('Inverter phase parameter not set correctly.')
         ts.log_error('phases=%s' % phases)
@@ -138,8 +142,8 @@ def measurement_total(data, type_meas):
 
     if type_meas == 'V':
         # average value of V
-        value = value/3
-        
+        value = value/nb_phases
+
     elif type_meas == 'P':
         return abs(value)
 
@@ -185,8 +189,8 @@ def test_run():
 
         # AC voltages
         v_nom = ts.param_value('eut.v_nom')
-        v_min = ts.param_value('eut.v_min')
-        v_max = ts.param_value('eut.v_max')
+        v_min = ts.param_value('eut.v_low')
+        v_max = ts.param_value('eut.v_high')
         p_min = ts.param_value('eut.p_min')
         p_min_prime = ts.param_value('eut.p_min_prime')
         phases = ts.param_value('eut.phases')
@@ -195,9 +199,11 @@ def test_run():
 
         # Pass/fail accuracies
         pf_msa = ts.param_value('eut.pf_msa')
-        MSA_Q = ts.param_value('eut.q_msa')
-        MSA_P = ts.param_value('eut.p_msa')
-        MSA_V = ts.param_value('eut.p_msa')
+        #According to Table 3-Minimum requirements for manufacturers stated measured and calculated accuracy
+        MSA_Q = 0.05 * s_rated
+        MSA_P = 0.05 * s_rated
+        MSA_V = 0.01 * v_nom
+        a_v = MSA_V * 1.5
 
         # get target power factors
         pf_targets = {}
@@ -249,7 +255,7 @@ def test_run():
             daq.sc['Q_TARGET_MAX'] = 100
             daq.sc['PF_TARGET'] = 1
             daq.sc['event'] = 'None'
-            
+
         ts.log('DAS device: %s' % daq.info())
 
         '''
@@ -285,12 +291,16 @@ def test_run():
 
         s) For an EUT with an input voltage range, repeat steps d) through o) for Vin_min and Vin_max.
 
+        #TODO Include step t)
         t) Steps d) through q) may be repeated to test additional communication protocols - Run with another test.
         '''
+
+
         # For PV systems, this requires that Vmpp = Vin_nom and Pmpp = Prated.
         for test, v_in in v_in_targets.iteritems():
             ts.log('Starting test %s at v_in = %s' % (test, v_in))
             if pv is not None:
+                # TODO implement IV_curve_config
                 pv.iv_curve_config(pmp=p_rated, vpm=v_in)
                 pv.irradiance_set(1000.)
 
@@ -345,11 +355,11 @@ def test_run():
                 k) Step the AC test source voltage to (VL + av)
                 '''
                 if grid is not None:
-                    grid.voltage(v_min + MSA_V)
+                    grid.voltage(v_min + a_v)
                     ts.sleep(4*pf_settling_time)
-                    grid.voltage(v_max - MSA_V)
+                    grid.voltage(v_max - a_v)
                     ts.sleep(4*pf_settling_time)
-                    grid.voltage(v_min + MSA_V)
+                    grid.voltage(v_min + a_v)
 
                 '''
                 l) For multiphase units, step the AC test source voltage to Case A from Table 23.
@@ -469,8 +479,9 @@ def test_run():
                 '''
                 if eut is not None:
                     ts.log('Reactive/active power control functions are disabled.')
-                    meas = eut.measurements()
-                    ts.log('EUT Power: %s, EUT Reactive Power: %s' % (meas['W'], meas['VAr']))
+                    # TODO Implement ts.prompt functionality?
+                    #meas = eut.measurements()
+                    #ts.log('EUT Power: %s, EUT Reactive Power: %s' % (meas['W'], meas['VAr']))
 
 
             result_params = {
@@ -493,7 +504,7 @@ def test_run():
             ds.to_csv(ts.result_file_path(dataset_filename))
             result_params['plot.title'] = os.path.splitext(dataset_filename)[0]
             ts.result_file(dataset_filename, params=result_params)
-
+            result = script.RESULT_COMPLETE
 
     except script.ScriptFail, e:
         reason = str(e)
@@ -629,10 +640,10 @@ info.param('eut.phases', label='Phases', values=['Single phase', 'Split phase', 
 info.param('eut.pf_settling_time', label='PF Settling Time (secs)', default=1.0)
 
 # The specified accuracies are provided in IEEE 1547-2018
-info.param('eut.p_msa', label='Active power manufacturers stated accuracy (W)', default=20.0)
-info.param('eut.q_msa', label='Reactive power manufacturers stated accuracy (Var)', default=100.0)
-info.param('eut.v_msa', label='Voltage manufacturers stated accuracy (V)', default=1.0)
-info.param('eut.pf_msa', label='PF Manufacturer Stated Accuracy (PF units)', default=0.03)
+#info.param('eut.p_msa', label='Active power manufacturers stated accuracy (W)', default=20.0)
+#info.param('eut.q_msa', label='Reactive power manufacturers stated accuracy (Var)', default=100.0)
+#info.param('eut.v_msa', label='Voltage manufacturers stated accuracy (V)', default=1.0)
+#info.param('eut.pf_msa', label='PF Manufacturer Stated Accuracy (PF units)', default=0.03)
 
 der.params(info)
 das.params(info)
