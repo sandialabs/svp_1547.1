@@ -47,7 +47,7 @@ import cmath
 import math
 
 
-def q_p_criteria(data, pf, MSA_P, MSA_Q, daq, imbalance_resp):
+def q_p_criteria(data, pf, MSA_P, MSA_Q, daq):
     """
     Determine Q(P) passfail criteria with PF and accuracies (MSAs)
 
@@ -56,15 +56,6 @@ def q_p_criteria(data, pf, MSA_P, MSA_Q, daq, imbalance_resp):
     :param q_msa: manufacturer's specified accuracy of reactive power
     :return: passfail value
     """
-
-
-    #TODO
-    if imbalance_resp == 'individual phase voltages':
-        pass
-    elif imbalance_resp == 'average of the three-phase effective (RMS)':
-        pass
-    else:  # 'the positive sequence of voltages'
-        pass
 
     try:
         daq.sc['V_MEAS'] = measurement_total(data=data, type_meas='V')
@@ -195,7 +186,7 @@ def test_run():
         p_min_prime = ts.param_value('eut.p_min_prime')
         phases = ts.param_value('eut.phases')
         pf_settling_time = ts.param_value('eut.pf_settling_time')
-        imbalance_resp = ts.param_value('eut.imbalance_resp')
+        #imbalance_resp = ts.param_value('eut.imbalance_resp')
 
         # Pass/fail accuracies
         pf_msa = ts.param_value('eut.pf_msa')
@@ -300,8 +291,7 @@ def test_run():
         for test, v_in in v_in_targets.iteritems():
             ts.log('Starting test %s at v_in = %s' % (test, v_in))
             if pv is not None:
-                # TODO implement IV_curve_config
-                pv.iv_curve_config(pmp=p_rated, vpm=v_in)
+                pv.iv_curve_config(pmp=p_rated, vmp=v_in)
                 pv.irradiance_set(1000.)
 
             '''
@@ -397,8 +387,7 @@ def test_run():
                     # Test result accuracy for CPF
                     daq.data_sample()
                     data = daq.data_capture_read()
-                    Q_P_passfail = q_p_criteria(data=data, pf=pf, MSA_P=MSA_P, MSA_Q=MSA_Q, daq=daq,
-                                                imbalance_resp=imbalance_resp)
+                    Q_P_passfail = q_p_criteria(data=data, pf=pf, MSA_P=MSA_P, MSA_Q=MSA_Q, daq=daq)
 
                     result_summary.write('%s, %s, %s, %s, %s, %s, %s, %s, %s \n' %
                                  (Q_P_passfail, ts.config_name(), pf, daq.sc['V_MEAS'], daq.sc['P_MEAS'],
@@ -481,21 +470,8 @@ def test_run():
                     ts.log('Reactive/active power control functions are disabled.')
                     # TODO Implement ts.prompt functionality?
                     #meas = eut.measurements()
+                    ts.log('EUT PF is now: %s' % (data.get('AC_PF_1')))
                     #ts.log('EUT Power: %s, EUT Reactive Power: %s' % (meas['W'], meas['VAr']))
-
-
-            result_params = {
-                'plot.title': 'title_name',
-                'plot.x.title': 'Time (sec)',
-                'plot.x.points': 'TIME',
-                'plot.y.points': 'Q_TARGET,V_MEAS',
-                'plot.y.title': 'Reactive power (Vars)',
-                'plot.Q_TARGET.point': 'True',
-                'plot.y2.points': 'Q_TARGET,Q_MEAS',
-                'plot.Q_TARGET.point': 'True',
-                'plot.Q_TARGET.min_error': 'Q_TARGET_MIN',
-                'plot.Q_TARGET.max_error': 'Q_TARGET_MAX',
-            }
 
             ts.log('Sampling complete')
             daq.data_capture(False)
@@ -631,19 +607,13 @@ info.param('eut.v_high', label='Maximum output voltage in the continous operatin
 info.param('eut.p_min', label='Pmin: Minimum active power (W)', default=0.2*3000.0)
 info.param('eut.p_min_prime', label='P\'min: minimum active power while sinking power(W) (negative)',
            default=-0.2*3000.0, active='eut.sink_power', active_value=['Yes'])
-info.param('eut.imbalance_resp', label='Imbalance response. EUT responds to:', default='individual phase voltages',
-           values=['individual phase voltages', 'average of the three-phase effective (RMS)',
-                   'the positive sequence of voltages'])
+#info.param('eut.imbalance_resp', label='Imbalance response. EUT responds to:', default='individual phase voltages',
+#           values=['individual phase voltages', 'average of the three-phase effective (RMS)',
+#                   'the positive sequence of voltages'])
 
 info.param('eut.phases', label='Phases', values=['Single phase', 'Split phase', 'Three phase'], default='Three phase')
 
 info.param('eut.pf_settling_time', label='PF Settling Time (secs)', default=1.0)
-
-# The specified accuracies are provided in IEEE 1547-2018
-#info.param('eut.p_msa', label='Active power manufacturers stated accuracy (W)', default=20.0)
-#info.param('eut.q_msa', label='Reactive power manufacturers stated accuracy (Var)', default=100.0)
-#info.param('eut.v_msa', label='Voltage manufacturers stated accuracy (V)', default=1.0)
-#info.param('eut.pf_msa', label='PF Manufacturer Stated Accuracy (PF units)', default=0.03)
 
 der.params(info)
 das.params(info)
