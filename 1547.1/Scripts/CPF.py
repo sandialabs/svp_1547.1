@@ -84,6 +84,7 @@ def q_p_criteria(pf, MSA_P, MSA_Q, daq, tr, step, q_initial):
             ts.sleep(time_to_sleep.total_seconds())
             now = datetime.now()
             if first_tr <= now:
+                daq.data_sample()
                 data = daq.data_capture_read()
                 daq.sc['V_MEAS'] = measurement_total(data=data, type_meas='V',log=False)
                 daq.sc['Q_MEAS'] = measurement_total(data=data, type_meas='Q',log=False)
@@ -100,6 +101,7 @@ def q_p_criteria(pf, MSA_P, MSA_Q, daq, tr, step, q_initial):
             ts.sleep(time_to_sleep.total_seconds())
             now = datetime.now()
             if four_times_tr <= now:
+                daq.data_sample()
                 data = daq.data_capture_read()
                 daq.sc['V_MEAS'] = measurement_total(data=data, type_meas='V',log=True)
                 daq.sc['Q_MEAS'] = measurement_total(data=data, type_meas='Q',log=True)
@@ -119,20 +121,34 @@ def q_p_criteria(pf, MSA_P, MSA_Q, daq, tr, step, q_initial):
                            1st tr     2nd tr     3rd tr     4th tr            
                 |          |                                |
                 q_initial  q_tr                             q_final    
+                
+                (1547.1)After each voltage, the open loop response time, Tr , is evaluated. 
+                The expected reactive power output, Q(T r ) ,
+                at one times the open loop response time , 
+                is calculated as 90% x (Qfinal - Q initial ) + Q initial
                 """
+
                 q_p_analysis['Q_INITIAL'] = q_initial['value']
                 q_p_analysis['Q_FINAL'] = daq.sc['Q_MEAS']
-                q_tr_target = (0.9 * (q_p_analysis['Q_FINAL'] - q_p_analysis['Q_INITIAL'])) +  q_p_analysis['Q_INITIAL']
-                if q_tr >= q_tr_target:
-                    q_p_analysis['Q_TR_PF'] = 'Pass'
-                else:
-                    q_p_analysis['Q_TR_PF'] = 'Fail'
+                q_tr_diff = q_p_analysis['Q_FINAL'] - q_p_analysis['Q_INITIAL']
+                q_tr_target = ((0.9 * q_tr_diff) +  q_p_analysis['Q_INITIAL'])
+                # This q_tr_diff < 0 has been added to tackle when Q_final - Q_initial is negative.
+                if q_tr_diff < 0 :
+                    if q_tr <= q_tr_target :
+                        q_p_analysis['Q_TR_PF'] = 'Pass'
+                    else:
+                        q_p_analysis['Q_TR_PF'] = 'Fail'
+                elif q_tr_diff >= 0:
+                    if q_tr >= q_tr_target :
+                        q_p_analysis['Q_TR_PF'] = 'Pass'
+                    else:
+                        q_p_analysis['Q_TR_PF'] = 'Fail'
 
                 if daq.sc['Q_TARGET_MIN'] <= daq.sc['Q_MEAS'] <= daq.sc['Q_TARGET_MAX']:
                     q_p_analysis['Q_FINAL_PF'] = 'Pass'
                 else:
                     q_p_analysis['Q_FINAL_PF'] = 'Fail'
-                ts.log('        Q_TR Passfail: %s' % (q_p_analysis['Q_FINAL_PF']))
+                ts.log('        Q_TR Passfail: %s' % (q_p_analysis['Q_TR_PF']))
                 ts.log('        Q_FINAL Passfail: %s' % (q_p_analysis['Q_FINAL_PF']))
 
                 # This is to get out of the while loop. It provides the timestamp of tr_4
@@ -158,11 +174,40 @@ def get_q_initial(daq, step):
     # TODO : In a more sophisticated approach, q_initial['timestamp'] will come from a reliable secure thread or data acquisition timestamp
     q_initial={}
     q_initial['timestamp'] = datetime.now()
-    daq.sc['event'] = step
     daq.data_sample()
     data = daq.data_capture_read()
-    q_initial['value'] = measurement_total(data=data, type_meas='Q',log=False)
+    daq.sc['event'] = step
+    daq.sc['Q_MEAS'] = measurement_total(data=data, type_meas='Q', log=True)
+    daq.data_sample()
+    q_initial['value'] = daq.sc['Q_MEAS']
     return q_initial
+
+def get_measurement_label(type_meas):
+    """
+    Sum the EUT reactive power from all phases
+    :param type_meas:   Either V,P or Q
+    :return:            List of labeled measurements
+    """
+
+    phases = ts.param_value('eut.phases')
+    if type_meas == 'V':
+        meas_root = 'AC_VRMS'
+    elif type_meas == 'P':
+        meas_root = 'AC_P'
+    elif type_meas == 'PF':
+        meas_root = 'AC_PF'
+    elif type_meas == 'I':
+        meas_root = 'AC_IRMS'
+    else:
+        meas_root = 'AC_Q'
+    if phases == 'Single phase':
+        meas_label = [meas_root+'_1']
+    elif phases == 'Split phase':
+        meas_label = [meas_root+'_1',meas_root+'_2']
+    elif phases == 'Three phase':
+        meas_label = [meas_root+'_1',meas_root+'_2',meas_root+'_3']
+
+    return meas_label
 
 def measurement_total(data, type_meas,log):
     """
@@ -173,35 +218,28 @@ def measurement_total(data, type_meas,log):
     :return: either total EUT reactive power, total EUT active power or average V
     """
     phases = ts.param_value('eut.phases')
-    if type_meas == 'V':
-        meas = 'VRMS'
-        log_meas = 'Voltages'
-    elif type_meas == 'P':
-        meas = 'P'
-        log_meas = 'Active powers'
-    else:
-        meas = 'Q'
-        log_meas='Reactive powers'
+
     if phases == 'Single phase':
+        value = data.get(get_measurement_label(type_meas)[0])
         if log:
-            ts.log_debug('        %s are: %s' % (log_meas, data.get('AC_{}_1'.format(meas))))
-        value = data.get('AC_{}_1')
+            ts.log_debug('        %s are: %s' % (get_measurement_label(type_meas),value))
         nb_phases = 1
 
     elif phases == 'Split phase':
+        value1 = data.get(get_measurement_label(type_meas)[0])
+        value2 = data.get(get_measurement_label(type_meas)[1])
         if log:
-            ts.log_debug('        %s are: %s, %s' % (log_meas, data.get('AC_{}_1'.format(meas)),
-                                                    data.get('AC_{}_2'.format(meas))))
-        value = data.get('AC_{}_1'.format(meas)) + data.get('AC_{}_2'.format(meas))
+            ts.log_debug('        %s are: %s, %s' % (get_measurement_label(type_meas),value1,value2))
+        value = value1 + value2
         nb_phases = 2
 
     elif phases == 'Three phase':
+        value1 = data.get(get_measurement_label(type_meas)[0])
+        value2 = data.get(get_measurement_label(type_meas)[1])
+        value3 = data.get(get_measurement_label(type_meas)[2])
         if log:
-            ts.log_debug('        %s are: %s, %s, %s' % (log_meas,
-                                                        data.get('AC_{}_1'.format(meas)),
-                                                        data.get('AC_{}_2'.format(meas)),
-                                                        data.get('AC_{}_3'.format(meas))))
-        value = data.get('AC_{}_1'.format(meas)) + data.get('AC_{}_2'.format(meas)) + data.get('AC_{}_3'.format(meas))
+            ts.log_debug('        %s are: %s, %s, %s' % (get_measurement_label(type_meas),value1,value2,value3))
+        value = value1 + value2 + value3
         nb_phases = 3
 
     else:
@@ -233,16 +271,7 @@ def test_run():
 
     #sc_points = ['PF_TARGET', 'PF_MAX', 'PF_MIN']
 
-    # result params
-    result_params = {
-        'plot.title': ts.name,
-        'plot.x.title': 'Time (sec)',
-        'plot.x.points': 'TIME',
-        'plot.y.points': 'AC_PF_1, PF_TARGET',
-        'plot.y.title': 'Power Factor',
-        'plot.y2.points': 'AC_IRMS_1',
-        'plot.y2.title': 'Current (A)'
-    }
+
 
     try:
 
@@ -254,6 +283,10 @@ def test_run():
         s_rated = ts.param_value('eut.s_rated')
 
         # DC voltages
+        v_nom_in_enabled = ts.param_value('cpf.v_in_nom')
+        v_min_in_enabled = ts.param_value('cpf.v_in_min')
+        v_max_in_enabled = ts.param_value('cpf.v_in_max')
+
         v_nom_in = ts.param_value('eut.v_in_nom')
         v_min_in = ts.param_value('eut.v_in_min')
         v_max_in = ts.param_value('eut.v_in_max')
@@ -270,6 +303,7 @@ def test_run():
 
         # Pass/fail accuracies
         pf_msa = ts.param_value('eut.pf_msa')
+
         #According to Table 3-Minimum requirements for manufacturers stated measured and calculated accuracy
         MSA_Q = 0.05 * s_rated
         MSA_P = 0.05 * s_rated
@@ -287,11 +321,17 @@ def test_run():
         if ts.param_value('cpf.pf_mid_ab') == 'Enabled':
             pf_targets['cpf_mid_cap'] = float(ts.param_value('cpf.pf_mid_ab_value'))
 
-        v_in_targets = {'v_nom_in': v_nom_in}
-        if v_min_in != v_nom_in:
+        v_in_targets = {}
+
+        if v_nom_in_enabled == 'Enabled' :
+            v_in_targets['v_nom_in'] = v_nom_in
+        if v_min_in != v_nom_in and v_min_in_enabled == 'Enabled':
             v_in_targets['v_min_in'] = v_min_in
-        if v_max_in != v_nom_in:
+        if v_max_in != v_nom_in and v_max_in_enabled == 'Enabled':
             v_in_targets['v_max_in'] = v_max_in
+        if not v_in_targets:
+            ts.log_error('No V_in target specify. Please select a V_IN test')
+            raise
 
 
         """
@@ -366,9 +406,6 @@ def test_run():
         t) Steps d) through q) may be repeated to test additional communication protocols - Run with another test.
         """
 
-        # Start acquisition
-        daq.data_capture(True)
-
         # For PV systems, this requires that Vmpp = Vin_nom and Pmpp = Prated.
         for v_in_label, v_in in v_in_targets.iteritems():
             ts.log('Starting test %s at v_in = %s' % (v_in_label, v_in))
@@ -383,6 +420,8 @@ def test_run():
             Only the user-selected PF setting will be tested.
             """
             for pf_test_name, pf_target in pf_targets.iteritems():
+                # Start acquisition
+                daq.data_capture(True)
                 # Configure the data acquisition system
                 ts.log('Starting data capture for pf = %s' % pf_target)
                 dataset_filename = ('{0}_{1}'.format(v_in_label.upper(), pf_test_name.upper()))
@@ -405,7 +444,7 @@ def test_run():
                 derive, active power, apparent power, reactive power, and power factor.
                 """
                 step = 'Step F'
-                daq.sc['event'] = 'Step F'
+                daq.sc['event'] = step
                 daq.data_sample()
                 ts.log('Wait for steady state to be reached')
                 ts.sleep(4*pf_response_time)
@@ -590,6 +629,17 @@ def test_run():
                     #ts.log('EUT PF is now: %s' % (data.get('AC_PF_1')))
                     #ts.log('EUT Power: %s, EUT Reactive Power: %s' % (meas['W'], meas['VAr']))
 
+                # result params
+                result_params = {
+                    'plot.title': ts.name,
+                    'plot.x.title': 'Time (sec)',
+                    'plot.x.points': 'TIME',
+                    'plot.y.points': '{}, PF_TARGET'.format(','.join(str(x) for x in get_measurement_label('PF'))),
+                    'plot.y.title': 'Power Factor',
+                    'plot.y2.points': '{}'.format(','.join(str(x) for x in get_measurement_label('I'))),
+                    'plot.y2.title': 'Current (A)'
+                }
+
                 ts.log('Sampling complete')
                 dataset_filename = dataset_filename + ".csv"
                 daq.data_capture(False)
@@ -657,7 +707,7 @@ def run(test_script):
 
     sys.exit(rc)
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.1.1')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.1.2')
 
 # Power factor parameters
 # PF - the commanded power factor
@@ -682,6 +732,9 @@ info.param('cpf.pf_min_ab_value', label='PFmin,ab (Underexcited)', default=0.90,
 info.param('cpf.pf_mid_ab', label='PFmid,ab', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('cpf.pf_mid_ab_value', label='PFmid,ab value (PFmin,ab < PFmid,ab < 1.00):', default=0.95,
            active='cpf.pf_mid_ab', active_value=['Enabled'])
+info.param('cpf.v_in_nom', label='Test V_in_nom', default='Enabled', values=['Disabled', 'Enabled'])
+info.param('cpf.v_in_min', label='Test V_in_min', default='Enabled', values=['Disabled', 'Enabled'])
+info.param('cpf.v_in_max', label='Test V_in_max', default='Enabled', values=['Disabled', 'Enabled'])
 
 # EUT parameters
 # Prated - output power rating (W)
@@ -731,7 +784,7 @@ info.param('eut.p_min_prime', label='P\'min: minimum active power while sinking 
 
 info.param('eut.phases', label='Phases', values=['Single phase', 'Split phase', 'Three phase'], default='Three phase')
 
-info.param('eut.pf_response_time', label='PF Settling Time (secs)', default=1.0)
+info.param('eut.pf_response_time', label='PF Response Time (secs)', default=1.0)
 
 der.params(info)
 das.params(info)
