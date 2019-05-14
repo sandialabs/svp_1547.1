@@ -33,6 +33,7 @@ from svpelab import das
 from svpelab import der
 from svpelab import hil
 from svpelab import result as rslt
+from datetime import datetime, timedelta
 import script
 import math
 import numpy as np
@@ -58,94 +59,215 @@ def interpolation_v_p(value, v_pairs):
 
     return round(float(p_value),2)
 
-def p_v_criteria(v_pairs, a_v, p_mra, daq, imbalance_resp):
-    """
-    Determine reactive power target and the min/max q values for pass/fail acceptance based on manufacturer's specified
-    accuracies (MSAs)
 
-    :param phases: number of phases of systems
-    :param v_value: measured voltage value
-    :param a_v: manufacturer's mininum requirement accuracy of voltage
-    :param p_mra: manufacturer's minimum requirement accuracy of reactive power
-    :param v: VW voltage points (volts)
-    :param p: VW reactive power points (W)
-    :return: passfail for p(v)
+def v_p_criteria(v_pairs, v_target, a_v, p_mra, daq, tr, step, p_initial):
     """
+    Determine Q(MSAs)
+    :param v_pairs:     Voltage point for the interpolation
+    :param v_target:     Voltage point for the interpolation
+    :param a_v:         Manufacturer's mininum requirement accuracy of voltage
+    :param p_mra:       Manufacturer's minimum requirement accuracy of active power
+    :param daq:         data acquisition object in order to manipulated
+    :param tr:          response time (s)
+    :param step:        test procedure step letter or number (e.g "Step G")
+    :param p_initial:   dictionnary with timestamp and active power value before step change
+    :return:            dictionnary v_p_analysis that contains :
+                        passfail of response time requirements ( v_p_analysis['TR_PF'])
+                        passfail of P(TR) test result accuracy requirements ( v_p_analysis['P_TR_PF'])
+                        passfail of test result accuracy requirements (v_p_analysis['P_FINAL_PF'] )
+    """
+    tr_analysis = 'start'
+    result_analysis = 'start'
+    v_p_analysis = {}
 
-    if imbalance_resp == 'individual phase voltages':
-        pass
-    elif imbalance_resp == 'average of the three-phase effective (RMS)':
-        pass
-    else:  # 'the positive sequence of voltages'
-        pass
+    """
+    Every time a parameter is stepped or ramped, 
+    measure and record the time domain current and 
+    voltage response for at least 4 times the maximum 
+    expected response time after the stimulus, and measure or derive, 
+    active power, apparent power, reactive power, and power factor.
+
+    This is only for the response time requirements (5.14.3.3 Criteria)
+    """
+    first_tr = p_initial['timestamp'] + timedelta(seconds=tr)
+    four_times_tr = p_initial['timestamp'] + timedelta(seconds=4 * tr)
+    daq.sc['V_TARGET'] = v_target
 
     try:
-        daq.sc['V_MEAS'] = measurement_total(data=data, type_meas='V')
-        #daq.sc['Q_MEAS'] = measurement_total(data=data, type_meas='Q')
-        daq.sc['P_MEAS'] = measurement_total(data=data, type_meas='P')
+        while tr_analysis == 'start':
+            time_to_sleep = first_tr - datetime.now()
+            ts.sleep(time_to_sleep.total_seconds())
+            now = datetime.now()
+            if first_tr <= now:
+                daq.data_sample()
+                data = daq.data_capture_read()
+                daq.sc['V_MEAS'] = measurement_total(data=data, type_meas='V', log=False)
+                daq.sc['P_MEAS'] = measurement_total(data=data, type_meas='P', log=False)
+                # The variable q_tr is the value use to verify the time response requirement.
+                v_tr = daq.sc['V_MEAS']
+                p_tr = daq.sc['P_MEAS']
+                daq.sc['P_TARGET'] = interpolation_v_p(daq.sc['V_MEAS'], v_pairs)
+                daq.sc['P_TARGET_MIN'] = interpolation_v_p(daq.sc['V_MEAS'] + a_v, v_pairs) - p_mra
+                daq.sc['P_TARGET_MAX'] = interpolation_v_p(daq.sc['V_MEAS'] - a_v, v_pairs) + p_mra
+                daq.data_sample()
+                ts.log('        P(Tr) actual, min, max: %s, %s, %s' % (daq.sc['P_MEAS'], daq.sc['P_TARGET_MIN'], daq.sc['P_TARGET_MAX']))
+                daq.sc['event'] = "{}_tr_1".format(step)
+                daq.data_sample()
+                if daq.sc['P_TARGET_MIN'] <= daq.sc['P_MEAS'] <= daq.sc['P_TARGET_MAX']:
+                    v_p_analysis['P_TR_PF'] = 'Pass'
+                else:
+                    v_p_analysis['P_TR_PF'] = 'Fail'
+                # This is to get out of the while loop. It provides the timestamp of tr_1
+                tr_analysis = now
+                v_p_analysis['tr_analysis'] = tr_analysis
 
-        #To calculate the min/max, you need the measured value
-        daq.sc['P_TARGET_MIN']= interpolation_v_p(daq.sc['V_MEAS'] + a_v, v_pairs)-p_mra  # reactive power target from the lower voltage limit
-        daq.sc['P_TARGET_MAX']= interpolation_v_p(daq.sc['V_MEAS'] - a_v, v_pairs)+p_mra  # reactive power target from the upper voltage limit
+        while result_analysis == 'start':
+            time_to_sleep = four_times_tr - datetime.now()
+            ts.sleep(time_to_sleep.total_seconds())
+            now = datetime.now()
+            if four_times_tr <= now:
+                daq.data_sample()
+                data = daq.data_capture_read()
+                daq.sc['V_MEAS'] = measurement_total(data=data, type_meas='V', log=True)
+                daq.sc['P_MEAS'] = measurement_total(data=data, type_meas='P', log=True)
+                daq.sc['event'] = "{}_tr_4".format(step)
+                # To calculate the min/max, you need the measured value
+                # reactive power target from the lower voltage limit
+                daq.sc['P_TARGET_MIN'] = interpolation_v_p(daq.sc['V_MEAS'] + a_v, v_pairs) - p_mra
+                daq.sc['P_TARGET_MAX'] = interpolation_v_p(daq.sc['V_MEAS'] - a_v, v_pairs) + p_mra
+                daq.data_sample()
+                ts.log('        P actual, min, max: %s, %s, %s' % (daq.sc['P_MEAS'], daq.sc['P_TARGET_MIN'], daq.sc['P_TARGET_MAX']))
+                """
+                The variable p_tr is the value use to verify the time response requirement.
+                |----------|----------|----------|----------|
+                           1st tr     2nd tr     3rd tr     4th tr            
+                |          |                                |
+                p_initial  p_tr                             p_final    
 
-        ts.log('        P actual, min, max: %s, %s, %s' % (daq.sc['P_MEAS'], daq.sc['P_TARGET_MIN'], daq.sc['P_TARGET_MAX']))
+                (1547.1)After each voltage, the open loop response time, Tr , is evaluated. 
+                The expected active power output, P(Tr) ,
+                at one times the open loop response time , 
+                is calculated as 90% x (P_final - P_initial ) + P_initial
+                """
 
-        if daq.sc['P_TARGET_MIN'] <= daq.sc['P_MEAS'] <= daq.sc['P_TARGET_MAX']:
-            passfail = 'Pass'
-        else:
-            passfail = 'Fail'
+                v_p_analysis['P_INITIAL'] = p_initial['value']
+                v_p_analysis['P_FINAL'] = daq.sc['P_MEAS']
+                p_tr_diff = v_p_analysis['P_FINAL'] - v_p_analysis['P_INITIAL']
+                p_tr_target = ((0.9 * p_tr_diff) + v_p_analysis['P_INITIAL'])
+                # This q_tr_diff < 0 has been added to tackle when Q_final - Q_initial is negative.
+                if p_tr_diff < 0:
+                    if p_tr <= p_tr_target:
+                        v_p_analysis['TR_PF'] = 'Pass'
+                    else:
+                        v_p_analysis['TR_PF'] = 'Fail'
+                elif p_tr_diff >= 0:
+                    if p_tr >= p_tr_target:
+                        v_p_analysis['TR_PF'] = 'Pass'
+                    else:
+                        v_p_analysis['TR_PF'] = 'Fail'
 
-        ts.log('        P(V) Passfail: %s' % (passfail))
+                if daq.sc['P_TARGET_MIN'] <= daq.sc['P_MEAS'] <= daq.sc['P_TARGET_MAX']:
+                    v_p_analysis['P_FINAL_PF'] = 'Pass'
+                else:
+                    v_p_analysis['P_FINAL_PF'] = 'Fail'
+                ts.log('        P_TR Passfail: %s' % (v_p_analysis['P_TR_PF']))
+                ts.log('        TR Passfail: %s' % (v_p_analysis['TR_PF']))
+                ts.log('        P_FINAL Passfail: %s' % (v_p_analysis['P_FINAL_PF']))
+
+                # This is to get out of the while loop. It provides the timestamp of tr_4
+                result_analysis = now
+                v_p_analysis['result_analysis'] = result_analysis
+
 
     except:
         daq.sc['V_MEAS'] = 'No Data'
         daq.sc['P_MEAS'] = 'No Data'
-        #daq.sc['Q_MEAS'] = 'No Data'
+        daq.sc['Q_MEAS'] = 'No Data'
         passfail = 'Fail'
         daq.sc['P_TARGET_MIN'] = 'No Data'
         daq.sc['P_TARGET_MAX'] = 'No Data'
 
-    return passfail
+    return v_p_analysis
 
-def measurement_total(data, type_meas):
+
+def get_p_initial(daq, step):
     """
     Sum the EUT reactive power from all phases
-    :param data: dataset
-    :param phases: number of phases in the EUT
-    :param choice: Either V,P or Q
+    :param daq:         data acquisition object in order to manipulated
+    :param step:        test procedure step letter or number (e.g "Step G")
+    :return: returns a dictionnary with the timestamp, event and total EUT active power
+    """
+    # TODO : In a more sophisticated approach, p_initial['timestamp'] will come from a reliable secure thread or data acquisition timestamp
+    q_initial = {}
+    q_initial['timestamp'] = datetime.now()
+    daq.data_sample()
+    data = daq.data_capture_read()
+    daq.sc['event'] = step
+    daq.sc['P_MEAS'] = measurement_total(data=data, type_meas='P', log=True)
+    daq.data_sample()
+    q_initial['value'] = daq.sc['P_MEAS']
+    return q_initial
+
+
+def get_measurement_label(type_meas):
+    """
+    Sum the EUT reactive power from all phases
+    :param type_meas:   Either V,P or Q
+    :return:            List of labeled measurements
+    """
+
+    phases = ts.param_value('eut.phases')
+    if type_meas == 'V':
+        meas_root = 'AC_VRMS'
+    elif type_meas == 'P':
+        meas_root = 'AC_P'
+    elif type_meas == 'PF':
+        meas_root = 'AC_PF'
+    elif type_meas == 'I':
+        meas_root = 'AC_IRMS'
+    else:
+        meas_root = 'AC_Q'
+    if phases == 'Single phase':
+        meas_label = [meas_root + '_1']
+    elif phases == 'Split phase':
+        meas_label = [meas_root + '_1', meas_root + '_2']
+    elif phases == 'Three phase':
+        meas_label = [meas_root + '_1', meas_root + '_2', meas_root + '_3']
+
+    return meas_label
+
+
+def measurement_total(data, type_meas, log):
+    """
+    Sum the EUT reactive power from all phases
+    :param data:        dataset from data acquistion object
+    :param type_meas:   Either V,P or Q
+    :param log:         Boolean variable to disable or enable logging
     :return: either total EUT reactive power, total EUT active power or average V
     """
     phases = ts.param_value('eut.phases')
-    if type_meas == 'V':
-        meas = 'VRMS'
-        log_meas = 'Voltages'
-    elif type_meas == 'P':
-        meas = 'P'
-        log_meas = 'Active powers'
-    else:
-        meas = 'Q'
-        log_meas='Reactive powers'
-
-    ts.log_debug('%s' % type_meas)
-    ts.log_debug('%s' % log_meas)
 
     if phases == 'Single phase':
-        ts.log_debug('        %s are: %s' % (log_meas, data.get('AC_{}_1'.format(meas))))
-        value = data.get('AC_{}_1')
+        value = data.get(get_measurement_label(type_meas)[0])
+        if log:
+            ts.log_debug('        %s are: %s' % (get_measurement_label(type_meas), value))
         nb_phases = 1
 
     elif phases == 'Split phase':
-        ts.log_debug('        %s are: %s, %s' % (log_meas, data.get('AC_{}_1'.format(meas)),
-                                                    data.get('AC_{}_2'.format(meas))))
-        value = data.get('AC_{}_1'.format(meas)) + data.get('AC_{}_2'.format(meas))
+        value1 = data.get(get_measurement_label(type_meas)[0])
+        value2 = data.get(get_measurement_label(type_meas)[1])
+        if log:
+            ts.log_debug('        %s are: %s, %s' % (get_measurement_label(type_meas), value1, value2))
+        value = value1 + value2
         nb_phases = 2
 
     elif phases == 'Three phase':
-        ts.log_debug('        %s are: %s, %s, %s' % (log_meas,
-                                                        data.get('AC_{}_1'.format(meas)),
-                                                        data.get('AC_{}_2'.format(meas)),
-                                                        data.get('AC_{}_3'.format(meas))))
-        value = data.get('AC_{}_1'.format(meas)) + data.get('AC_{}_2'.format(meas)) + data.get('AC_{}_3'.format(meas))
+        value1 = data.get(get_measurement_label(type_meas)[0])
+        value2 = data.get(get_measurement_label(type_meas)[1])
+        value3 = data.get(get_measurement_label(type_meas)[2])
+        if log:
+            ts.log_debug('        %s are: %s, %s, %s' % (get_measurement_label(type_meas), value1, value2, value3))
+        value = value1 + value2 + value3
         nb_phases = 3
 
     else:
@@ -155,14 +277,14 @@ def measurement_total(data, type_meas):
 
     if type_meas == 'V':
         # average value of V
-        value = value/nb_phases
+        value = value / nb_phases
 
     elif type_meas == 'P':
         return abs(value)
 
     return value
 
-def volt_watt_mode(vw_curves, t_settling, pwr_lvls):
+def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
 
     result = script.RESULT_FAIL
     daq = None
@@ -174,19 +296,7 @@ def volt_watt_mode(vw_curves, t_settling, pwr_lvls):
     result_summary = None
 
     try:
-        # result params
-        result_params = {
-            'plot.title': 'title_name',
-            'plot.x.title': 'Time (sec)',
-            'plot.x.points': 'TIME',
-            'plot.y.points': 'V_TARGET,V_MEAS',
-            'plot.y.title': 'Voltage (V)',
-            'plot.V_TARGET.point': 'True',
-            'plot.y2.points': 'P_TARGET,P_MEAS',
-            'plot.P_TARGET.point': 'True',
-            'plot.P_TARGET.min_error': 'P_TARGET_MIN',
-            'plot.P_TARGET.max_error': 'P_TARGET_MAX',
-        }
+
 
         cat = ts.param_value('eut.cat')
         cat2 = ts.param_value('eut.cat2')
@@ -194,6 +304,8 @@ def volt_watt_mode(vw_curves, t_settling, pwr_lvls):
         p_rated = ts.param_value('eut.p_rated')
         p_rated_prime = ts.param_value('eut.p_rated_prime')
         s_rated = ts.param_value('eut.s_rated')
+
+        #TODO Implement eut efficiency?
         eff = {
             1.00: ts.param_value('eut.efficiency_100') / 100,
             0.66: ts.param_value('eut.efficiency_66') / 100,
@@ -213,7 +325,6 @@ def volt_watt_mode(vw_curves, t_settling, pwr_lvls):
         p_min = ts.param_value('eut.p_min')
         p_min_prime = ts.param_value('eut.p_min_prime')
         phases = ts.param_value('eut.phases')
-        pf_settling_time = ts.param_value('eut.pf_settling_time')
         imbalance_resp = ts.param_value('eut.imbalance_resp')
 
         # Pass/fail accuracies
@@ -232,10 +343,6 @@ def volt_watt_mode(vw_curves, t_settling, pwr_lvls):
         if chil is not None:
             chil.config()
 
-        # grid simulator is initialized with test parameters and enabled
-        grid = gridsim.gridsim_init(ts)  # Turn on AC so the EUT can be initialized
-        if grid is not None:
-            grid.voltage(v_nom)
 
         # pv simulator is initialized with test parameters and enabled
         pv = pvsim.pvsim_init(ts)
@@ -259,17 +366,24 @@ def volt_watt_mode(vw_curves, t_settling, pwr_lvls):
         b) Set all voltage trip parameters to the widest range of adjustability. Disable all reactive/active power
         control functions.
         '''
-        # it is assumed the EUT is on
         eut = der.der_init(ts)
         if eut is not None:
-            vw_curve_params = {'v': [v_start, v_stop], 'w': [100., 0], 'DeptRef': 'W_MAX_PCT'}
-            vw_params = {'Ena': True, 'ActCrv': 1, 'curve': vw_curve_params}
-            eut.volt_watt(params=vw_params)
-            ts.log_debug('Initial EUT VW settings are %s' % eut.volt_watt())
+            eut.config()
+            ts.log_debug(eut.measurements())
+            ts.log_debug(
+                'L/HVRT and trip parameters set to the widest range : v_min:{0} V, v_max:{1} V'.format(v_min, v_max))
+            eut.vrt_stay_connected_high(
+                params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000, 'V1': v_max, 'Tms2': 0.16, 'V2': v_max})
+            eut.vrt_stay_connected_low(
+                params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000, 'V1': v_min, 'Tms2': 0.16, 'V2': v_min})
+        else:
+            ts.log_debug('Set L/HVRT and trip parameters to the widest range of adjustability possible.')
+
         '''
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
         '''
-
+        # grid simulator is initialized with test parameters and enabled
+        grid = gridsim.gridsim_init(ts)  # Turn on AC so the EUT can be initialized
         if grid is not None:
             grid.voltage(v_nom)
 
@@ -278,23 +392,18 @@ def volt_watt_mode(vw_curves, t_settling, pwr_lvls):
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
 
-        result_summary.write('Result,Test Name,Power Level,Iteration,direction,V_target,V_actual,Power_target,Power_actual,P_min,P_max,Dataset File\n')
+        result_summary.write('P_TR_ACC_REQ,TR_REQ,P_FINAL_ACC_REQ,V_MEAS,P_MEAS,P_TARGET,P_TARGET_MIN,P_TARGET_MAX,STEP,FILENAME\n')
 
 
         '''
         d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
         voltage to Vin_nom. The EUT may limit active power throughout the test to meet reactive power requirements.
-        For an EUT with an input voltage range, repeat steps d) through o) for Vin_min and Vin_max.
+        For an EUT with an input voltage range.
         '''
 
-        #if pv is not None:
-            # TODO implement IV_curve_config
-            #pv.iv_curve_config(pmp=p_rated, vpm=v_nom)
-            #pv.iv_curve_config(pmp=p_rated, vpm=v_in)
-            #pv.irradiance_set(1000.)
-        '''
-        e) Set EUT volt-watt parameters to the values specified by Characteristic 1. All other function be turned off.
-        '''
+        if pv is not None:
+            pv.iv_curve_config(pmp=p_rated, vmp=v_nom_in)
+            pv.irradiance_set(1000.)
 
         v_pairs = collections.OrderedDict()#{}
 
@@ -327,8 +436,8 @@ def volt_watt_mode(vw_curves, t_settling, pwr_lvls):
                 v_pairs[2]['P2'] = int(p_min)
                 v_pairs[3]['P2'] = int(p_min)
 
+
         '''
-        f) Verify volt-watt mode is reported as active and that the correct characteristic is reported.
         g) Begin the adjustment towards V_h. Step the AC test source voltage to a_v below V_1.
         t) Repeat steps d) through t) at EUT power set at 20% and 66% of rated power.
         u) Repeat steps d) through u) for characteristics 2 and 3.
@@ -338,121 +447,107 @@ def volt_watt_mode(vw_curves, t_settling, pwr_lvls):
         """
         Test start
         """
-        for test, vw_curve in vw_curves.iteritems():
+        for vw_curve in vw_curves:
 
-            ts.log('Starting test with VW mode at %s' % (test))
+            ts.log('Starting test with VW mode - Characteristic %s' % (vw_curve))
+
+            '''
+            e) Set EUT volt-watt parameters to the values specified by Characteristic 1. All other function be turned off.
+            f) Verify volt-watt mode is reported as active and that the correct characteristic is reported.
+            '''
+            if eut is not None:
+                vw_curve_params = {'v': [v_pairs[vw_curve]['V1'], v_pairs[vw_curve]['V2']],
+                                   'w': [v_pairs[vw_curve]['P1'], v_pairs[vw_curve]['P2']],
+                                   'DeptRef': 'W_MAX_PCT'}
+                vw_params = {'Ena': True, 'ActCrv': 1, 'curve': vw_curve_params}
+                eut.volt_watt(params=vw_params)
+                ts.log_debug('Initial EUT VW settings are %s' % eut.volt_watt())
 
             v_steps_dict = collections.OrderedDict()
 
-            # 1547.1 :
-            v_steps_up = [(v_pairs[vw_curve]['V1'] - a_v),  # step g
-                          (v_pairs[vw_curve]['V1'] + a_v),  # step h
-                          (v_pairs[vw_curve]['V2'] + v_pairs[vw_curve]['V1']) / 2,  # step i
-                          v_pairs[vw_curve]['V2'] - a_v,  # step j
-                          v_pairs[vw_curve]['V2'] + a_v,  # step k
-                          v_max - a_v]  # step l
+            # 1547.1 steps :
 
-            v_steps_down = [v_pairs[vw_curve]['V2'] + a_v,  # step m
-                            v_pairs[vw_curve]['V2'] - a_v,  # step n
-                            (v_pairs[vw_curve]['V1'] + v_pairs[vw_curve]['V2']) / 2,  # step o
-                            v_pairs[vw_curve]['V1'] + a_v,  # step p
-                            v_pairs[vw_curve]['V1'] - a_v,  # step q
-                            v_min + a_v]  # step s
+            v_steps_dict["Step G"] = v_pairs[vw_curve]['V1'] - a_v
+            v_steps_dict["Step H"] = v_pairs[vw_curve]['V1'] + a_v
+            v_steps_dict["Step I"] = (v_pairs[vw_curve]['V2'] + v_pairs[vw_curve]['V1']) / 2
+            v_steps_dict["Step J"] = v_pairs[vw_curve]['V2'] - a_v
+            v_steps_dict["Step K"] = v_pairs[vw_curve]['V2'] + a_v
+            v_steps_dict["Step L"] = v_max - a_v
 
-            for i in range(len(v_steps_up)):
-                if v_steps_up[i] > v_max:
-                    v_steps_up[i] = v_max
-                elif v_steps_up[i] < v_min:
-                    v_steps_up[i] = v_min
-            for i in range(len(v_steps_down)):
-                if v_steps_down[i] > v_max:
-                    v_steps_down[i] = v_max
-                elif v_steps_down[i] < v_min:
-                    v_steps_down[i] = v_min
-
-            v_steps_dict['up'] = np.around(v_steps_up, decimals=2)
-            v_steps_dict['down'] = np.around(v_steps_down, decimals=2)
-            ts.log('Testing VW function at the following voltage(up) points %s' % v_steps_dict['up'])
-            ts.log('Testing VW function at the following voltage(down) points %s' % v_steps_dict['down'])
+            v_steps_dict["Step M"] = v_pairs[vw_curve]['V2'] + a_v
+            v_steps_dict["Step N"] = v_pairs[vw_curve]['V2'] - a_v
+            v_steps_dict["Step O"] = (v_pairs[vw_curve]['V1'] + v_pairs[vw_curve]['V2']) / 2
+            v_steps_dict["Step P"] = v_pairs[vw_curve]['V1'] + a_v
+            v_steps_dict["Step Q"] = v_pairs[vw_curve]['V1'] - a_v
+            # STD_CHANGE: Duplicated step R was ignored
+            #v_steps_dict["Step R"] = v_pairs[vw_curve]['V1'] - a_v
+            v_steps_dict["Step S"] = v_min + a_v
+            
+            # This is to make sure the volatge step don't exceed the EUT boundaries and to round the number to 2 decimals
+            for step, voltage in v_steps_dict.iteritems():
+                v_steps_dict.update({step : np.around(voltage,2)})
+                if voltage > v_max:
+                    v_steps_dict.update({step : v_max})
+                elif voltage < v_min:
+                    v_steps_dict.update({step: v_min})
 
             for power in pwr_lvls:
                 if pv is not None:
-                    # TODO implement IV_curve_config
-                    pv.power_set(power)
-                    #pv_power_setting = (p_rated * power) / eff[power]
-                    #pv.iv_curve_config(pmp=pv_power_setting, vpm=v_in)
-                    #pv.irradiance_set(1000.)
-                    #ts.log('Set PV simulator power to {} with efficiency at {} %'.format(p_rated * power, eff[power] * 100.))
-
-
-
+                    pv_power_setting = (p_rated * power)
+                    pv.iv_curve_config(pmp=pv_power_setting, vmp=v_nom_in)
+                    pv.irradiance_set(1000.)                
+                
                 ts.log_debug('curve points:  %s' % v_pairs[vw_curve])
 
                 # Configure the data acquisition system
                 ts.log('Starting data capture for power = %s' % power)
-                dataset_filename = 'VW_curve_%s_pwr_%0.2f.csv' % (vw_curve, power)
+                dataset_filename = ('VW_{0}_PWR_{1}'.format(vw_curve, power))
+                ts.log('------------{}------------'.format(dataset_filename))
                 daq.data_capture(True)
 
-                for direction, v_steps in v_steps_dict.iteritems():
-                    for v_step in v_steps:
-
-                        ts.log('        Recording power at voltage %0.2f V for 4*t_settling = %0.1f sec.' %
-                               (v_step, 4 * t_settling[vw_curve]))
-                        daq.sc['V_TARGET'] = v_step
-                        daq.sc['event'] = 'v_step_{}'.format(direction)
-
-                        p_targ = interpolation_v_p(value=v_step,
-                                                   v_pairs=v_pairs[vw_curve])
-
-                        grid.voltage(v_step)
-                        for i in range(4):
-                            daq.sc['event'] = 'v_step_{}'.format(direction)
-                            ts.sleep(1 * t_settling[vw_curve])
-                            daq.sc['event'] = 'TR_{}_done'.format(i + 1)
-                            daq.data_sample()
-                            data = daq.data_capture_read()
-
-                        daq.sc['P_TARGET'] = p_targ
-
-                        # Test result accuracy requirements per IEEE1547-4.2 for Q(V)
-                        P_V_passfail = p_v_criteria(v_pairs=v_pairs[vw_curve], a_v=a_v, p_mra=MSA_P, daq=daq,
-                                                    imbalance_resp=imbalance_resp)
-                                                   #data=data)
-
-                        # Test result accuracy requirements per IEEE1547-4.2 for Q(tr)
-                        # TODO p_tr_criteria still needs to be implemented
-
-                        ts.log('        Powers targ, min, max: %s, %s, %s' % (
-                        daq.sc['P_TARGET'], daq.sc['P_TARGET_MIN'], daq.sc['P_TARGET_MAX']))
-
-                        daq.sc['event'] = 'T_settling_done_{}'.format(direction)
-                        daq.data_sample()
+                for step_label, v_step in v_steps_dict.iteritems():
+                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_step,step_label))
+                    p_initial = get_p_initial(daq=daq, step=step_label)
+                    grid.voltage(v_step)
+                    v_p_analysis = v_p_criteria(v_pairs=v_pairs[vw_curve],
+                                                v_target=v_step,
+                                                a_v=MSA_V,
+                                                p_mra=MSA_P,
+                                                daq=daq,
+                                                tr=vw_response_time[vw_curve],
+                                                step=step_label,
+                                                p_initial=p_initial)
+                    result_summary.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' %
+                                         (v_p_analysis['P_TR_PF'], v_p_analysis['TR_PF'],v_p_analysis['P_FINAL_PF'],
+                                          daq.sc['V_MEAS'], daq.sc['P_MEAS'],daq.sc['P_TARGET'],daq.sc['P_TARGET_MIN'],
+                                          daq.sc['P_TARGET_MAX'],step_label,dataset_filename))
 
 
 
-            result_summary.write('%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s \n' %
-                                 (P_V_passfail,
-                                  ts.config_name(),
-                                  power * 100.,
-                                  direction,
-                                  daq.sc['V_TARGET'],
-                                  daq.sc['V_MEAS'],
-                                  daq.sc['P_TARGET'],
-                                  daq.sc['P_MEAS'],
-                                  daq.sc['P_TARGET_MIN'],
-                                  daq.sc['P_TARGET_MAX'],
-                                  dataset_filename))
+                # result params
+                result_params = {
+                    'plot.title': 'title_name',
+                    'plot.x.title': 'Time (sec)',
+                    'plot.x.points': 'TIME',
+                    'plot.y.points': 'P_TARGET,P_MEAS',
+                    'plot.P_TARGET.point': 'True',
+                    'plot.y.title': 'Active Power (W)',
+                    'plot.y2.points': 'V_TARGET,V_MEAS',
+                    'plot.y.title': 'Voltage (V)',
+                    'plot.P_TARGET.min_error': 'P_TARGET_MIN',
+                    'plot.P_TARGET.max_error': 'P_TARGET_MAX',
+                }
+                # create result workbook
 
-        # create result workbook
-
-        ts.log('Sampling complete')
-        daq.data_capture(False)
-        ds = daq.data_capture_dataset()
-        ts.log('Saving file: %s' % dataset_filename)
-        ds.to_csv(ts.result_file_path(dataset_filename))
-        result_params['plot.title'] = os.path.splitext(dataset_filename)[0]
-        ts.result_file(dataset_filename, params=result_params)
-        result = script.RESULT_COMPLETE
+                ts.log('Sampling complete')
+                dataset_filename = dataset_filename + ".csv"
+                daq.data_capture(False)
+                ds = daq.data_capture_dataset()
+                ts.log('Saving file: %s' % dataset_filename)
+                ds.to_csv(ts.result_file_path(dataset_filename))
+                result_params['plot.title'] = dataset_filename.split('.csv')[0]
+                ts.result_file(dataset_filename, params=result_params)
+                result = script.RESULT_COMPLETE
 
         return result
 
@@ -474,13 +569,13 @@ def volt_watt_mode(vw_curves, t_settling, pwr_lvls):
         if chil is not None:
             chil.close()
         if eut is not None:
+            eut.volt_watt(params={'Ena': False, 'ActCrv': 0})
             eut.close()
         if result_summary is not None:
             result_summary.close()
 
 
-
-def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves = 1):
+def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
 
     result = script.RESULT_FAIL
     daq = None
@@ -492,19 +587,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves = 1):
     result_summary = None
 
     try:
-        # result params
-        result_params = {
-            'plot.title': 'title_name',
-            'plot.x.title': 'Time (sec)',
-            'plot.x.points': 'TIME',
-            'plot.y.points': 'V_TARGET,V_MEAS',
-            'plot.y.title': 'Voltage (V)',
-            'plot.V_TARGET.point': 'True',
-            'plot.y2.points': 'P_TARGET,P_MEAS',
-            'plot.P_TARGET.point': 'True',
-            'plot.P_TARGET.min_error': 'P_TARGET_MIN',
-            'plot.P_TARGET.max_error': 'P_TARGET_MAX',
-        }
+
 
         cat = ts.param_value('eut.cat')
         cat2 = ts.param_value('eut.cat2')
@@ -520,9 +603,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves = 1):
         absorb_enable = ts.param_value('eut.abs_enabled')
 
         # DC voltages
-        v_nom_in = ts.param_value('eut.v_in_nom')
-        v_min_in = ts.param_value('eut.v_in_min')
-        v_max_in = ts.param_value('eut.v_in_max')
+        v_in_nom = ts.param_value('eut.v_in_nom')
 
         # AC voltages
         v_nom = ts.param_value('eut.v_nom')
@@ -531,8 +612,6 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves = 1):
         p_min = ts.param_value('eut.p_min')
         p_min_prime = ts.param_value('eut.p_min_prime')
         phases = ts.param_value('eut.phases')
-        pf_settling_time = ts.param_value('eut.pf_settling_time')
-        imbalance_resp = ts.param_value('eut.imbalance_resp')
 
         # Pass/fail accuracies
         pf_msa = ts.param_value('eut.pf_msa')
@@ -541,6 +620,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves = 1):
         MSA_P = 0.05 * s_rated
         MSA_V = 0.01 * v_nom
         a_v = 1.5 * MSA_V
+
 
         '''
         a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
@@ -557,8 +637,9 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves = 1):
 
         # pv simulator is initialized with test parameters and enabled
         pv = pvsim.pvsim_init(ts)
-        pv.power_set(p_rated)
-        pv.power_on()  # Turn on DC so the EUT can be initialized
+        if pv is not None:
+            pv.power_set(p_rated)
+            pv.power_on()  # Turn on DC so the EUT can be initialized
 
         # DAS soft channels
         das_points = {'sc': ('P_TARGET', 'P_TARGET_MIN', 'P_TARGET_MAX', 'P_MEAS', 'V_TARGET', 'V_MEAS', 'event')}
@@ -577,13 +658,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves = 1):
         b) Set all voltage trip parameters to the widest range of adjustability. Disable all reactive/active power
         control functions.
         '''
-        # it is assumed the EUT is on
-        eut = der.der_init(ts)
-        if eut is not None:
-            vw_curve_params = {'v': [v_start, v_stop], 'w': [100., 0], 'DeptRef': 'W_MAX_PCT'}
-            vw_params = {'Ena': True, 'ActCrv': 1, 'curve': vw_curve_params}
-            eut.volt_watt(params=vw_params)
-            ts.log_debug('Initial EUT VW settings are %s' % eut.volt_watt())
+
         '''
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
         '''
@@ -596,226 +671,224 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves = 1):
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
 
-        result_summary.write(
-            'Result,Test Name,Power Level,Iteration,direction,V_target,V_actual,Power_target,Power_actual,P_min,P_max,Dataset File\n')
+        result_summary.write('P_TR_ACC_REQ,TR_REQ,P_FINAL_ACC_REQ,V_MEAS,P_MEAS,P_TARGET,P_TARGET_MIN,P_TARGET_MAX,STEP,FILENAME\n')
+
 
         '''
-        d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
-        voltage to Vin_nom. The EUT may limit active power throughout the test to meet reactive power requirements.
-        For an EUT with an input voltage range, repeat steps d) through o) for Vin_min and Vin_max.
+         d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
+        voltage to Vin_nom.
         '''
 
-        # if pv is not None:
-        # TODO implement IV_curve_config
-        # pv.iv_curve_config(pmp=p_rated, vpm=v_nom)
-        # pv.iv_curve_config(pmp=p_rated, vpm=v_in)
-        # pv.irradiance_set(1000.)
-        '''
-        e) Set EUT volt-watt parameters to the values specified by Characteristic 1. All other function be turned off.
-        '''
+        if pv is not None:
+            pv.iv_curve_config(pmp=p_rated, vmp=v_in_nom)
+            pv.irradiance_set(1000.)
 
-        v_pairs = collections.OrderedDict()  # {}
-
-        v_pairs[1] = {'V1': round(1.06 * v_nom, 2),
-                      'V2': round(1.10 * v_nom, 2),
-                      'P1': round(p_rated, 2)}
-
-        if absorb_enable == 'Yes':
-            v_pairs[1].add('P2', 0)
-
-        else:
-            if p_min > (0.2 * p_rated):
-                v_pairs[1]['P2'] = int(0.2 * p_rated)
-            else:
-                v_pairs[1]['P2'] = int(p_min)
-
-        '''
-        f) Verify volt-var mode is reported as active and that the correct characteristic is reported.
-        g) Once steady state is reached, begin the adjustment of phase voltages.
-        t) Repeat steps d) through t) at EUT power set at 20% and 66% of rated power.
-        u) Repeat steps d) through u) for characteristics 2 and 3.
-        v) Test may be repeated for EUT's that can also absorb power using the P' values in the characteristic definition.
-        '''
-
-        """
-        Test start
-        """
         for imbalance_response in imbalance_resp:
+            for vw_curve in vw_curves:
+                '''
+                e) Set EUT volt-watt parameters to the values specified by Characteristic 1. All other function be turned off.
+                '''
 
-            ts.log('Starting imbalance test with VW mode at %s' % (imbalance_response))
+                v_pairs = collections.OrderedDict()  # {}
 
-            if pv is not None:
-                # TODO implement IV_curve_config
-                pv.power_set(power)
-                # pv_power_setting = (p_rated * power) / eff[power]
-                # pv.iv_curve_config(pmp=pv_power_setting, vpm=v_in)
-                # pv.irradiance_set(1000.)
-                # ts.log('Set PV simulator power to {} with efficiency at {} %'.format(p_rated * power, eff[power] * 100.))
+                v_pairs[vw_curve] = {'V1': round(1.06 * v_nom, 2),
+                                     'V2': round(1.10 * v_nom, 2),
+                                     'P1': round(p_rated, 2)}
 
-            # Configure the data acquisition system
-            ts.log('Starting data capture for power = %s' % power)
-            dataset_filename = 'VW_curve_%s_pwr_%0.2f.csv' % (vw_curve, power)
-            daq.data_capture(True)
+                if absorb_enable == 'Yes':
+                    v_pairs[vw_curve]['P2'] = 0
 
-            ts.log_debug('curve points:  %s' % v_pairs[vw_curve])
+                else:
+                    if p_min > (0.2 * p_rated):
+                        v_pairs[vw_curve]['P2'] = int(0.2 * p_rated)
+                    else:
+                        v_pairs[vw_curve]['P2'] = int(p_min)
 
-            '''
-            l) For multiphase units, step the AC test source voltage to Case A from Table 23.
+                # it is assumed the EUT is on
+                eut = der.der_init(ts)
+                if eut is not None:
+                    vw_curve_params = {'v': [v_pairs[vw_curve]['V1'], v_pairs[vw_curve]['V2']],
+                                       'w': [v_pairs[vw_curve]['P1'], v_pairs[vw_curve]['P2']],
+                                       'DeptRef': 'W_MAX_PCT'}
+                    vw_params = {'Ena': True, 'ActCrv': 1, 'curve': vw_curve_params}
+                    '''
+                    f) Verify volt-watt mode is reported as active and that the correct characteristic is reported
+                    '''
+                    eut.volt_watt(params=vw_params)
+                    '''
+                    g) Verify volt-var mode is reported as active and that the correct characteristic is reported.
+                    '''
+                    # TODO : Not sure if this makes sense
+                    eut.volt_var(params=vw_params)
+                    # eut.volt_var(params={'Ena': True})
+                    ts.log_debug('Initial EUT VW settings are %s' % eut.volt_watt())
+                    ts.log_debug('curve points:  %s' % v_pairs[vw_curve])
 
-                                        Table 23 - Imbalanced Voltage Test Cases 12
-                    +----------------------------------------------+-----------------------------------------------+
-                    | Symmetrical Components                       | Phasor Components                             |
-                    +----------------------------------------------+-----------------------------------------------+
-                    | Zero Sequence | Positive Seq | Negative Seq  | Phase A      | Phase B       | Phase C        |
-                    | Mag | Angle   | Mag | Angle  | Mag   | Angle | Mag   | Angle| Mag   | Angle | Mag   | Angle  |
-            +-------+-----+---------+-----+--------+-------+-------+-------+------+-------+-------+-------+--------+
-            |Case A | 0.0 | 0.0     | 1.0 | 0.0    | 0.07  | 0     | 1.070 | 0.0  | 0.967 | 123.6 | 0.967 | -123.6 |
-            +-------+-----+---------+-----+--------+-------+-------+-------+------+-------+-------+-------+--------+
-            |Case B | 0.0 | 0.0     | 1.0 | 0.0    | 0.09  | 180   | 0.910 | 0.0  | 1.048 | 115.7 | 1.048 | -115.7 |
-            +-------+-----+---------+-----+--------+-------+-------+-------+------+-------+-------+-------+--------+
-            |Case C | 0.0 | 0.0     | 1.0 | 0.0    | 0.05  | 0     | 1.050 | 0.0  | 0.976 | 122.5 | 0.976 | -122.5 |
-            +-------+-----+---------+-----+--------+-------+-------+-------+------+-------+-------+-------+--------+
-            |Case D | 0.0 | 0.0     | 1.0 | 0.0    | 0.05  | 180   | 0.950 | 0.0  | 1.026 | 117.6 | 1.026 | -117.6 |
-            +-------+-----+---------+-----+--------+-------+-------+-------+------+-------+-------+-------+--------+
+                '''
+                h) Once steady state is reached, begin the adjustment of phase voltages.
+                '''
 
-            For tests with imbalanced, three-phase voltages, the manufacturer shall state whether the EUT responds
-            to individual phase voltages, or the average of the three-phase effective (RMS) values or the positive
-            sequence of voltages. For EUTs that respond to individual phase voltages, the response of each
-            individual phase shall be evaluated. For EUTs that response to the average of the three-phase effective
-            (RMS) values mor the positive sequence of voltages, the total three-phase reactive and active power
-            shall be evaluated.
-            '''
-
-            '''
-            Step i) For multiphase units, step the AC test source voltage to Case A from Table 23
-            '''
-
-            if grid is not None:
-                grid.config_asymmetric_phase_angles(mag=[1.07 * v_nom, 0.967 * v_nom, 0.967 * v_nom],
-                                                    angle=[0., 123.6, -123.6])
-                daq.sc['event'] = 'Case A'
-                ts.sleep(4 * pf_settling_time)
-                daq.sc['event'] = 'T_settling_done'
-
-                # Test result accuracy for CPF
+                """
+                Test start
+                """
+                step = 'Step H'
+                daq.sc['event'] = step
                 daq.data_sample()
-                data = daq.data_capture_read()
+                ts.log('Wait for steady state to be reached')
+                ts.sleep(4 * vw_response_time[vw_curve])
+                ts.log(imbalance_resp)
 
-                # Test result accuracy requirements per IEEE1547-4.2 for Q(V)
-                P_V_passfail = p_v_criteria(v_pairs=v_pairs[vw_curve], a_v=a_v, p_mra=MSA_P, daq=daq,
-                                            imbalance_resp=imbalance_response)
+                ts.log('Starting imbalance test with VW mode at %s' % (imbalance_response))
 
-                # Test result accuracy requirements per IEEE1547-4.2 for Q(tr)
-                # TODO p_tr_criteria still needs to be implemented
+                # Configure the data acquisition system
+                dataset_filename = 'VW_imbalanced_%s' % (imbalance_response)
+                ts.log('------------{}------------'.format(dataset_filename))
+                daq.data_capture(True)
 
-                ts.log('        Powers targ, min, max: %s, %s, %s' % (
-                    daq.sc['P_TARGET'], daq.sc['P_TARGET_MIN'], daq.sc['P_TARGET_MAX']))
+                '''
+                l) For multiphase units, step the AC test source voltage to Case A from Table 23.
+    
+                                            Table 23 - Imbalanced Voltage Test Cases 12
+                        +----------------------------------------------+-----------------------------------------------+
+                        | Symmetrical Components                       | Phasor Components                             |
+                        +----------------------------------------------+-----------------------------------------------+
+                        | Zero Sequence | Positive Seq | Negative Seq  | Phase A      | Phase B       | Phase C        |
+                        | Mag | Angle   | Mag | Angle  | Mag   | Angle | Mag   | Angle| Mag   | Angle | Mag   | Angle  |
+                +-------+-----+---------+-----+--------+-------+-------+-------+------+-------+-------+-------+--------+
+                |Case A | 0.0 | 0.0     | 1.0 | 0.0    | 0.07  | 0     | 1.070 | 0.0  | 0.967 | 123.6 | 0.967 | -123.6 |
+                +-------+-----+---------+-----+--------+-------+-------+-------+------+-------+-------+-------+--------+
+                |Case B | 0.0 | 0.0     | 1.0 | 0.0    | 0.09  | 180   | 0.910 | 0.0  | 1.048 | 115.7 | 1.048 | -115.7 |
+                +-------+-----+---------+-----+--------+-------+-------+-------+------+-------+-------+-------+--------+
+                |Case C | 0.0 | 0.0     | 1.0 | 0.0    | 0.05  | 0     | 1.050 | 0.0  | 0.976 | 122.5 | 0.976 | -122.5 |
+                +-------+-----+---------+-----+--------+-------+-------+-------+------+-------+-------+-------+--------+
+                |Case D | 0.0 | 0.0     | 1.0 | 0.0    | 0.05  | 180   | 0.950 | 0.0  | 1.026 | 117.6 | 1.026 | -117.6 |
+                +-------+-----+---------+-----+--------+-------+-------+-------+------+-------+-------+-------+--------+
+    
+                For tests with imbalanced, three-phase voltages, the manufacturer shall state whether the EUT responds
+                to individual phase voltages, or the average of the three-phase effective (RMS) values or the positive
+                sequence of voltages. For EUTs that respond to individual phase voltages, the response of each
+                individual phase shall be evaluated. For EUTs that response to the average of the three-phase effective
+                (RMS) values mor the positive sequence of voltages, the total three-phase reactive and active power
+                shall be evaluated.
+                '''
 
-                result_summary.write('%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s \n' %
-                                     (P_V_passfail, ts.config_name(), power * 100., direction, daq.sc['V_TARGET'],
-                                      daq.sc['V_MEAS'], daq.sc['P_TARGET'], daq.sc['P_MEAS'], daq.sc['P_TARGET_MIN'],
-                                      daq.sc['P_TARGET_MAX'], dataset_filename))
+                '''
+                Step i) For multiphase units, step the AC test source voltage to Case A from Table 23
+                '''
 
-            '''
-            Step j) For multiphase units, step the AC test source voltage to VN.
-            '''
-            if grid is not None:
-                grid.voltage(v_nom)
-                daq.sc['event'] = 'Step J'
-                ts.sleep(4 * pf_settling_time)
-                daq.sc['event'] = 'T_settling_done'
+                if grid is not None:
+                    step = 'Step I'
+                    ts.log('Voltage step: setting Grid simulator to case A (IEEE 1547.1-Table 23)(%s)' % step)
+                    p_initial = get_p_initial(daq=daq, step=step)
+                    mag = [1.07 * v_nom, 0.967 * v_nom, 0.967 * v_nom]
+                    grid.config_asymmetric_phase_angles(mag= mag ,
+                                                        angle=[0., 123.6, -123.6])
+                    v_p_analysis = v_p_criteria(v_pairs=v_pairs[1],
+                                                v_target=np.mean(np.array(mag)),
+                                                a_v=MSA_V,
+                                                p_mra=MSA_P,
+                                                daq=daq,
+                                                tr=vw_response_time[vw_curve],
+                                                step=step,
+                                                p_initial=p_initial)
 
-                # Test result accuracy for CPF
-                daq.data_sample()
-                data = daq.data_capture_read()
+                    result_summary.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' %
+                                         (v_p_analysis['P_TR_PF'], v_p_analysis['TR_PF'], v_p_analysis['P_FINAL_PF'],
+                                          daq.sc['V_MEAS'], daq.sc['P_MEAS'], daq.sc['P_TARGET'], daq.sc['P_TARGET_MIN'],
+                                          daq.sc['P_TARGET_MAX'], step, dataset_filename))
 
-                # Test result accuracy requirements per IEEE1547-4.2 for Q(V)
-                P_V_passfail = p_v_criteria(v_pairs=v_pairs[vw_curve], a_v=a_v, p_mra=MSA_P, daq=daq,
-                                            imbalance_resp=imbalance_response)
 
-                # Test result accuracy requirements per IEEE1547-4.2 for Q(tr)
-                # TODO p_tr_criteria still needs to be implemented
+                '''
+                Step j) For multiphase units, step the AC test source voltage to VN.
+                '''
+                if grid is not None:
+                    step = 'Step J'
+                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
+                    p_initial = get_p_initial(daq=daq, step=step)
+                    grid.voltage(v_nom)
+                    v_p_analysis = v_p_criteria(v_pairs=v_pairs[1],
+                                                v_target=v_nom,
+                                                a_v=MSA_V,
+                                                p_mra=MSA_P,
+                                                daq=daq,
+                                                tr=vw_response_time[vw_curve],
+                                                step=step,
+                                                p_initial=p_initial)
+                    result_summary.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' %
+                                         (v_p_analysis['P_TR_PF'], v_p_analysis['TR_PF'], v_p_analysis['P_FINAL_PF'],
+                                          daq.sc['V_MEAS'], daq.sc['P_MEAS'], daq.sc['P_TARGET'], daq.sc['P_TARGET_MIN'],
+                                          daq.sc['P_TARGET_MAX'], step, dataset_filename))
 
-                ts.log('        Powers targ, min, max: %s, %s, %s' % (
-                    daq.sc['P_TARGET'], daq.sc['P_TARGET_MIN'], daq.sc['P_TARGET_MAX']))
+                '''
+                Step k) For multiphase units, step the AC test source voltage to Case B from Table 23
+                '''
 
-                result_summary.write('%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s \n' %
-                                     (P_V_passfail, ts.config_name(), power * 100., direction, daq.sc['V_TARGET'],
-                                      daq.sc['V_MEAS'], daq.sc['P_TARGET'], daq.sc['P_MEAS'],
-                                      daq.sc['P_TARGET_MIN'],
-                                      daq.sc['P_TARGET_MAX'], dataset_filename))
+                if grid is not None:
+                    step = 'Step K'
+                    ts.log('Voltage step: setting Grid simulator to case B (IEEE 1547.1-Table 23)(%s)' % step)
+                    p_initial = get_p_initial(daq=daq, step=step)
+                    mag = [0.910 * v_nom, 1.048 * v_nom, 1.048 * v_nom]
+                    grid.config_asymmetric_phase_angles(mag= mag,
+                                                        angle=[0., 115.7, -115.7])
+                    v_p_analysis = v_p_criteria(v_pairs=v_pairs[1],
+                                                v_target=np.mean(np.array(mag)),
+                                                a_v=MSA_V,
+                                                p_mra=MSA_P,
+                                                daq=daq,
+                                                tr=vw_response_time[vw_curve],
+                                                step=step,
+                                                p_initial=p_initial)
+                    result_summary.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' %
+                                         (v_p_analysis['P_TR_PF'], v_p_analysis['TR_PF'], v_p_analysis['P_FINAL_PF'],
+                                          daq.sc['V_MEAS'], daq.sc['P_MEAS'], daq.sc['P_TARGET'], daq.sc['P_TARGET_MIN'],
+                                          daq.sc['P_TARGET_MAX'], step, dataset_filename))
 
-            '''
-            Step k) For multiphase units, step the AC test source voltage to Case B from Table 23
-            '''
+                '''
+                Step l) For multiphase units, step the AC test source voltage to VN.
+                '''
+                if grid is not None:
+                    step = 'Step L'
+                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
+                    p_initial = get_p_initial(daq=daq, step=step)
+                    grid.voltage(v_nom)
+                    v_p_analysis = v_p_criteria(v_pairs=v_pairs[1],
+                                                v_target=v_nom,
+                                                a_v=MSA_V,
+                                                p_mra=MSA_P,
+                                                daq=daq,
+                                                tr=vw_response_time[vw_curve],
+                                                step=step,
+                                                p_initial=p_initial)
+                    result_summary.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' %
+                                         (v_p_analysis['P_TR_PF'], v_p_analysis['TR_PF'], v_p_analysis['P_FINAL_PF'],
+                                          daq.sc['V_MEAS'], daq.sc['P_MEAS'], daq.sc['P_TARGET'], daq.sc['P_TARGET_MIN'],
+                                          daq.sc['P_TARGET_MAX'], step, dataset_filename))
 
-            if grid is not None:
-                grid.config_asymmetric_phase_angles(mag=[0.910 * v_nom, 1.048 * v_nom, 1.048 * v_nom],
-                                                    angle=[0., 115.7, -115.7])
-                daq.sc['event'] = 'Case B'
-                ts.sleep(4 * pf_settling_time)
-                daq.sc['event'] = 'T_settling_done'
+                # result params
+                result_params = {
+                    'plot.title': 'title_name',
+                    'plot.x.title': 'Time (sec)',
+                    'plot.x.points': 'TIME',
+                    'plot.y.points': 'P_TARGET,P_MEAS',
+                    'plot.P_TARGET.point': 'True',
+                    'plot.y.title': 'Active Power (W)',
+                    'plot.y2.points': 'V_TARGET,V_MEAS',
+                    'plot.y.title': 'Voltage (V)',
+                    'plot.P_TARGET.min_error': 'P_TARGET_MIN',
+                    'plot.P_TARGET.max_error': 'P_TARGET_MAX',
+                }
 
-                # Test result accuracy for CPF
-                daq.data_sample()
-                data = daq.data_capture_read()
+                ts.log('Sampling complete')
+                dataset_filename = dataset_filename + ".csv"
+                daq.data_capture(False)
+                ds = daq.data_capture_dataset()
+                ts.log('Saving file: %s' % dataset_filename)
+                ds.to_csv(ts.result_file_path(dataset_filename))
+                result_params['plot.title'] = dataset_filename.split('.csv')[0]
+                ts.result_file(dataset_filename, params=result_params)
+                result = script.RESULT_COMPLETE
 
-                # Test result accuracy requirements per IEEE1547-4.2 for Q(V)
-                P_V_passfail = p_v_criteria(v_pairs=v_pairs[vw_curve], a_v=a_v, p_mra=MSA_P, daq=daq,
-                                            imbalance_resp=imbalance_response)
 
-                # Test result accuracy requirements per IEEE1547-4.2 for Q(tr)
-                # TODO p_tr_criteria still needs to be implemented
-
-                ts.log('        Powers targ, min, max: %s, %s, %s' % (
-                    daq.sc['P_TARGET'], daq.sc['P_TARGET_MIN'], daq.sc['P_TARGET_MAX']))
-
-                result_summary.write('%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s \n' %
-                                     (P_V_passfail, ts.config_name(), power * 100., direction, daq.sc['V_TARGET'],
-                                      daq.sc['V_MEAS'], daq.sc['P_TARGET'], daq.sc['P_MEAS'], daq.sc['P_TARGET_MIN'],
-                                      daq.sc['P_TARGET_MAX'], dataset_filename))
-
-            '''
-            Step l) For multiphase units, step the AC test source voltage to VN.
-            '''
-            if grid is not None:
-                grid.voltage(v_nom)
-                daq.sc['event'] = 'Step J'
-                ts.sleep(4 * pf_settling_time)
-                daq.sc['event'] = 'T_settling_done'
-
-                # Test result accuracy for CPF
-                daq.data_sample()
-                data = daq.data_capture_read()
-
-                # Test result accuracy requirements per IEEE1547-4.2 for Q(V)
-                P_V_passfail = p_v_criteria(v_pairs=v_pairs[vw_curve], a_v=a_v, p_mra=MSA_P, daq=daq,
-                                            imbalance_resp=imbalance_response)
-
-                # Test result accuracy requirements per IEEE1547-4.2 for Q(tr)
-                # TODO p_tr_criteria still needs to be implemented
-
-                ts.log('        Powers targ, min, max: %s, %s, %s' % (
-                    daq.sc['P_TARGET'], daq.sc['P_TARGET_MIN'], daq.sc['P_TARGET_MAX']))
-
-                result_summary.write('%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s \n' %
-                                     (P_V_passfail, ts.config_name(), power * 100., direction, daq.sc['V_TARGET'],
-                                      daq.sc['V_MEAS'], daq.sc['P_TARGET'], daq.sc['P_MEAS'],
-                                      daq.sc['P_TARGET_MIN'],
-                                      daq.sc['P_TARGET_MAX'], dataset_filename))
-
-        # create result workbook
-
-        ts.log('Sampling complete')
-        daq.data_capture(False)
-        ds = daq.data_capture_dataset()
-        ts.log('Saving file: %s' % dataset_filename)
-        ds.to_csv(ts.result_file_path(dataset_filename))
-        result_params['plot.title'] = os.path.splitext(dataset_filename)[0]
-        ts.result_file(dataset_filename, params=result_params)
-        result = script.RESULT_COMPLETE
-
-        return result
 
     except script.ScriptFail, e:
         reason = str(e)
@@ -835,9 +908,12 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves = 1):
         if chil is not None:
             chil.close()
         if eut is not None:
+            eut.volt_var(params={'Ena': False})
+            eut.volt_watt(params={'Ena': False})
             eut.close()
         if result_summary is not None:
             result_summary.close()
+    return result
 
 def test_run():
 
@@ -853,41 +929,33 @@ def test_run():
         irr = ts.param_value('vw.irr')
 
         """
-        Equipment Configuration
-        """
-
-        # initialize pv simulator
-        pv = pvsim.pvsim_init(ts)
-        p_rated = ts.param_value('eut.p_rated')
-        pv.power_set(p_rated)
-        pv.power_on()  # power on at p_rated
-
-        """
         Test Configuration
         """
         # list of active tests
-        vw_curves = collections.OrderedDict()
-        t_settling = [0,0,0,0]
-
+        vw_curves = []
+        imbalance_resp = []
+        vw_response_time = [0,0,0,0]
         if mode == 'Imbalanced grid':
-            if ts.param_value('vw.imbalance_resp_1') == 'Enable':
-                imbalance_resp.append('individual phase voltages')
-            if ts.param_value('vw.imbalance_resp_2') == 'Enable':
-                imbalance_resp.append('average of the three-phase effective (RMS)')
-            if ts.param_value('vw.imbalance_resp_3') == 'Enable':
-                imbalance_resp.append('the positive sequence of voltages')
+            if ts.param_value('eut.imbalance_resp_1') == 'Enabled':
+                imbalance_resp.append('INDIVIDUAL_PHASES_VOLTAGES')
+            if ts.param_value('eut.imbalance_resp_2') == 'Enabled':
+                imbalance_resp.append('AVG_3PH_RMS')
+            if ts.param_value('eut.imbalance_resp_3') == 'Enabled':
+                imbalance_resp.append('POSITIVE_SEQUENCE_VOLTAGES')
+            vw_curves.append(1)
+            vw_response_time[1] = float(ts.param_value('vw.test_1_tr'))
+
         else:
             irr = ts.param_value('vw.irr')
             if ts.param_value('vw.test_1') == 'Enabled':
-                vw_curves['characteristic 1'] = 1
-                t_settling[1]=ts.param_value('vw.test_1_t_r')
+                vw_curves.append(1)
+                vw_response_time[1] = float(ts.param_value('vw.test_1_tr'))
             if ts.param_value('vw.test_2') == 'Enabled':
-                vw_curves['characteristic 2'] = 2
-                t_settling[2]=ts.param_value('vw.test_2_t_r')
+                vw_curves.append(2)
+                vw_response_time[2]=float(ts.param_value('vw.test_2_tr'))
             if ts.param_value('vw.test_3') == 'Enabled':
-                vw_curves['characteristic 3'] = 3
-                t_settling[3]=ts.param_value('vw.test_3_t_r')
-
+                vw_curves.append(3)
+                vw_response_time[3]=float(ts.param_value('vw.test_3_tr'))
         #List of power level for tests
         if irr == '20%':
             pwr_lvls = [0.20]
@@ -898,12 +966,10 @@ def test_run():
         else:
             pwr_lvls = [1.00, 0.66, 0.20]
 
-        # ts.log_debug('power_lvl_dictionary:%s' % (pwr_lvls))
-        # ts.log_debug('%s' % (vw_curves))
         if mode == 'Imbalanced grid':
-            result = volt_watt_mode_imbalanced_grid(imbalance_resp=imbalance_resp)
+            result = volt_watt_mode_imbalanced_grid(imbalance_resp=imbalance_resp,vw_curves=vw_curves, vw_response_time=vw_response_time)
         else:
-            result = volt_watt_mode(vw_curves=vw_curves, t_settling=t_settling, pwr_lvls=pwr_lvls)
+            result = volt_watt_mode(vw_curves=vw_curves, vw_response_time=vw_response_time, pwr_lvls=pwr_lvls)
 
         return result
 
@@ -911,6 +977,12 @@ def test_run():
         reason = str(e)
         if reason:
             ts.log_error(reason)
+
+    finally:
+        # create result workbook
+        excelfile = ts.config_name() + '.xlsx'
+        rslt.result_workbook(excelfile, ts.results_dir(), ts.result_dir())
+        ts.result_file(excelfile)
 
     return result
 
@@ -939,7 +1011,7 @@ def run(test_script):
 
     sys.exit(rc)
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.0.0')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.1.1')
 
 # EUT VW parameters
 info.param_group('eut', label='VW EUT specified parameters',glob=True)
@@ -951,6 +1023,7 @@ info.param('eut.abs_enable', label='Can DER absorb active power?', default='No',
 info.param('eut.v_low', label='Min AC voltage range with function enabled (V)', default=108.)
 info.param('eut.v_high', label='Max AC voltage range with function enabled (V)', default=132.)
 info.param('eut.v_nom', label='Nominal AC voltage (V)', default=120.)
+info.param('eut.v_in_nom', label='V_in_nom: Nominal input voltage (Vdc)', default=400)
 info.param('eut.efficiency_20', label='CEC Efficiency list for power level = 20% at nominal VDC', default=97.0)
 info.param('eut.efficiency_66', label='CEC Efficiency list for power level = 66% at nominal VDC', default=97.0)
 info.param('eut.efficiency_100', label='CEC Efficiency list for power level = 100% at nominal VDC', default=96.9)
@@ -960,30 +1033,29 @@ info.param_group('vw', label='Test Parameters')
 info.param('vw.mode', label='Volt-Watt mode', default='Normal', values=['Normal', 'Imbalanced grid'])
 
 info.param('vw.test_1', label='Characteristic 1 curve', default='Enabled', values=['Disabled', 'Enabled'],\
-           active='vw.mode', active_value=['Normal'])
-info.param('vw.test_1_t_r', label='Settling time (t) for curve 1', default=10.0,\
+           active='vw.mode', active_value=['Normal', 'Imbalanced grid'])
+info.param('vw.test_1_tr', label='Response time (s) for curve 1', default=10.0,\
            active='vw.test_1', active_value=['Enabled'])
 
 info.param('vw.test_2', label='Characteristic 2 curve', default='Enabled', values=['Disabled', 'Enabled'],\
            active='vw.mode', active_value=['Normal'])
-info.param('vw.test_2_t_r', label='Settling time min (t) for curve 2', default=90.0,\
+info.param('vw.test_2_tr', label='Response time (s) for curve 2', default=90.0,\
            active='vw.test_2', active_value=['Enabled'])
 
 info.param('vw.test_3', label='Characteristic 3 curve', default='Enabled', values=['Disabled', 'Enabled'],\
            active='vw.mode', active_value=['Normal'])
-info.param('vw.test_3_t_r', label='Settling time max (t) for curve 3', default=0.5,\
+info.param('vw.test_3_tr', label='Response time (s) for curve 3', default=0.5,\
            active='vw.test_3', active_value=['Enabled'])
 
 info.param('vw.power_lvl', label='Power Levels', default='All', values=['100%', '66%', '20%', 'All'],\
            active='vw.mode', active_value=['Normal'])
 
-info.param('vw.imbalance_resp_1', label='EUT responds to: Individual phase voltages', \
+info.param('eut.imbalance_resp_1', label='EUT responds to: Individual phase voltages', \
+           default='Disabled', values=['Disabled', 'Enabled'], active='vw.mode', active_value=['Imbalanced grid'])
+info.param('eut.imbalance_resp_2', label='EUT responds to: Average of the three-phase effective (RMS)', \
            default='Enabled', values=['Disabled', 'Enabled'], active='vw.mode', active_value=['Imbalanced grid'])
-info.param('vw.imbalance_resp_2', label='EUT responds to: Average of the three-phase effective (RMS)', \
-           default='Enabled', values=['Disabled', 'Enabled'], active='vw.mode', active_value=['Imbalanced grid'])
-info.param('vw.imbalance_resp_3', label='EUT responds to: Positive sequence of voltages', \
-           default='Enabled', values=['Disabled', 'Enabled'], active='vw.mode', active_value=['Imbalanced grid'])
-#info.param('vw.n_iter', label='Number of iteration for each test', default=1)
+info.param('eut.imbalance_resp_3', label='EUT responds to: Positive sequence of voltages', \
+           default='Disabled', values=['Disabled', 'Enabled'], active='vw.mode', active_value=['Imbalanced grid'])
 
 
 # Other equipment parameters
