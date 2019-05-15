@@ -334,6 +334,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         MSA_P = 0.05 * s_rated
         MSA_V = 0.01 * v_nom
         a_v = 1.5 * MSA_V
+        p_mra = 1.5 * MSA_P
 
         '''
         a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
@@ -511,8 +512,8 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
                     grid.voltage(v_step)
                     v_p_analysis = v_p_criteria(v_pairs=v_pairs[vw_curve],
                                                 v_target=v_step,
-                                                a_v=MSA_V,
-                                                p_mra=MSA_P,
+                                                a_v=a_v,
+                                                p_mra=p_mra,
                                                 daq=daq,
                                                 tr=vw_response_time[vw_curve],
                                                 step=step_label,
@@ -614,12 +615,13 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
         phases = ts.param_value('eut.phases')
 
         # Pass/fail accuracies
-        pf_msa = ts.param_value('eut.pf_msa')
         # According to Table 3-Minimum requirements for manufacturers stated measured and calculated accuracy
         MSA_Q = 0.05 * s_rated
         MSA_P = 0.05 * s_rated
         MSA_V = 0.01 * v_nom
         a_v = 1.5 * MSA_V
+        p_mra = 1.5 * MSA_P
+
 
 
         '''
@@ -785,8 +787,8 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                                                         angle=[0., 123.6, -123.6])
                     v_p_analysis = v_p_criteria(v_pairs=v_pairs[1],
                                                 v_target=np.mean(np.array(mag)),
-                                                a_v=MSA_V,
-                                                p_mra=MSA_P,
+                                                a_v=a_v,
+                                                p_mra=p_mra,
                                                 daq=daq,
                                                 tr=vw_response_time[vw_curve],
                                                 step=step,
@@ -808,8 +810,8 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                     grid.voltage(v_nom)
                     v_p_analysis = v_p_criteria(v_pairs=v_pairs[1],
                                                 v_target=v_nom,
-                                                a_v=MSA_V,
-                                                p_mra=MSA_P,
+                                                a_v=a_v,
+                                                p_mra=p_mra,
                                                 daq=daq,
                                                 tr=vw_response_time[vw_curve],
                                                 step=step,
@@ -832,8 +834,8 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                                                         angle=[0., 115.7, -115.7])
                     v_p_analysis = v_p_criteria(v_pairs=v_pairs[1],
                                                 v_target=np.mean(np.array(mag)),
-                                                a_v=MSA_V,
-                                                p_mra=MSA_P,
+                                                a_v=a_v,
+                                                p_mra=p_mra,
                                                 daq=daq,
                                                 tr=vw_response_time[vw_curve],
                                                 step=step,
@@ -853,8 +855,8 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                     grid.voltage(v_nom)
                     v_p_analysis = v_p_criteria(v_pairs=v_pairs[1],
                                                 v_target=v_nom,
-                                                a_v=MSA_V,
-                                                p_mra=MSA_P,
+                                                a_v=a_v,
+                                                p_mra=p_mra,
                                                 daq=daq,
                                                 tr=vw_response_time[vw_curve],
                                                 step=step,
