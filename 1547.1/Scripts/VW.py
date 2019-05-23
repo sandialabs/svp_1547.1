@@ -639,7 +639,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
         (RMS) values mor the positive sequence of voltages, the total three-phase reactive and active power
         shall be evaluated.
         '''
-        imbalance_fix = ts.param_value('vw.imablance_fix')
+        imbalance_fix = ts.param_value('vw.imbalance_fix')
         mag = {}
         ang = {}
 
@@ -653,10 +653,10 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
         else:
             # Case A
             mag['case_a'] = [1.08 * v_nom, 0.91 * v_nom, 0.91 * v_nom]
-            ang['case_a'] = [0., -126.59, 126.59]
+            ang['case_a'] = [0., 126.59, -126.59]
             # Case B
             mag['case_b'] = [0.9 * v_nom, 1.08 * v_nom, 1.08 * v_nom]
-            ang['case_b'] = [0., -114.5, 114.5]
+            ang['case_b'] = [0., 114.5, -114.5]
 
         '''
         a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
@@ -779,9 +779,9 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                 ts.log('Starting imbalance test with VW mode at %s' % (imbalance_response))
 
                 if imbalance_fix == "Yes":
-                    dataset_filename = 'VW_imbalanced_%s_FIX' % (imbalance_response)
+                    dataset_filename = 'VW_IMB_%s_FIX' % (imbalance_response)
                 else:
-                    dataset_filename = 'VW_imbalanced_%s' % (imbalance_response)
+                    dataset_filename = 'VW_IMB_%s' % (imbalance_response)
                 ts.log('------------{}------------'.format(dataset_filename))
                 # Start the data acquisition systems
                 daq.data_capture(True)
@@ -797,7 +797,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                     grid.config_asymmetric_phase_angles(mag=mag['case_a'],
                                                         angle=ang['case_a'])
                     v_p_analysis = v_p_criteria(v_pairs=v_pairs[1],
-                                                v_target=np.mean(np.array(mag)),
+                                                v_target=np.mean(np.array(mag['case_a'])),
                                                 a_v=a_v,
                                                 p_mra=p_mra,
                                                 daq=daq,
@@ -843,7 +843,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                     grid.config_asymmetric_phase_angles(mag=mag['case_b'],
                                                         angle=ang['case_b'])
                     v_p_analysis = v_p_criteria(v_pairs=v_pairs[1],
-                                                v_target=np.mean(np.array(mag)),
+                                                v_target=np.mean(np.array(mag['case_b'])),
                                                 a_v=a_v,
                                                 p_mra=p_mra,
                                                 daq=daq,
@@ -1042,7 +1042,7 @@ info.param('vw.test_3_tr', label='Response time (s) for curve 3', default=0.5,\
            active='vw.test_3', active_value=['Enabled'])
 info.param('vw.power_lvl', label='Power Levels', default='All', values=['100%', '66%', '20%', 'All'],\
            active='vw.mode', active_value=['Normal'])
-info.param('vw.imbalace_fix', label='Use minimum fix requirements from table 24 ?', \
+info.param('vw.imbalance_fix', label='Use minimum fix requirements from table 24 ?', \
            default='No', values=['Yes', 'No'], active='vw.mode', active_value=['Imbalanced grid'])
 
 # EUT general parameters

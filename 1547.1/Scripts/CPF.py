@@ -304,7 +304,7 @@ def test_run():
         pf_msa = ts.param_value('eut.pf_msa')
         
         # Imbalance configuration
-        imbalance_fix = ts.param_value('cpf.imablance_fix')
+        imbalance_fix = ts.param_value('cpf.imbalance_fix')
         mag = {}
         ang = {}
         
@@ -318,10 +318,10 @@ def test_run():
         else:
             # Case A
             mag['case_a'] = [1.08 * v_nom, 0.91 * v_nom, 0.91 * v_nom]
-            ang['case_a'] = [0., -126.59, 126.59]
+            ang['case_a'] = [0., 126.59, -126.59]
             # Case B
             mag['case_b'] = [0.9 * v_nom, 1.08 * v_nom, 1.08 * v_nom]
-            ang['case_b'] = [0., -114.5, 114.5]
+            ang['case_b'] = [0., 114.5, -114.5]
         
             
 
@@ -730,7 +730,7 @@ info.param('cpf.pf_response_time', label='PF Response Time (secs)', default=1.0)
 info.param('cpf.v_in_nom', label='Test V_in_nom', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('cpf.v_in_min', label='Test V_in_min', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('cpf.v_in_max', label='Test V_in_max', default='Enabled', values=['Disabled', 'Enabled'])
-info.param('cpf.imbalace_fix', label='Use minimum fix requirements from table 24 ?', \
+info.param('cpf.imbalance_fix', label='Use minimum fix requirements from table 24 ?', \
            default='No', values=['Yes', 'No'])
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)

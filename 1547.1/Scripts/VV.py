@@ -706,7 +706,7 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
         (RMS) values mor the positive sequence of voltages, the total three-phase reactive and active power
         shall be evaluated.
         '''
-        imbalance_fix = ts.param_value('vv.imablance_fix')
+        imbalance_fix = ts.param_value('vv.imbalance_fix')
         mag = {}
         ang = {}
 
@@ -720,10 +720,10 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
         else:
             # Case A
             mag['case_a'] = [1.08 * v_nom, 0.91 * v_nom, 0.91 * v_nom]
-            ang['case_a'] = [0., -126.59, 126.59]
+            ang['case_a'] = [0., 126.59, -126.59]
             # Case B
             mag['case_b'] = [0.9 * v_nom, 1.08 * v_nom, 1.08 * v_nom]
-            ang['case_b'] = [0., -114.5, 114.5]
+            ang['case_b'] = [0., 114.5, -114.5]
 
         '''
         a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
@@ -846,9 +846,9 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
 
 
                 if imbalance_fix == "Yes":
-                    dataset_filename = 'VW_imbalanced_%s_FIX' % (imbalance_response)
+                    dataset_filename = 'VW_IMB_%s_FIX' % (imbalance_response)
                 else:
-                    dataset_filename = 'VW_imbalanced_%s' % (imbalance_response)
+                    dataset_filename = 'VW_IMB_%s' % (imbalance_response)
                 ts.log('------------{}------------'.format(dataset_filename))
                 # Start the data acquisition systems
                 daq.data_capture(True)
@@ -861,11 +861,10 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                     ts.log('Voltage step: setting Grid simulator to case A (IEEE 1547.1-Table 24)')
                     step = 'Step H'
                     q_initial = get_q_initial(daq=daq, step=step)
-                    mag = [1.07 * v_nom, 0.967 * v_nom, 0.967 * v_nom]
                     grid.config_asymmetric_phase_angles(mag=mag['case_a'],
                                                         angle=ang['case_a'])
                     q_v_analysis = q_v_criteria(v_pairs=v_pairs[1],
-                                                v_target=np.mean(np.array(mag)),
+                                                v_target=np.mean(np.array(mag['case_a'])),
                                                 MSA_V=MSA_V,
                                                 MSA_Q=MSA_Q,
                                                 daq=daq,
@@ -921,11 +920,10 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                     ts.log('Voltage step: setting Grid simulator to case B (IEEE 1547.1-Table 24)')
                     step = 'Step I'
                     q_initial = get_q_initial(daq=daq, step=step)
-                    mag = [0.910 * v_nom, 1.048 * v_nom, 1.048 * v_nom]
                     grid.config_asymmetric_phase_angles(mag=mag['case_b'],
                                                         angle=ang['case_b'])
                     q_v_analysis = q_v_criteria(v_pairs=v_pairs[1],
-                                                v_target=np.mean(np.array(mag)),
+                                                v_target=np.mean(np.array(mag['case_b'])),
                                                 MSA_V=MSA_V,
                                                 MSA_Q=MSA_Q,
                                                 daq=daq,
@@ -1170,7 +1168,7 @@ info.param('vv.irr', label='Power Levels iteration', default='All', values=['100
            active='vv.mode', active_value=['Normal'])
 info.param('vv.vref', label='Voltage reference iteration', default='All', values=['100%', '95%', '105%', 'All'],
            active='vv.mode', active_value=['Normal'])
-info.param('vv.imbalace_fix', label='Use minimum fix requirements from table 24 ?', \
+info.param('vv.imbalance_fix', label='Use minimum fix requirements from table 24 ?', \
            default='No', values=['Yes', 'No'], active='vv.mode', active_value=['Imbalanced grid'])
 
 # EUT general parameters
