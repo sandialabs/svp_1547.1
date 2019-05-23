@@ -288,8 +288,8 @@ def test_run():
         v_max_in_enabled = ts.param_value('cpf.v_in_max')
 
         v_nom_in = ts.param_value('eut.v_in_nom')
-        v_min_in = ts.param_value('eut.v_in_min')
-        v_max_in = ts.param_value('eut.v_in_max')
+        v_min_in = ts.param_value('eut_cpf.v_in_min')
+        v_max_in = ts.param_value('eut_cpf.v_in_max')
 
         # AC voltages
         v_nom = ts.param_value('eut.v_nom')
@@ -298,11 +298,33 @@ def test_run():
         p_min = ts.param_value('eut.p_min')
         p_min_prime = ts.param_value('eut.p_min_prime')
         phases = ts.param_value('eut.phases')
-        pf_response_time = ts.param_value('eut.pf_response_time')
-        #imbalance_resp = ts.param_value('eut.imbalance_resp')
+        pf_response_time = ts.param_value('cpf.pf_response_time')
 
         # Pass/fail accuracies
         pf_msa = ts.param_value('eut.pf_msa')
+        
+        # Imbalance configuration
+        imbalance_fix = ts.param_value('cpf.imablance_fix')
+        mag = {}
+        ang = {}
+        
+        if imbalance_fix == "Yes" :
+            # Case A
+            mag['case_a'] = [1.07 * v_nom, 0.91 * v_nom, 0.91 * v_nom]
+            ang['case_a'] = [0., 120, -120]
+            # Case B
+            mag['case_b'] = [0.91 * v_nom, 1.07 * v_nom, 1.07 * v_nom]
+            ang['case_b'] = [0., 120.0, -120.0]
+        else:
+            # Case A
+            mag['case_a'] = [1.08 * v_nom, 0.91 * v_nom, 0.91 * v_nom]
+            ang['case_a'] = [0., -126.59, 126.59]
+            # Case B
+            mag['case_b'] = [0.9 * v_nom, 1.08 * v_nom, 1.08 * v_nom]
+            ang['case_b'] = [0., -114.5, 114.5]
+        
+            
+
 
         #According to Table 3-Minimum requirements for manufacturers stated measured and calculated accuracy
         MSA_Q = 0.05 * s_rated
@@ -420,12 +442,15 @@ def test_run():
             Only the user-selected PF setting will be tested.
             """
             for pf_test_name, pf_target in pf_targets.iteritems():
-                # Start acquisition
-                daq.data_capture(True)
-                # Configure the data acquisition system
+
                 ts.log('Starting data capture for pf = %s' % pf_target)
-                dataset_filename = ('{0}_{1}'.format(v_in_label.upper(), pf_test_name.upper()))
+                if imbalance_fix == "Yes":
+                    dataset_filename = ('{0}_{1}_FIX'.format(v_in_label.upper(), pf_test_name.upper()))
+                else:
+                    dataset_filename = ('{0}_{1}'.format(v_in_label.upper(), pf_test_name.upper()))
                 ts.log('------------{}------------'.format(dataset_filename))
+                # Start the data acquisition systems
+                daq.data_capture(True)
                 daq.sc['PF_TARGET'] = pf_target
 
 
@@ -453,8 +478,8 @@ def test_run():
                 g) Step the EUT's active power to Pmin.
                 """
                 if pv is not None:
-                    ts.log('Power step: setting PV simulator power to %s' % p_min)
                     step = 'Step G'
+                    ts.log('Power step: setting PV simulator power to %s (%s)' % (p_min,step))
                     q_initial = get_q_initial(daq=daq,step=step)
                     pv.power_set(p_min)
                     q_p_analysis = q_p_criteria(pf=pf_target, MSA_P=MSA_P, MSA_Q=MSA_Q, daq=daq, tr=pf_response_time, step=step, q_initial=q_initial)
@@ -466,8 +491,8 @@ def test_run():
                 h) Step the EUT's available active power to Prated.
                 """
                 if pv is not None:
-                    ts.log('Power step: setting PV simulator power to %s' % p_rated)
                     step = 'Step H'
+                    ts.log('Power step: setting PV simulator power to %s (%s)' % (p_rated,step))
                     q_initial = get_q_initial(daq=daq,step=step)
                     pv.power_set(p_rated)
                     q_p_analysis = q_p_criteria(pf=pf_target, MSA_P=MSA_P, MSA_Q=MSA_Q, daq=daq, tr=pf_response_time,
@@ -480,8 +505,8 @@ def test_run():
                 if grid is not None:
 
                     #   i) Step the AC test source voltage to (VL + av)
-                    ts.log('Voltage step: setting Grid simulator voltage to %s' % (v_min + a_v))
                     step = 'Step I'
+                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % ((v_min + a_v),step))
                     q_initial = get_q_initial(daq=daq,step=step)
                     grid.voltage(v_min + a_v)
                     q_p_analysis = q_p_criteria(pf=pf_target, MSA_P=MSA_P, MSA_Q=MSA_Q, daq=daq, tr=pf_response_time,
@@ -492,8 +517,8 @@ def test_run():
                                           daq.sc['Q_TARGET_MIN'], daq.sc['Q_TARGET_MAX'], step, dataset_filename))
 
                     #   j) Step the AC test source voltage to (VH - av)
-                    ts.log('Voltage step: setting Grid simulator voltage to %s' % (v_max - a_v))
                     step = 'Step J'
+                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % ((v_max - a_v),step))
                     q_initial = get_q_initial(daq=daq, step=step)
                     grid.voltage(v_max - a_v)
                     q_p_analysis = q_p_criteria(pf=pf_target, MSA_P=MSA_P, MSA_Q=MSA_Q, daq=daq, tr=pf_response_time,
@@ -505,8 +530,8 @@ def test_run():
 
                     #   k) Step the AC test source voltage to (VL + av)
                     #   STD_CHANGE : We think at CanmetENERGY that this should be v_nom and not (v_min + a_v) before doing imbalance testing
-                    ts.log('Voltage step: setting Grid simulator voltage to %s' % (v_nom))
                     step = 'Step K'
+                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
                     q_initial = get_q_initial(daq=daq, step=step)
                     grid.voltage(v_nom)
                     q_p_analysis = q_p_criteria(pf=pf_target, MSA_P=MSA_P, MSA_Q=MSA_Q, daq=daq, tr=pf_response_time,
@@ -516,38 +541,16 @@ def test_run():
                                           daq.sc['V_MEAS'], daq.sc['P_MEAS'], q_p_analysis['Q_FINAL'],
                                           daq.sc['Q_TARGET_MIN'], daq.sc['Q_TARGET_MAX'], step, dataset_filename))
 
-                """
-                l) For multiphase units, step the AC test source voltage to Case A from Table 23.
-
-                                            Table 23 - Imbalanced Voltage Test Cases 12
-                        +----------------------------------------------+-----------------------------------------------+
-                        | Symmetrical Components                       | Phasor Components                             |
-                        +----------------------------------------------+-----------------------------------------------+
-                        | Zero Sequence | Positive Seq | Negative Seq  | Phase A      | Phase B       | Phase C        |
-                        | Mag | Angle   | Mag | Angle  | Mag   | Angle | Mag   | Angle| Mag   | Angle | Mag   | Angle  |
-                +-------+-----+---------+-----+--------+-------+-------+-------+------+-------+-------+-------+--------+
-                |Case A | 0.0 | 0.0     | 1.0 | 0.0    | 0.07  | 0     | 1.070 | 0.0  | 0.967 | 123.6 | 0.967 | -123.6 |
-                +-------+-----+---------+-----+--------+-------+-------+-------+------+-------+-------+-------+--------+
-                |Case B | 0.0 | 0.0     | 1.0 | 0.0    | 0.09  | 180   | 0.910 | 0.0  | 1.048 | 115.7 | 1.048 | -115.7 |
-                +-------+-----+---------+-----+--------+-------+-------+-------+------+-------+-------+-------+--------+
-                |Case C | 0.0 | 0.0     | 1.0 | 0.0    | 0.05  | 0     | 1.050 | 0.0  | 0.976 | 122.5 | 0.976 | -122.5 |
-                +-------+-----+---------+-----+--------+-------+-------+-------+------+-------+-------+-------+--------+
-                |Case D | 0.0 | 0.0     | 1.0 | 0.0    | 0.05  | 180   | 0.950 | 0.0  | 1.026 | 117.6 | 1.026 | -117.6 |
-                +-------+-----+---------+-----+--------+-------+-------+-------+------+-------+-------+-------+--------+
-
-                For tests with imbalanced, three-phase voltages, the manufacturer shall state whether the EUT responds
-                to individual phase voltages, or the average of the three-phase effective (RMS) values or the positive
-                sequence of voltages. For EUTs that respond to individual phase voltages, the response of each
-                individual phase shall be evaluated. For EUTs that response to the average of the three-phase effective
-                (RMS) values mor the positive sequence of voltages, the total three-phase reactive and active power
-                shall be evaluated.
-                """
+                '''
+                l) For multiphase units, step the AC test source voltage to Case A from Table 24.
+                '''
+                
                 if grid is not None:
-                    ts.log('Voltage step: setting Grid simulator to case A (IEEE 1547.1-Table 23)')
                     step = 'Step L'
+                    ts.log('Voltage step: setting Grid simulator to case A (IEEE 1547.1-Table 24)(%s)' % step)
                     q_initial = get_q_initial(daq=daq, step=step)
-                    grid.config_asymmetric_phase_angles(mag=[1.07*v_nom, 0.967*v_nom, 0.967*v_nom],
-                                                        angle=[0., 123.6, -123.6])
+                    grid.config_asymmetric_phase_angles(mag=mag['case_a'],
+                                                        angle=ang['case_a'])
                     q_p_analysis = q_p_criteria(pf=pf_target, MSA_P=MSA_P, MSA_Q=MSA_Q, daq=daq, tr=pf_response_time,
                                                 step=step, q_initial=q_initial)
                     result_summary.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' %
@@ -562,8 +565,8 @@ def test_run():
                 """
 
                 if grid is not None:
-                    ts.log('Voltage step: setting Grid simulator voltage to %s' % v_nom)
                     step = 'Step M'
+                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
                     q_initial = get_q_initial(daq=daq,step=step)
                     grid.voltage(v_nom)
                     q_p_analysis = q_p_criteria(pf=pf_target, MSA_P=MSA_P, MSA_Q=MSA_Q, daq=daq, tr=pf_response_time,
@@ -574,14 +577,14 @@ def test_run():
                                           daq.sc['Q_TARGET_MIN'], daq.sc['Q_TARGET_MAX'], step, dataset_filename))
 
                 """
-                n) For multiphase units, step the AC test source voltage to Case B from Table 23.
+                n) For multiphase units, step the AC test source voltage to Case B from Table 24.
                 """
                 if grid is not None:
-                    ts.log('Voltage step: setting Grid simulator to case B (IEEE 1547.1-Table 23)')
                     step = 'Step N'
+                    ts.log('Voltage step: setting Grid simulator to case B (IEEE 1547.1-Table 24)(%s)' % step)
                     q_initial = get_q_initial(daq=daq,step=step)
-                    grid.config_asymmetric_phase_angles(mag=[0.91*v_nom, 1.048*v_nom, 1.048*v_nom],
-                                                        angle=[0., 115.7, -115.7])
+                    grid.config_asymmetric_phase_angles(mag=mag['case_b'],
+                                                        angle=ang['case_b'])
                     q_p_analysis = q_p_criteria(pf=pf_target, MSA_P=MSA_P, MSA_Q=MSA_Q, daq=daq, tr=pf_response_time,
                                                 step=step, q_initial=q_initial)
                     result_summary.write('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' %
@@ -593,8 +596,8 @@ def test_run():
                 o) For multiphase units, step the AC test source voltage to VN
                 """
                 if grid is not None:
-                    ts.log('Voltage step: setting Grid simulator voltage to %s' % v_nom)
                     step = 'Step O'
+                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
                     q_initial = get_q_initial(daq=daq, step=step)
                     grid.voltage(v_nom)
                     q_p_analysis = q_p_criteria(pf=pf_target, MSA_P=MSA_P, MSA_Q=MSA_Q, daq=daq, tr=pf_response_time,
@@ -707,84 +710,60 @@ def run(test_script):
 
     sys.exit(rc)
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.1.2')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.1.3')
 
-# Power factor parameters
-# PF - the commanded power factor
-# PFmin,inj - minimum injected power factor, 0.90 for both Category A and B equipment
-# PFmin,ab - minimum absorbed power factor, 0.97 for Catergory A, 0.90 for Catergory B
-# PFmid,inj - a power factor setting chosen to be less than 1 and greater than PFmin,inj
-# PFmid,ab - a power factor setting chosen to be less than 1 and greater than PFmin,ab
-
+# CPF test parameters
 info.param_group('cpf', label='Test Parameters')
 info.param('cpf.pf_min_inj', label='PFmin,inj activation', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('cpf.pf_min_inj_value', label='PFmin,inj (Overexcited) (negative value, for SunSpec sign convention)',
            default=-0.90, active='cpf.pf_min_inj', active_value=['Enabled'])
-
 info.param('cpf.pf_mid_inj', label='PFmid,inj activation', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('cpf.pf_mid_inj_value', label='PFmid,inj value (-1.00 < PFmid,inj < PFmin,inj):', default=-0.95,
            active='cpf.pf_mid_inj', active_value=['Enabled'])
-
 info.param('cpf.pf_min_ab', label='PFmin,ab activation', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('cpf.pf_min_ab_value', label='PFmin,ab (Underexcited)', default=0.90,
            active='cpf.pf_min_ab', active_value=['Enabled'])
-
 info.param('cpf.pf_mid_ab', label='PFmid,ab', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('cpf.pf_mid_ab_value', label='PFmid,ab value (PFmin,ab < PFmid,ab < 1.00):', default=0.95,
            active='cpf.pf_mid_ab', active_value=['Enabled'])
+info.param('cpf.pf_response_time', label='PF Response Time (secs)', default=1.0)
 info.param('cpf.v_in_nom', label='Test V_in_nom', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('cpf.v_in_min', label='Test V_in_min', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('cpf.v_in_max', label='Test V_in_max', default='Enabled', values=['Disabled', 'Enabled'])
-
-# EUT parameters
-# Prated - output power rating (W)
-# P'rated - for EUT's that can sink power, output power rating while sinking power (W)
-# Srated - apparent power rating (VA)
-# Vin_nom - for an EUT with an electrical input, nominal input voltage (V)
-# Vin_min - for an EUT with an electrical input, minimum input voltage (V)
-# Vin_max - for an EUT with an electrical input, maximum input voltage (V)
-# VN - nominal output voltage (V)
-# VL - minimum output voltage in the continous operating region (V)
-# VH - maximum output voltage in the continous operating region (V)
-# Pmin - minimum active power (W)
-# P'min - for EUT's that can sink power, minimum active power while sinking power(W)
-# Qmax,inj - maximum absorbed reactive power (VAr)
-# Qmax,inj - minimum absorbed reactive power (VAr)
-
-info.param_group('eut', label='CPF - EUT Parameters', glob=True)
-info.param('eut.cat', label='DER Category (Distribution System Stability)', default='Category III (inverter-based)',
-           values=['Category I (synchronous generator)', 'Category II (fuel cell)', 'Category III (inverter-based)'])
-
-info.param('eut.cat2', label='DER Category (Bulk System Stability)', default='Category B',
-           values=['Category A', 'Category B'],
-           active='eut.cat', active_value=['Category II (fuel cell)'])
-
-info.param('eut.sink_power', label='Can the EUT sink power, e.g., is it a battery system', default='No',
-           values=['No', 'Yes'])
-
-info.param('eut.p_rated', label='Prated: Output power rating (W)', default=3000.0)
-info.param('eut.p_rated_prime', label='P\'rated: Output power rating while sinking power (W) (negative)',
-           default=-3000.0, active='eut.sink_power', active_value=['Yes'])
-
-info.param('eut.s_rated', label='Srated: apparent power rating (VA)', default=3000.0)
-
+info.param('cpf.imbalace_fix', label='Use minimum fix requirements from table 24 ?', \
+           default='No', values=['Yes', 'No'])
+# EUT general parameters
+info.param_group('eut', label='EUT Parameters', glob=True)
+info.param('eut.phases', label='Phases', default='Single Phase', values=['Single phase', 'Split phase', 'Three phase'])
+info.param('eut.s_rated', label='Apparent power rating (VA)', default=10000.0)
+info.param('eut.p_rated', label='Output power rating (W)', default=8000.0)
+info.param('eut.p_min', label='Minimum Power Rating(W)', default=1000.)
+info.param('eut.var_rated', label='Output var rating (vars)', default=2000.0)
+info.param('eut.v_nom', label='Nominal AC voltage (V)', default=120.0, desc='Nominal voltage for the AC simulator.')
+info.param('eut.v_low', label='Minimum AC voltage (V)', default=116.0)
+info.param('eut.v_high', label='Maximum AC voltage (V)', default=132.0)
 info.param('eut.v_in_nom', label='V_in_nom: Nominal input voltage (Vdc)', default=400)
-info.param('eut.v_in_min', label='V_in_min: Nominal input voltage (Vdc)', default=200)
-info.param('eut.v_in_max', label='V_in_max: Nominal input voltage (Vdc)', default=600)
-info.param('eut.v_nom', label='V_nom: Nominal voltage output (V)', default=240.0)
-info.param('eut.v_low', label='Minimum output voltage in the continous operating region (V)', default=0.88*240)
-info.param('eut.v_high', label='Maximum output voltage in the continous operating region (V)', default=1.1*240)
+info.param('eut.imbalance_resp_1', label='EUT response to the individual phase voltages', default='Disabled',
+           values=['Disabled', 'Enabled'])
+info.param('eut.imbalance_resp_2', label='EUT response to the average of the three-phase effective (RMS)', default='Enabled',
+           values=['Disabled', 'Enabled'])
+info.param('eut.imbalance_resp_3', label='EUT response to the positive sequence of voltages', default='Disabled',
+           values=['Disabled', 'Enabled'])
 
-info.param('eut.p_min', label='Pmin: Minimum active power (W)', default=0.2*3000.0)
-info.param('eut.p_min_prime', label='P\'min: minimum active power while sinking power(W) (negative)',
-           default=-0.2*3000.0, active='eut.sink_power', active_value=['Yes'])
-#info.param('eut.imbalance_resp', label='Imbalance response. EUT responds to:', default='individual phase voltages',
-#           values=['individual phase voltages', 'average of the three-phase effective (RMS)',
-#                   'the positive sequence of voltages'])
 
-info.param('eut.phases', label='Phases', values=['Single phase', 'Split phase', 'Three phase'], default='Three phase')
+# EUT CPF parameters
+info.param_group('eut_cpf', label='CPF - EUT Parameters', glob=True)
+info.param('eut_cpf.v_in_min', label='V_in_min: Nominal input voltage (Vdc)', default=300)
+info.param('eut_cpf.v_in_max', label='V_in_max: Nominal input voltage (Vdc)', default=500)
+info.param('eut_cpf.sink_power', label='Can the EUT sink power, e.g., is it a battery system', default='No',
+           values=['No', 'Yes'])
+info.param('eut_cpf.p_rated_prime', label='P\'rated: Output power rating while sinking power (W) (negative)',
+           default=-3000.0, active='eut_cpf.sink_power', active_value=['Yes'])
+info.param('eut_cpf.p_min_prime', label='P\'min: minimum active power while sinking power(W) (negative)',
+           default=-0.2*3000.0, active='eut_cpf.sink_power', active_value=['Yes'])
 
-info.param('eut.pf_response_time', label='PF Response Time (secs)', default=1.0)
+# Add the SIRFN logo
+info.logo('sirfn.png')
 
 der.params(info)
 das.params(info)
