@@ -292,6 +292,8 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
     result = script.RESULT_FAIL
     daq = None
     data = None
+    p_rated = None
+    v_nom = None
     grid = None
     pv = None
     eut = None
@@ -322,6 +324,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
 
         # Pass/fail accuracies
         pf_msa = ts.param_value('eut.pf_msa')
+
         # According to Table 3-Minimum requirements for manufacturers stated measured and calculated accuracy
         MSA_Q = 0.05 * s_rated
         MSA_P = 0.05 * s_rated
@@ -336,7 +339,6 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         chil = hil.hil_init(ts)
         if chil is not None:
             chil.config()
-
 
         # pv simulator is initialized with test parameters and enabled
         pv = pvsim.pvsim_init(ts)
@@ -365,13 +367,39 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
             eut.config()
             ts.log_debug(eut.measurements())
             ts.log_debug(
-                'L/HVRT and trip parameters set to the widest range : v_min:{0} V, v_max:{1} V'.format(v_min, v_max))
-            eut.vrt_stay_connected_high(
-                params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000, 'V1': v_max, 'Tms2': 0.16, 'V2': v_max})
-            eut.vrt_stay_connected_low(
-                params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000, 'V1': v_min, 'Tms2': 0.16, 'V2': v_min})
+                'L/HVRT and trip parameters set to the widest range : v_min: {0} V, v_max: {1} V'.format(v_min, v_max))
+            try:
+                eut.vrt_stay_connected_high(
+                    params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000, 'V1': v_max, 'Tms2': 0.16, 'V2': v_max})
+            except Exception, e:
+                ts.log_error('Could not set VRT Stay Connected High curve. %s' % e)
+            try:
+                eut.vrt_stay_connected_low(
+                    params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000, 'V1': v_min, 'Tms2': 0.16, 'V2': v_min})
+            except Exception, e:
+                ts.log_error('Could not set VRT Stay Connected Low curve. %s' % e)
         else:
-            ts.log_debug('Set L/HVRT and trip parameters to the widest range of adjustability possible.')
+            ts.log_debug('Set L/HVRT and trip parameters set to the widest range of adjustability possible.')
+
+        # Special considerations for CHIL ASGC/Typhoon startup #
+        if chil is not None:
+            inv_power = eut.measurements().get('W')
+            timeout = 120.
+            if inv_power <= p_rated * 0.85:
+                pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                ts.sleep(3)
+                eut.connect(params={'Conn': True})
+            while inv_power <= p_rated * 0.85 and timeout >= 0:
+                ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                       (inv_power, timeout))
+                ts.sleep(1)
+                timeout -= 1
+                inv_power = eut.measurements().get('W')
+                if timeout == 0:
+                    result = script.RESULT_FAIL
+                    raise der.DERError('Inverter did not start.')
+            ts.log('Waiting for EUT to ramp up')
+            ts.sleep(8)
 
         '''
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
@@ -482,10 +510,10 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
             # This is to make sure the volatge step don't exceed the
             # EUT boundaries and to round the number to 2 decimals
             for step, voltage in v_steps_dict.iteritems():
-                v_steps_dict.update({step : np.around(voltage,2)})
+                v_steps_dict.update({step: np.around(voltage, 2)})
                 if voltage > v_max:
                     ts.log("{0} voltage step (value : {1}) changed to VH (v_max)".format(step, voltage))
-                    v_steps_dict.update({step : v_max})
+                    v_steps_dict.update({step: v_max})
                 elif voltage < v_min:
                     ts.log("{0} voltage step (value : {1}) changed to VL (v_min)".format(step, voltage))
                     v_steps_dict.update({step: v_min})
@@ -521,8 +549,6 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
                                          (v_p_analysis['P_TR_PF'], v_p_analysis['TR_PF'],v_p_analysis['P_FINAL_PF'],
                                           daq.sc['V_MEAS'], daq.sc['P_MEAS'],daq.sc['P_TARGET'],daq.sc['P_TARGET_MIN'],
                                           daq.sc['P_TARGET_MAX'],step_label,dataset_filename))
-
-
 
                 # result params
                 result_params = {
@@ -586,8 +612,6 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
     result_summary = None
 
     try:
-
-
         cat = ts.param_value('eut.cat')
         cat2 = ts.param_value('eut.cat2')
         p_rated = ts.param_value('eut.p_rated')
@@ -607,7 +631,6 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
         absorb_enable = ts.param_value('eut_vw.sink_power')
         p_rated_prime = ts.param_value('eut_vw.p_rated_prime')
         p_min_prime = ts.param_value('eut_vw.p_min_prime')
-
 
         # Pass/fail accuracies
         # According to Table 3-Minimum requirements for manufacturers stated measured and calculated accuracy
@@ -694,6 +717,44 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
         b) Set all voltage trip parameters to the widest range of adjustability. Disable all reactive/active power
         control functions.
         '''
+        eut = der.der_init(ts)
+        if eut is not None:
+            eut.config()
+            ts.log_debug(eut.measurements())
+            ts.log_debug(
+                'L/HVRT and trip parameters set to the widest range : v_min: {0} V, v_max: {1} V'.format(v_min, v_max))
+            try:
+                eut.vrt_stay_connected_high(
+                    params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000, 'V1': v_max, 'Tms2': 0.16, 'V2': v_max})
+            except Exception, e:
+                ts.log_error('Could not set VRT Stay Connected High curve. %s' % e)
+            try:
+                eut.vrt_stay_connected_low(
+                    params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000, 'V1': v_min, 'Tms2': 0.16, 'V2': v_min})
+            except Exception, e:
+                ts.log_error('Could not set VRT Stay Connected Low curve. %s' % e)
+        else:
+            ts.log_debug('Set L/HVRT and trip parameters set to the widest range of adjustability possible.')
+
+        # Special considerations for CHIL ASGC/Typhoon startup #
+        if chil is not None:
+            inv_power = eut.measurements().get('W')
+            timeout = 120.
+            if inv_power <= p_rated * 0.85:
+                pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                ts.sleep(3)
+                eut.connect(params={'Conn': True})
+            while inv_power <= p_rated * 0.85 and timeout >= 0:
+                ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                       (inv_power, timeout))
+                ts.sleep(1)
+                timeout -= 1
+                inv_power = eut.measurements().get('W')
+                if timeout == 0:
+                    result = script.RESULT_FAIL
+                    raise der.DERError('Inverter did not start.')
+            ts.log('Waiting for EUT to ramp up')
+            ts.sleep(8)
 
         '''
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
@@ -711,7 +772,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
 
 
         '''
-         d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
+        d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
         voltage to Vin_nom.
         '''
 
@@ -761,7 +822,6 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                     '''
                     #eut.volt_var(params=vw_params)
 
-
                 '''
                 h) Once steady state is reached, begin the adjustment of phase voltages.
                 '''
@@ -794,8 +854,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                     step = 'Step I'
                     ts.log('Voltage step: setting Grid simulator to case A (IEEE 1547.1-Table 24)(%s)' % step)
                     p_initial = get_p_initial(daq=daq, step=step)
-                    grid.config_asymmetric_phase_angles(mag=mag['case_a'],
-                                                        angle=ang['case_a'])
+                    grid.config_asymmetric_phase_angles(mag=mag['case_a'], angle=ang['case_a'])
                     v_p_analysis = v_p_criteria(v_pairs=v_pairs[1],
                                                 v_target=np.mean(np.array(mag['case_a'])),
                                                 a_v=a_v,
@@ -945,7 +1004,7 @@ def test_run():
         # list of active tests
         vw_curves = []
         imbalance_resp = []
-        vw_response_time = [0,0,0,0]
+        vw_response_time = [0, 0, 0, 0]
         if mode == 'Imbalanced grid':
             if ts.param_value('eut.imbalance_resp_1') == 'Enabled':
                 imbalance_resp.append('INDIVIDUAL_PHASES_VOLTAGES')
@@ -957,7 +1016,6 @@ def test_run():
             vw_response_time[1] = float(ts.param_value('vw.test_1_tr'))
 
         else:
-            irr = ts.param_value('vw.irr')
             if ts.param_value('vw.test_1') == 'Enabled':
                 vw_curves.append(1)
                 vw_response_time[1] = float(ts.param_value('vw.test_1_tr'))
@@ -967,7 +1025,8 @@ def test_run():
             if ts.param_value('vw.test_3') == 'Enabled':
                 vw_curves.append(3)
                 vw_response_time[3]=float(ts.param_value('vw.test_3_tr'))
-        #List of power level for tests
+
+        # List of power level for tests
         irr = ts.param_value('vw.power_lvl')
         if irr == '20%':
             pwr_lvls = [0.20]
@@ -979,7 +1038,8 @@ def test_run():
             pwr_lvls = [1.00, 0.66, 0.20]
 
         if mode == 'Imbalanced grid':
-            result = volt_watt_mode_imbalanced_grid(imbalance_resp=imbalance_resp,vw_curves=vw_curves, vw_response_time=vw_response_time)
+            result = volt_watt_mode_imbalanced_grid(imbalance_resp=imbalance_resp, vw_curves=vw_curves,
+                                                    vw_response_time=vw_response_time)
         else:
             result = volt_watt_mode(vw_curves=vw_curves, vw_response_time=vw_response_time, pwr_lvls=pwr_lvls)
 
@@ -997,6 +1057,7 @@ def test_run():
         ts.result_file(excelfile)
 
     return result
+
 
 def run(test_script):
 
@@ -1071,8 +1132,6 @@ info.param('eut_vw.p_rated_prime', label='P\'rated: Output power rating while ab
            default=-3000.0, active='eut_vw.sink_power', active_value=['Yes'])
 info.param('eut_vw.p_min_prime', label='P\'min: minimum active power while sinking power(W) (negative)',
            default=-0.2*3000.0, active='eut_vw.sink_power', active_value=['Yes'])
-
-
 
 # Add the SIRFN logo
 info.logo('sirfn.png')

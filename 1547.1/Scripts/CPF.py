@@ -271,8 +271,6 @@ def test_run():
 
     #sc_points = ['PF_TARGET', 'PF_MAX', 'PF_MIN']
 
-
-
     try:
 
         cat = ts.param_value('eut.cat')
@@ -323,10 +321,7 @@ def test_run():
             mag['case_b'] = [0.9 * v_nom, 1.08 * v_nom, 1.08 * v_nom]
             ang['case_b'] = [0., 114.5, -114.5]
         
-            
-
-
-        #According to Table 3-Minimum requirements for manufacturers stated measured and calculated accuracy
+        # According to Table 3-Minimum requirements for manufacturers stated measured and calculated accuracy
         MSA_Q = 0.05 * s_rated
         MSA_P = 0.05 * s_rated
         MSA_V = 0.01 * v_nom
@@ -403,6 +398,26 @@ def test_run():
             # disable volt/var curve
             eut.volt_var(params={'Ena': False})
             ts.log_debug('If not done already, set L/HVRT and trip parameters to the widest range of adjustability.')
+
+        # Special considerations for CHIL ASGC/Typhoon startup #
+        if chil is not None:
+            inv_power = eut.measurements().get('W')
+            timeout = 120.
+            if inv_power <= p_rated * 0.85:
+                pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                ts.sleep(3)
+                eut.connect(params={'Conn': True})
+            while inv_power <= p_rated * 0.85 and timeout >= 0:
+                ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                       (inv_power, timeout))
+                ts.sleep(1)
+                timeout -= 1
+                inv_power = eut.measurements().get('W')
+                if timeout == 0:
+                    result = script.RESULT_FAIL
+                    raise der.DERError('Inverter did not start.')
+            ts.log('Waiting for EUT to ramp up')
+            ts.sleep(8)
 
         """
         c) Set all AC test source parameters to the nominal operating voltage and frequency.

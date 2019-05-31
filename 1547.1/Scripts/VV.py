@@ -373,7 +373,6 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             pv.power_set(p_rated)
             pv.power_on()  # Turn on DC so the EUT can be initialized
 
-
         # DAS soft channels
         das_points = {'sc': ('Q_TARGET', 'Q_TARGET_MIN', 'Q_TARGET_MAX', 'Q_MEAS', 'V_TARGET', 'V_MEAS', 'event')}
 
@@ -405,6 +404,27 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             ts.log_debug('If not done already, set L/HVRT and trip parameters to the widest range of adjustability.')
         else:
             ts.log_debug('Set L/HVRT and trip parameters to the widest range of adjustability possible.')
+
+        # Special considerations for CHIL ASGC/Typhoon startup #
+        if chil is not None:
+            inv_power = eut.measurements().get('W')
+            timeout = 120.
+            if inv_power <= p_rated * 0.85:
+                pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                ts.sleep(3)
+                eut.connect(params={'Conn': True})
+            while inv_power <= p_rated * 0.85 and timeout >= 0:
+                ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                       (inv_power, timeout))
+                ts.sleep(1)
+                timeout -= 1
+                inv_power = eut.measurements().get('W')
+                if timeout == 0:
+                    result = script.RESULT_FAIL
+                    raise der.DERError('Inverter did not start.')
+            ts.log('Waiting for EUT to ramp up')
+            ts.sleep(8)
+            ts.log_debug('DAS data_read(): %s' % daq.data_read())
 
         '''
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
@@ -528,8 +548,6 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     test to meet reactive power 5 requirements.    
                     '''
                     if pv is not None:
-                        # TODO implement IV_curve_config
-                        #pv.power_set(power*p_rated)
                         pv_power_setting = (p_rated * power)
                         pv.iv_curve_config(pmp=pv_power_setting, vmp=v_in_nom)
                         pv.irradiance_set(1000.)
