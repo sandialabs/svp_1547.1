@@ -306,7 +306,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         s_rated = ts.param_value('eut.s_rated')
 
         # DC voltages
-        v_nom_in = ts.param_value('eut.v_in_nom')
+        v_in_nom = ts.param_value('eut.v_in_nom')
         v_min_in = ts.param_value('eut.v_in_min')
         v_max_in = ts.param_value('eut.v_in_max')
 
@@ -381,26 +381,6 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         else:
             ts.log_debug('Set L/HVRT and trip parameters set to the widest range of adjustability possible.')
 
-        # Special considerations for CHIL ASGC/Typhoon startup #
-        if chil is not None:
-            inv_power = eut.measurements().get('W')
-            timeout = 120.
-            if inv_power <= p_rated * 0.85:
-                pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
-                ts.sleep(3)
-                eut.connect(params={'Conn': True})
-            while inv_power <= p_rated * 0.85 and timeout >= 0:
-                ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
-                       (inv_power, timeout))
-                ts.sleep(1)
-                timeout -= 1
-                inv_power = eut.measurements().get('W')
-                if timeout == 0:
-                    result = script.RESULT_FAIL
-                    raise der.DERError('Inverter did not start.')
-            ts.log('Waiting for EUT to ramp up')
-            ts.sleep(8)
-
         '''
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
         '''
@@ -416,16 +396,6 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
 
         result_summary.write('P_TR_ACC_REQ, TR_REQ, P_FINAL_ACC_REQ, V_MEAS, P_MEAS, P_TARGET, '
                              'P_TARGET_MIN, P_TARGET_MAX, STEP,FILENAME\n')
-
-        '''
-        d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
-        voltage to Vin_nom. The EUT may limit active power throughout the test to meet reactive power requirements.
-        For an EUT with an input voltage range.
-        '''
-
-        if pv is not None:
-            pv.iv_curve_config(pmp=p_rated, vmp=v_nom_in)
-            pv.irradiance_set(1000.)
 
         v_pairs = collections.OrderedDict()
 
@@ -454,96 +424,123 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
                 v_pairs[1]['P2'] = int(p_min)
                 v_pairs[2]['P2'] = int(p_min)
                 v_pairs[3]['P2'] = int(p_min)
+        '''
+        v) Test may be repeated for EUT's that can also absorb power using the P' values in the characteristic
+        definition.
+        '''
+        # TODO: add P' tests
 
         '''
-        g) Begin the adjustment towards V_h. Step the AC test source voltage to a_v below V_1.
-        t) Repeat steps d) through t) at EUT power set at 20% and 66% of rated power.
         u) Repeat steps d) through u) for characteristics 2 and 3.
-        v) Test may be repeated for EUT's that can also absorb power using the P' values in the characteristic definition.
         '''
-
-        """
-        Test start
-        """
         for vw_curve in vw_curves:
             ts.log('Starting test with VW mode - Characteristic %s' % (vw_curve))
 
             '''
-            e) Set EUT volt-watt parameters to the values specified by Characteristic 1. All other functions should
-               be turned off.
+            t) Repeat steps d) through t) at EUT power set at 20% and 66% of rated power.
             '''
-            eut.volt_var(params={'Ena': False})
-            eut.fixed_pf(params={'Ena': False})
-
-            '''
-            f) Verify volt-watt mode is reported as active and that the correct characteristic is reported.
-            '''
-            if eut is not None:
-                vw_curve_units = ts.param_value('vw.vw_curve_units')
-                if vw_curve_units == 'Percentage':
-                    vw_curve_params = {'v': [int(v_pairs[vw_curve]['V1']*(100./v_nom)),
-                                             int(v_pairs[vw_curve]['V2']*(100./v_nom))],
-                                       'w': [int(v_pairs[vw_curve]['P1']*(100./p_rated)),
-                                             int(v_pairs[vw_curve]['P2']*(100./p_rated))],
-                                       'DeptRef': 'W_MAX_PCT'}
-                elif vw_curve_units == 'pu':
-                    vw_curve_params = {'v': [v_pairs[vw_curve]['V1']/v_nom, v_pairs[vw_curve]['V2']/v_nom],
-                                       'w': [v_pairs[vw_curve]['P1']/p_rated, v_pairs[vw_curve]['P2']/p_rated],
-                                       'DeptRef': 'W_MAX_PCT'}
-                else:  # units = volts and watts
-                    vw_curve_params = {'v': [v_pairs[vw_curve]['V1'], v_pairs[vw_curve]['V2']],
-                                       'w': [v_pairs[vw_curve]['P1'], v_pairs[vw_curve]['P2']],
-                                       'DeptRef': 'W_MAX_PCT'}
-
-                vw_params = {'Ena': True, 'ActCrv': 1, 'curve': vw_curve_params}
-                ts.log_debug('Writing the following params to EUT: %s' % vw_params)
-                eut.volt_watt(params=vw_params)
-                ts.log_debug('Initial EUT VW settings are %s' % eut.volt_watt())
-
-            v_steps_dict = collections.OrderedDict()
-
-            '''
-            1547.1 steps:
-            STD_CHANGE: When V2 >= VH, some steps should be skipped.
-            k) If V2 is less than VH, step the AC test source voltage to av above V2, else skip to step o).
-
-            JAY NOTE: VRT requirements are such that VH should always be larger than V2 (1.1 pu). DER will operate
-            within the 0.88 - 1.1 pu range continuously.
-            '''
-            v_steps_dict["Step G"] = v_pairs[vw_curve]['V1'] - a_v
-            v_steps_dict["Step H"] = v_pairs[vw_curve]['V1'] + a_v
-            v_steps_dict["Step I"] = (v_pairs[vw_curve]['V2'] + v_pairs[vw_curve]['V1']) / 2
-            v_steps_dict["Step J"] = v_pairs[vw_curve]['V2'] - a_v
-            if v_pairs[vw_curve]['V2'] < v_max:
-                v_steps_dict["Step K"] = v_pairs[vw_curve]['V2'] + a_v
-                v_steps_dict["Step L"] = v_max - a_v
-                v_steps_dict["Step M"] = v_pairs[vw_curve]['V2'] + a_v
-                v_steps_dict["Step N"] = v_pairs[vw_curve]['V2'] - a_v
-            v_steps_dict["Step O"] = (v_pairs[vw_curve]['V1'] + v_pairs[vw_curve]['V2']) / 2
-            v_steps_dict["Step P"] = v_pairs[vw_curve]['V1'] + a_v
-            v_steps_dict["Step Q"] = v_pairs[vw_curve]['V1'] - a_v
-            # STD_CHANGE: Duplicated step R. Step R was changed for v_min + a_v
-            # v_steps_dict["Step R"] = v_min + a_v
-            # STD_CHANGE: Duplicated step R. Step S was changed for v_nom
-            # JAY NOTE: Agreed. Delete step R. Don't return to V_nom because this will be done in the next loop.
-            v_steps_dict["Step S"] = v_min + a_v
-            
-            # This is to make sure the voltage step don't exceed the EUT boundaries and to round V to 2 decimal places
-            for step, voltage in v_steps_dict.iteritems():
-                v_steps_dict.update({step: np.around(voltage, 2)})
-                if voltage > v_max:
-                    ts.log("{0} voltage step (value : {1}) changed to VH (v_max)".format(step, voltage))
-                    v_steps_dict.update({step: v_max})
-                elif voltage < v_min:
-                    ts.log("{0} voltage step (value : {1}) changed to VL (v_min)".format(step, voltage))
-                    v_steps_dict.update({step: v_min})
-
             for power in pwr_lvls:
+                '''
+                d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
+                voltage to Vin_nom. The EUT may limit active power throughout the test to meet reactive power requirements.
+                For an EUT with an input voltage range.
+                '''
                 if pv is not None:
                     pv_power_setting = (p_rated * power)
-                    pv.iv_curve_config(pmp=pv_power_setting, vmp=v_nom_in)
-                    pv.irradiance_set(1000.)                
-                
+                    pv.iv_curve_config(pmp=pv_power_setting, vmp=v_in_nom)
+                    pv.irradiance_set(1000.)
+
+                # Special considerations for CHIL ASGC/Typhoon startup #
+                if chil is not None:
+                    inv_power = eut.measurements().get('W')
+                    timeout = 120.
+                    if inv_power <= pv_power_setting * 0.85:
+                        pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                        ts.sleep(3)
+                        eut.connect(params={'Conn': True})
+                    while inv_power <= pv_power_setting * 0.85 and timeout >= 0:
+                        ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                               (inv_power, timeout))
+                        ts.sleep(1)
+                        timeout -= 1
+                        inv_power = eut.measurements().get('W')
+                        if timeout == 0:
+                            result = script.RESULT_FAIL
+                            raise der.DERError('Inverter did not start.')
+                    ts.log('Waiting for EUT to ramp up')
+                    ts.sleep(8)
+
+                '''
+                e) Set EUT volt-watt parameters to the values specified by Characteristic 1. All other functions should
+                   be turned off.
+                '''
+                if eut is not None:
+                    vw_curve_units = ts.param_value('vw.vw_curve_units')
+                    if vw_curve_units == 'Percentage':
+                        vw_curve_params = {'v': [int(v_pairs[vw_curve]['V1']*(100./v_nom)),
+                                                 int(v_pairs[vw_curve]['V2']*(100./v_nom))],
+                                           'w': [int(v_pairs[vw_curve]['P1']*(100./p_rated)),
+                                                 int(v_pairs[vw_curve]['P2']*(100./p_rated))],
+                                           'DeptRef': 'W_MAX_PCT'}
+                    elif vw_curve_units == 'pu':
+                        vw_curve_params = {'v': [v_pairs[vw_curve]['V1']/v_nom, v_pairs[vw_curve]['V2']/v_nom],
+                                           'w': [v_pairs[vw_curve]['P1']/p_rated, v_pairs[vw_curve]['P2']/p_rated],
+                                           'DeptRef': 'W_MAX_PCT'}
+                    else:  # units = volts and watts
+                        vw_curve_params = {'v': [v_pairs[vw_curve]['V1'], v_pairs[vw_curve]['V2']],
+                                           'w': [v_pairs[vw_curve]['P1'], v_pairs[vw_curve]['P2']],
+                                           'DeptRef': 'W_MAX_PCT'}
+
+                    vw_params = {'Ena': True, 'ActCrv': 1, 'curve': vw_curve_params}
+                    ts.log_debug('Writing the following params to EUT: %s' % vw_params)
+                    eut.volt_watt(params=vw_params)
+                    eut.volt_var(params={'Ena': False})
+                    eut.fixed_pf(params={'Ena': False})
+
+                '''
+                f) Verify volt-watt mode is reported as active and that the correct characteristic is reported.
+                '''
+                if eut is not None:
+                    ts.log_debug('Initial EUT VW settings are %s' % eut.volt_watt())
+
+                '''
+                g) Begin the adjustment towards V_h. Step the AC test source voltage to a_v below V_1.
+
+                STD_CHANGE: When V2 >= VH, some steps should be skipped.
+                k) If V2 is less than VH, step the AC test source voltage to av above V2, else skip to step o).
+
+                JAY NOTE: VRT requirements are such that VH should always be larger than V2 (1.1 pu). DER will operate
+                within the 0.88 - 1.1 pu range continuously.
+                '''
+                v_steps_dict = collections.OrderedDict()
+                v_steps_dict["Step G"] = v_pairs[vw_curve]['V1'] - a_v
+                v_steps_dict["Step H"] = v_pairs[vw_curve]['V1'] + a_v
+                v_steps_dict["Step I"] = (v_pairs[vw_curve]['V2'] + v_pairs[vw_curve]['V1']) / 2
+                v_steps_dict["Step J"] = v_pairs[vw_curve]['V2'] - a_v
+                if v_pairs[vw_curve]['V2'] < v_max:
+                    v_steps_dict["Step K"] = v_pairs[vw_curve]['V2'] + a_v
+                    v_steps_dict["Step L"] = v_max - a_v
+                    v_steps_dict["Step M"] = v_pairs[vw_curve]['V2'] + a_v
+                    v_steps_dict["Step N"] = v_pairs[vw_curve]['V2'] - a_v
+                v_steps_dict["Step O"] = (v_pairs[vw_curve]['V1'] + v_pairs[vw_curve]['V2']) / 2
+                v_steps_dict["Step P"] = v_pairs[vw_curve]['V1'] + a_v
+                v_steps_dict["Step Q"] = v_pairs[vw_curve]['V1'] - a_v
+                # STD_CHANGE: Duplicated step R. Step R was changed for v_min + a_v
+                # v_steps_dict["Step R"] = v_min + a_v
+                # STD_CHANGE: Duplicated step R. Step S was changed for v_nom
+                # JAY NOTE: Agreed. Delete step R. Don't return to V_nom because this will be done in the next loop.
+                v_steps_dict["Step S"] = v_min + a_v
+
+                # Ensure voltage step doesn't exceed the EUT boundaries and round V to 2 decimal places
+                for step, voltage in v_steps_dict.iteritems():
+                    v_steps_dict.update({step: np.around(voltage, 2)})
+                    if voltage > v_max:
+                        ts.log("{0} voltage step (value : {1}) changed to VH (v_max)".format(step, voltage))
+                        v_steps_dict.update({step: v_max})
+                    elif voltage < v_min:
+                        ts.log("{0} voltage step (value : {1}) changed to VL (v_min)".format(step, voltage))
+                        v_steps_dict.update({step: v_min})
+
                 ts.log_debug('curve points:  %s' % v_pairs[vw_curve])
 
                 # Configure the data acquisition system

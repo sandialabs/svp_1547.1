@@ -499,14 +499,22 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             if eut is not None:
                 # Activate volt-var function with following parameters
                 # SunSpec convention is to use percentages for V and Q points.
-                vv_curve_params = {'v': [v_pairs[vv_curve]['V1']*(100./v_nom), v_pairs[vv_curve]['V2']*(100./v_nom),
-                                         v_pairs[vv_curve]['V3']*(100./v_nom), v_pairs[vv_curve]['V4']*(100./v_nom)],
-                                   'var': [v_pairs[vv_curve]['Q1']*(100./var_rated),
-                                           v_pairs[vv_curve]['Q2']*(100./var_rated),
-                                           v_pairs[vv_curve]['Q3']*(100./var_rated),
-                                           v_pairs[vv_curve]['Q4']*(100./var_rated)]}
-
+                vv_curve_params = {'v': [v_pairs[vv_curve]['V1']*(100/v_nom), v_pairs[vv_curve]['V2']*(100/v_nom),
+                                         v_pairs[vv_curve]['V3']*(100/v_nom), v_pairs[vv_curve]['V4']*(100/v_nom)],
+                                   'var': [v_pairs[vv_curve]['Q1']*(100/var_rated),
+                                           v_pairs[vv_curve]['Q2']*(100/var_rated),
+                                           v_pairs[vv_curve]['Q3']*(100/var_rated),
+                                           v_pairs[vv_curve]['Q4']*(100/var_rated)]}
+                ts.log_debug('Sending VV points: %s' % vv_curve_params)
                 eut.volt_var(params={'Ena': True, 'curve': vv_curve_params})
+                for i in range(10):
+                    if not eut.volt_var()['Ena']:
+                        ts.log_error('EUT VV Enable register not set to True. Trying again...')
+                        eut.volt_var(params={'Ena': True})
+                        ts.sleep(1)
+                    else:
+                        break
+
                 eut.volt_watt(params={'Ena': False})
                 # TODO autonomous vref adjustment to be included
                 # eut.autonomous_vref_adjustment(params={'Ena': False})
@@ -520,6 +528,30 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             cc) Repeat test steps d) through cc) at EUT power set at 20% and 66% of rated power.
             '''
             for power in pwr_lvls:
+                if pv is not None:
+                    pv_power_setting = (p_rated * power)
+                    pv.iv_curve_config(pmp=pv_power_setting, vmp=v_in_nom)
+                    pv.irradiance_set(1000.)
+
+                # Special considerations for CHIL ASGC/Typhoon startup #
+                if chil is not None:
+                    inv_power = eut.measurements().get('W')
+                    timeout = 120.
+                    if inv_power <= pv_power_setting * 0.85:
+                        pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                        ts.sleep(3)
+                        eut.connect(params={'Conn': True})
+                    while inv_power <= pv_power_setting * 0.85 and timeout >= 0:
+                        ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                               (inv_power, timeout))
+                        ts.sleep(1)
+                        timeout -= 1
+                        inv_power = eut.measurements().get('W')
+                        if timeout == 0:
+                            result = script.RESULT_FAIL
+                            raise der.DERError('Inverter did not start.')
+                    ts.log('Waiting for EUT to ramp up')
+                    ts.sleep(8)
 
                 '''
                 bb) Repeat test steps e) through bb) with Vref set to 1.05*VN and 0.95*VN, respectively.
