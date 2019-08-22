@@ -125,7 +125,9 @@ def test_run():
             daq.sc['P_TARGET'] = 100
             daq.sc['P_TARGET_MIN'] = 100
             daq.sc['P_TARGET_MAX'] = 100
+            daq.sc['P_MEAS'] = 100
             daq.sc['F_TARGET'] = f_nom
+            daq.sc['P_TARGET'] = p_rated
             daq.sc['event'] = 'None'
             ts.log('DAS device: %s' % daq.info())
 
@@ -254,7 +256,7 @@ def test_run():
                     f_steps_dic[mode]['Step G'] = (f_nom + fw_param['dbf']) - a_f
                     f_steps_dic[mode]['Step H'] = (f_nom - fw_param['dbf']) - a_f
                     f_steps_dic[mode]['Step I'] = f_nom - fw_param['f_small'] - fw_param['dbf']
-                    # STD_CHANGE : step k) should consider the accuracy
+                    # STD_CHANGE : step j) should consider the accuracy
                     f_steps_dic[mode]['Step J'] = f_min + a_f
                     f_steps_dic[mode]['Step K'] = f_min + fw_param['f_small']
                     f_steps_dic[mode]['Step L'] = (f_nom - fw_param['dbf']) - a_f
@@ -297,9 +299,9 @@ def test_run():
                     ts.log_debug('Test parameters :  %s' % fw_param)
                     ts.log('Starting data capture for power = %s' % power)
 
-                    dataset_filename = 'FW_{0}_PWR_{1}_{2}.csv'.format(fw_curve, power, mode)
+                    dataset_filename = 'FW_{0}_PWR_{1}_{2}'.format(fw_curve, power, mode)
                     if absorb_power:
-                        dataset_filename = 'FW_{0}_PWR_{1}_{2}_ABSORB.csv'.format(fw_curve, power, mode)
+                        dataset_filename = 'FW_{0}_PWR_{1}_{2}_ABSORB'.format(fw_curve, power, mode)
 
                     ts.log('------------{}------------'.format(dataset_filename))
                     '''
@@ -330,7 +332,7 @@ def test_run():
                         result_summary.write(lib_1547.write_rslt_sum(analysis=f_p_analysis, step=step_label,
                                                                      filename=dataset_filename))
 
-
+                    dataset_filename = dataset_filename + ".csv"
                     daq.data_capture(False)
                     ds = daq.data_capture_dataset()
                     ts.log('Saving file: %s' % dataset_filename)

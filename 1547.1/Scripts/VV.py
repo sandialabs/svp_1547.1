@@ -221,12 +221,13 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                 # ASK @Jay about this loop. Necessary here ? Could go inside your driver...
 
                 for i in range(10):
-                    if not eut.volt_var()['Ena']:
-                        ts.log_error('EUT VV Enable register not set to True. Trying again...')
-                        eut.volt_var(params={'Ena': True})
-                        ts.sleep(1)
-                    else:
-                        break
+                    if eut.volt_var() is not None:
+                        if not eut.volt_var()['Ena']:
+                            ts.log_error('EUT VV Enable register not set to True. Trying again...')
+                            eut.volt_var(params={'Ena': True})
+                            ts.sleep(1)
+                        else:
+                            break
                 # TODO autonomous vref adjustment to be included
                 # eut.autonomous_vref_adjustment(params={'Ena': False})
 
@@ -335,6 +336,8 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                                                             pwr_lvl=power,
                                                             target=v_step)
 
+
+
                         result_summary.write(lib_1547.write_rslt_sum(analysis=q_v_analysis, step=step_label,
                                                                 filename=dataset_filename))
 
@@ -347,6 +350,8 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     result_params['plot.title'] = dataset_filename.split('.csv')[0]
                     ts.result_file(dataset_filename, params=result_params)
                     result = script.RESULT_COMPLETE
+
+
 
     except script.ScriptFail, e:
         reason = str(e)
@@ -364,6 +369,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             ts.result_file(dataset_filename, params=result_params)
         ts.log_error('Test script exception: %s' % traceback.format_exc())
 
+
     finally:
         if daq is not None:
             daq.close()
@@ -380,6 +386,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             eut.close()
         if result_summary is not None:
             result_summary.close()
+
 
     return result
 
@@ -558,8 +565,8 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                 derive, active power, apparent power, reactive power, and power factor.
                 '''
                 """
-                Test start
-                """
+                 Test start
+                 """
                 step = 'Step G'
                 daq.sc['event'] = step
                 daq.data_sample()

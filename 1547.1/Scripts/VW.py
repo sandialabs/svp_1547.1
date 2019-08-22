@@ -42,6 +42,10 @@ import collections
 import cmath
 
 
+
+
+
+
 def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
 
     result = script.RESULT_FAIL
@@ -55,6 +59,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
     chil = None
     result_summary = None
     dataset_filename = None
+
 
     try:
 
@@ -122,6 +127,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         eut = der.der_init(ts)
         if eut is not None:
             eut.config()
+            ts.log_debug(eut.measurements())
             ts.log_debug(
                 'L/HVRT and trip parameters set to the widest range : v_min: {0} V, v_max: {1} V'.format(v_min, v_max))
             try:
@@ -150,6 +156,8 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
         result_summary.write(lib_1547.get_rslt_sum_col_name())
+
+
 
         '''
         v) Test may be repeated for EUT's that can also absorb power using the P' values in the characteristic
@@ -203,6 +211,8 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
                    be turned off.
                 '''
                 if eut is not None:
+                    # TODO : remove vw_curve unit
+                    vw_curve_units = ts.param_value('vw.vw_curve_units')
                     vw_curve_params = {'v': [int(v_pairs['V1']*(100./v_nom)),
                                              int(v_pairs['V2']*(100./v_nom))],
                                        'w': [int(v_pairs['P1']*(100./p_rated)),
@@ -272,11 +282,11 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
                         grid.voltage(v_step)
                     v_p_analysis = lib_1547.criteria(daq=daq,
                                                      tr=vw_response_time[vw_curve],
-                                                     step=step_label,
-                                                     initial_value=p_initial,
-                                                     target=v_step,
-                                                     curve=vw_curve,
-                                                     pwr_lvl=power)
+                                                         step=step_label,
+                                                         initial_value=p_initial,
+                                                         target=v_step,
+                                                         curve =vw_curve,
+                                                         pwr_lvl=power)
                     result_summary.write(lib_1547.write_rslt_sum(analysis=v_p_analysis, step=step_label,
                                                                  filename=dataset_filename))
                 # create result workbook
@@ -297,6 +307,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         if reason:
             ts.log_error(reason)
 
+
     except Exception as e:
         if dataset_filename is not None:
             dataset_filename = dataset_filename + ".csv"
@@ -307,6 +318,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
             result_params['plot.title'] = dataset_filename.split('.csv')[0]
             ts.result_file(dataset_filename, params=result_params)
         raise
+
 
     finally:
         if daq is not None:
@@ -363,14 +375,16 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
         absorb['p_rated_prime'] = ts.param_value('eut_vw.p_rated_prime')
         absorb['p_min_prime'] = ts.param_value('eut_vw.p_min_prime')
 
-        '''
+        """
         A separate module has been create for the 1547.1 Standard
-        '''
+        """
         lib_1547 = p1547.module_1547(ts=ts, aif='VW', imbalance_angle_fix=imbalance_fix)
         ts.log_debug('1547.1 Library configured for %s' % lib_1547.get_test_name())
 
         # Get the rslt parameters for plot
         result_params = lib_1547.get_rslt_param_plot()
+
+
 
         '''
         a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
@@ -413,6 +427,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
         eut = der.der_init(ts)
         if eut is not None:
             eut.config()
+            ts.log_debug(eut.measurements())
             ts.log_debug(
                 'L/HVRT and trip parameters set to the widest range : v_min: {0} V, v_max: {1} V'.format(v_min, v_max))
             try:
@@ -481,7 +496,8 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                     eut.fixed_pf(params={'Ena': False})
                 v_pairs = lib_1547.get_params(curve=vw_curve)
 
-                # Assume the EUT is on
+
+                # it is assumed the EUT is on
                 eut = der.der_init(ts)
                 if eut is not None:
                     vw_curve_params = {'v': [int(v_pairs['V1'] * (100. / v_nom)),
@@ -496,7 +512,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                     eut.volt_watt(params=vw_params)
                     # eut.volt_var(params={'Ena': True})
                     ts.log_debug('Initial EUT VW settings are %s' % eut.volt_watt())
-                    ts.log_debug('curve points:  %s' % v_pairs[vw_curve])
+                    ts.log_debug('curve points:  %s' % v_pairs)
 
                     # STD_CHANGE: Remove step g) or add more information about the volt-var configuration.
                     # Jay NOTE: Not sure if the committee is trying to test asymmetric VW/VV response here, but most
@@ -595,6 +611,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                     result_summary.write(lib_1547.write_rslt_sum(analysis=v_p_analysis, step=step,
                                                                  filename=dataset_filename))
 
+
                 ts.log('Sampling complete')
                 dataset_filename = dataset_filename + ".csv"
                 daq.data_capture(False)
@@ -639,6 +656,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
             eut.close()
         if result_summary is not None:
             result_summary.close()
+
 
     return result
 
@@ -712,6 +730,7 @@ def test_run():
         excelfile = ts.config_name() + '.xlsx'
         rslt.result_workbook(excelfile, ts.results_dir(), ts.result_dir())
         ts.result_file(excelfile)
+
 
     return result
 
