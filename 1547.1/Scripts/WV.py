@@ -106,8 +106,7 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
             pv.power_on()  # Turn on DC so the EUT can be initialized
 
         # DAS soft channels
-        # TODO : add to library 1547
-        das_points = {'sc': ('Q_TARGET', 'Q_TARGET_MIN', 'Q_TARGET_MAX', 'Q_MEAS', 'V_TARGET', 'V_MEAS', 'event')}
+        das_points = lib_1547.get_sc_points()
 
         # initialize data acquisition system
         daq = das.das_init(ts, sc_points=das_points['sc'])
@@ -130,9 +129,9 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
             eut.config()
             ts.log_debug(eut.measurements())
 
-            eut.volt_var(params={'Ena': False})
-            eut.volt_watt(params={'Ena': False})
-            eut.fixed_pf(params={'Ena': False})
+            #Disable all functions on EUT
+            eut.deactivate_all_fct()
+
             ts.log_debug('Voltage trip parameters set to the widest range: v_min: {0} V, '
                          'v_max: {1} V'.format(v_low, v_high))
             try:
@@ -193,7 +192,6 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
         if pv is not None:
             pv.iv_curve_config(pmp=p_rated, vmp=v_in_nom)
             pv.irradiance_set(1000.)
-
 
         '''
         dd) Repeat steps e) through dd) for characteristics 2 and 3.
@@ -297,8 +295,8 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
                     # Start the data acquisition systems
                     daq.data_capture(True)
 
-                    for step_label, v_step in p_steps_dict.iteritems():
-                        ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_step, step_label))
+                    for step_label, p_step in p_steps_dict.iteritems():
+                        ts.log('Power step: setting Grid simulator voltage to %s (%s)' % (p_step, step_label))
                         q_initial = lib_1547.get_initial(daq=daq, step=step_label)
                         if grid is not None:
                             grid.voltage(v_step)
@@ -323,8 +321,6 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
                     ts.result_file(dataset_filename, params=result_params)
                     result = script.RESULT_COMPLETE
 
-
-
     except script.ScriptFail, e:
         reason = str(e)
         if reason:
@@ -340,7 +336,6 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
             result_params['plot.title'] = dataset_filename.split('.csv')[0]
             ts.result_file(dataset_filename, params=result_params)
         ts.log_error('Test script exception: %s' % traceback.format_exc())
-
 
     finally:
         if daq is not None:
@@ -359,8 +354,8 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
         if result_summary is not None:
             result_summary.close()
 
-
     return result
+
 
 def test_run():
 
@@ -443,7 +438,7 @@ def run(test_script):
 info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.0')
 
 # VV test parameters
-info.param_group('wv', label='Test Parameters')
+info.param_group('eut_wv', label='Test Parameters')
 info.param('eut_wv.mode', label='Watt-Vat mode', default='Normal', values=['Normal'])
 info.param('eut_wv.test_1', label='Characteristic 1 curve', default='Enabled', values=['Disabled', 'Enabled'],
            active='eut_wv.mode', active_value=['Normal'])
@@ -459,6 +454,8 @@ info.param('eut_wv.test_3_t_r', label='Settling time max (t) for curve 3', defau
            active='eut_wv.test_3', active_value=['Enabled'])
 info.param('eut_wv.irr', label='Power Levels iteration', default='All', values=['100%', '66%', '20%', 'All'],
            active='eut_wv.mode', active_value=['Normal'])
+info.param('eut_wv.p_prime_mode', label='Repeat Test with P(prime) value if EUT able to absorb', default='No',
+           values=['Yes', 'No'], active='eut.abs_enable', active_value=['Yes'])
 
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)
@@ -466,11 +463,13 @@ info.param('eut.phases', label='Phases', default='Single Phase', values=['Single
 info.param('eut.s_rated', label='Apparent power rating (VA)', default=10000.0)
 info.param('eut.p_rated', label='Output power rating (W)', default=8000.0)
 info.param('eut.p_min', label='Minimum Power Rating(W)', default=1000.)
+info.param('eut.abs_enable', label='EUT able to absorb power?', default='No', values=['Yes', 'No'])
 info.param('eut.var_rated', label='Output var rating (vars)', default=2000.0)
 info.param('eut.v_nom', label='Nominal AC voltage (V)', default=120.0, desc='Nominal voltage for the AC simulator.')
 info.param('eut.v_low', label='Minimum AC voltage (V)', default=116.0)
 info.param('eut.v_high', label='Maximum AC voltage (V)', default=132.0)
 info.param('eut.v_in_nom', label='V_in_nom: Nominal input voltage (Vdc)', default=400)
+
 
 # Other equipment parameters
 der.params(info)
