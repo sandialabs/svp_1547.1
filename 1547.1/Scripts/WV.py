@@ -46,7 +46,7 @@ import cmath
 import math
 
 
-def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
+def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
 
     result = script.RESULT_FAIL
     daq = None
@@ -67,7 +67,6 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
         var_rated = ts.param_value('eut.var_rated')
         s_rated = ts.param_value('eut.s_rated')
 
-        #absorb_enable = ts.param_value('eut.abs_enabled')
         # DC voltages
         v_in_nom = ts.param_value('eut.v_in_nom')
         #v_min_in = ts.param_value('eut.v_in_min')
@@ -81,10 +80,14 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
         p_min_prime = ts.param_value('eut.p_min_prime')
         phases = ts.param_value('eut.phases')
 
+        # EUI Absorb capabilities
+        absorb = {}
+        absorb['ena'] = ts.param_value('eut_cpf.sink_power')
+
         """
         A separate module has been create for the 1547.1 Standard
         """
-        lib_1547 = p1547.module_1547(ts=ts, aif='WV')
+        lib_1547 = p1547.module_1547(ts=ts, aif='WV', absorb=absorb)
         ts.log_debug("1547.1 Library configured for %s" % lib_1547.get_test_name())
 
         # result params
@@ -111,7 +114,8 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
         # initialize data acquisition system
         daq = das.das_init(ts, sc_points=das_points['sc'])
 
-        daq.sc['V_TARGET'] = v_nom
+        ts.log_debug(0.05 * ts.param_value('eut.s_rated'))
+        daq.sc['P_TARGET'] = v_nom
         daq.sc['Q_TARGET'] = 100
         daq.sc['Q_TARGET_MIN'] = 100
         daq.sc['Q_TARGET_MAX'] = 100
@@ -187,7 +191,6 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
         For an EUT with an input voltage range.
         '''
         ts.log('%s %s' % (p_rated, v_in_nom))
-        ts.log('%s %s' % (type(p_rated), type(v_in_nom)))
 
         if pv is not None:
             pv.iv_curve_config(pmp=p_rated, vmp=v_in_nom)
@@ -196,6 +199,10 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
         '''
         dd) Repeat steps e) through dd) for characteristics 2 and 3.
         '''
+
+        #TODO 1.Add absorb option possibility for EUT
+        #TODO 2.Add communication with EUT
+
         for wv_curve in wv_curves:
             ts.log('Starting test with characteristic curve %s' % (wv_curve))
             p_pairs = lib_1547.get_params(curve=wv_curve)
@@ -206,10 +213,12 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
             if eut is not None:
                 # Activate watt-var function with following parameters
                 # SunSpec convention is to use percentages for P and Q points.
-                wv_curve_params = {'w': [p_pairs['P1']*(100/p_rated),
+                wv_curve_params = {'w': [p_pairs['P0']*(100/p_rated),
+                                         p_pairs['P1']*(100/p_rated),
                                          p_pairs['P2']*(100/p_rated),
                                          p_pairs['P3']*(100/p_rated)],
-                                   'var': [p_pairs['Q1']*(100/var_rated),
+                                   'var': [p_pairs['Q0']*(100/var_rated),
+                                           p_pairs['Q1']*(100/var_rated),
                                            p_pairs['Q2']*(100/var_rated),
                                            p_pairs['Q3']*(100/var_rated)]}
                 ts.log_debug('Sending WV points: %s' % wv_curve_params)
@@ -250,76 +259,73 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
                     ts.log('Waiting for EUT to ramp up')
                     ts.sleep(8)
 
-                for v_ref in v_ref_value:
-                    ts.log('Setting v_ref at %s %% of v_nom' % (int(v_ref*100)))
-                    p_steps_dict = collections.OrderedDict()
-                    a_p = lib_1547.MSA_P * 1.5
-
-                    # Capacitive test
-                    #p_steps_dict['Step F'] = p_pairs['V3'] - a_p
+                p_steps_dict = collections.OrderedDict()
+                a_p = lib_1547.MSA_P * 1.5
 
 
-                    p_steps_dict['Step G'] = p1547.p_min
-                    p_steps_dict['Step H'] = p_pairs['P1'] - a_p
 
-                    '''
-                    i) If V4 is less than VH, step the AC test source voltage to av below V4, else skip to step l).
-                    l) Begin the return to VRef. If V4 is less than VH, step the AC test source voltage to av above V4,
-                       else skip to step n).
-                    '''
+                '''
+                i) If V4 is less than VH, step the AC test source voltage to av below V4, else skip to step l).
+                l) Begin the return to VRef. If V4 is less than VH, step the AC test source voltage to av above V4,
+                   else skip to step n).
+                '''
+                p_steps_dict['Step G'] = p_min
 
-                    p_steps_dict['Step I'] = p_pairs['P1'] + a_p
-                    p_steps_dict['Step J'] = (p_pairs['P1'] + p_pairs['P2']) / 2
-                    p_steps_dict['Step K'] = p_pairs['P2'] - a_p
-                    p_steps_dict['Step L'] = p_pairs['P2'] + a_p
-                    p_steps_dict['Step M'] = (p_pairs['P2'] + p_pairs['P3']) / 2
-                    p_steps_dict['Step N'] = p_pairs['P3'] - a_p
-                    p_steps_dict['Step O'] = p_pairs['P3'] + a_p
-                    p_steps_dict['Step P'] = p_rated
+                p_steps_dict['Step H'] = p_pairs['P1'] - a_p
+                p_steps_dict['Step I'] = p_pairs['P1'] + a_p
+                p_steps_dict['Step J'] = (p_pairs['P1'] + p_pairs['P2']) / 2
+                p_steps_dict['Step K'] = p_pairs['P2'] - a_p
+                p_steps_dict['Step L'] = p_pairs['P2'] + a_p
+                p_steps_dict['Step M'] = (p_pairs['P2'] + p_pairs['P3']) / 2
+                p_steps_dict['Step N'] = p_pairs['P3'] - a_p
+                p_steps_dict['Step O'] = p_pairs['P3'] + a_p
+                p_steps_dict['Step P'] = p_rated
 
-                    # Begin the return to Pmin
-                    p_steps_dict['Step Q'] = p_pairs['P3'] + a_p
-                    p_steps_dict['Step R'] = p_pairs['P3'] - a_p
-                    p_steps_dict['Step S'] = (p_pairs['P2'] + p_pairs['P3']) / 2
+                # Begin the return to Pmin
+                p_steps_dict['Step Q'] = p_pairs['P3'] + a_p
+                p_steps_dict['Step R'] = p_pairs['P3'] - a_p
+                p_steps_dict['Step S'] = (p_pairs['P2'] + p_pairs['P3']) / 2
 
-                    p_steps_dict['Step T'] = p_pairs['P2'] + a_p
-                    p_steps_dict['Step U'] = p_pairs['P2'] - a_p
-                    p_steps_dict['Step V'] = (p_pairs['P1'] + p_pairs['P2']) / 2
-                    p_steps_dict['Step W'] = p_pairs['P1'] + a_p
-                    p_steps_dict['Step X'] = p_pairs['P1'] - a_p
-                    p_steps_dict['Step Y'] = p_min
+                p_steps_dict['Step T'] = p_pairs['P2'] + a_p
+                p_steps_dict['Step U'] = p_pairs['P2'] - a_p
+                p_steps_dict['Step V'] = (p_pairs['P1'] + p_pairs['P2']) / 2
+                p_steps_dict['Step W'] = p_pairs['P1'] + a_p
+                p_steps_dict['Step X'] = p_pairs['P1'] - a_p
+                p_steps_dict['Step Y'] = p_min
 
 
-                    dataset_filename = 'WV_%s_PWR_%d' % (wv_curve, power * 100)
-                    ts.log('------------{}------------'.format(dataset_filename))
-                    # Start the data acquisition systems
-                    daq.data_capture(True)
+                dataset_filename = 'WV_%s_PWR_%d' % (wv_curve, power * 100)
+                ts.log('------------{}------------'.format(dataset_filename))
 
-                    for step_label, p_step in p_steps_dict.iteritems():
-                        ts.log('Power step: setting Grid simulator voltage to %s (%s)' % (p_step, step_label))
-                        q_initial = lib_1547.get_initial(daq=daq, step=step_label)
-                        if grid is not None:
-                            grid.voltage(v_step)
-                        p_q_analysis = lib_1547.criteria(   daq=daq,
-                                                            tr=wv_response_time[wv_curve],
-                                                            step=step_label,
-                                                            initial_value=q_initial,
-                                                            curve=wv_curve,
-                                                            pwr_lvl=power,
-                                                            target=v_step)
+                # Start the data acquisition systems
+                daq.data_capture(True)
 
-                        result_summary.write(lib_1547.write_rslt_sum(analysis=p_q_analysis, step=step_label,
-                                                                filename=dataset_filename))
+                for step_label, p_step in p_steps_dict.iteritems():
+                    ts.log('Power step: setting Grid power to %s (W)(%s)' % (p_step, step_label))
+                    q_initial = lib_1547.get_initial(daq=daq, step=step_label)
+                    if pv is not None:
+                        pv.power_set(p_step)
+                    p_q_analysis = lib_1547.criteria(   daq=daq,
+                                                        tr=wv_response_time[wv_curve],
+                                                        step=step_label,
+                                                        initial_value=q_initial,
+                                                        curve=wv_curve,
+                                                        pwr_lvl=power,
+                                                        target=p_step)
+                    ts.log_debug(p_q_analysis)
 
-                    ts.log('Sampling complete')
-                    dataset_filename = dataset_filename + ".csv"
-                    daq.data_capture(False)
-                    ds = daq.data_capture_dataset()
-                    ts.log('Saving file: %s' % dataset_filename)
-                    ds.to_csv(ts.result_file_path(dataset_filename))
-                    result_params['plot.title'] = dataset_filename.split('.csv')[0]
-                    ts.result_file(dataset_filename, params=result_params)
-                    result = script.RESULT_COMPLETE
+                    result_summary.write(lib_1547.write_rslt_sum(analysis=p_q_analysis, step=step_label,
+                                                            filename=dataset_filename))
+
+                ts.log('Sampling complete')
+                dataset_filename = dataset_filename + ".csv"
+                daq.data_capture(False)
+                ds = daq.data_capture_dataset()
+                ts.log('Saving file: %s' % dataset_filename)
+                ds.to_csv(ts.result_file_path(dataset_filename))
+                result_params['plot.title'] = dataset_filename.split('.csv')[0]
+                ts.result_file(dataset_filename, params=result_params)
+                result = script.RESULT_COMPLETE
 
     except script.ScriptFail, e:
         reason = str(e)
@@ -341,6 +347,7 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
         if daq is not None:
             daq.close()
         if pv is not None:
+            pv.power_set(p_rated)
             pv.close()
         if grid is not None:
             if v_nom is not None:
@@ -349,10 +356,15 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls, v_ref_value):
         if chil is not None:
             chil.close()
         if eut is not None:
-            eut.volt_var(params={'Ena': False})
+            eut.deactivate_all_fct()
             eut.close()
         if result_summary is not None:
             result_summary.close()
+
+        # create result workbook
+        excelfile = ts.config_name() + '.xlsx'
+        rslt.result_workbook(excelfile, ts.results_dir(), ts.result_dir())
+        ts.result_file(excelfile)
 
     return result
 
@@ -392,7 +404,7 @@ def test_run():
             pwr_lvls = [1., 0.66, 0.20]
 
         result = watt_var_mode(wv_curves=wv_curves, wv_response_time=wv_response_time,
-                                pwr_lvls=pwr_lvls, v_ref_value=v_ref_value)
+                                pwr_lvls=pwr_lvls)
 
     except script.ScriptFail, e:
         reason = str(e)
@@ -402,6 +414,9 @@ def test_run():
     finally:
         # create result workbook
         excelfile = ts.config_name() + '.xlsx'
+        ts.log_debug(excelfile)
+        ts.log_debug(ts.results_dir())
+        ts.log_debug(ts.result_dir())
         rslt.result_workbook(excelfile, ts.results_dir(), ts.result_dir())
         ts.result_file(excelfile)
 
