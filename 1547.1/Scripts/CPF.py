@@ -127,7 +127,7 @@ def test_run():
 
         v_in_targets = {}
 
-        if v_nom_in_enabled == 'Enabled' :
+        if v_nom_in_enabled == 'Enabled':
             v_in_targets['v_nom_in'] = v_nom_in
         if v_min_in != v_nom_in and v_min_in_enabled == 'Enabled':
             v_in_targets['v_min_in'] = v_min_in
@@ -158,8 +158,8 @@ def test_run():
             pv.power_on()  # Turn on DC so the EUT can be initialized
 
         # DAS soft channels
-        das_points = {'sc': ('V_MEAS', 'P_MEAS', 'Q_MEAS', 'Q_TARGET_MIN', 'Q_TARGET_MAX', 'PF_TARGET', 'event')}
-
+        #das_points = {'sc': ('V_MEAS', 'P_MEAS', 'Q_MEAS', 'Q_TARGET_MIN', 'Q_TARGET_MAX', 'PF_TARGET', 'event')}
+        das_points = p1547.get_sc_points()
         # initialize data acquisition
         daq = das.das_init(ts, sc_points=das_points['sc'])
 

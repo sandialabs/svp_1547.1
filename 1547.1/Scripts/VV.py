@@ -106,9 +106,8 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             pv.power_on()  # Turn on DC so the EUT can be initialized
 
         # DAS soft channels
-        # TODO : add to library 1547
-        das_points = {'sc': ('Q_TARGET', 'Q_TARGET_MIN', 'Q_TARGET_MAX', 'Q_MEAS', 'V_TARGET', 'V_MEAS', 'event')}
-
+        #das_points = {'sc': ('Q_TARGET', 'Q_TARGET_MIN', 'Q_TARGET_MAX', 'Q_MEAS', 'V_TARGET', 'V_MEAS', 'event')}
+        das_points = p1547.get_sc_points()
         # initialize data acquisition system
         daq = das.das_init(ts, sc_points=das_points['sc'])
 
@@ -283,6 +282,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     l) Begin the return to VRef. If V4 is less than VH, step the AC test source voltage to av above V4,
                        else skip to step n).
                     '''
+
                     if v_pairs['V4'] < v_high:
                         v_steps_dict['Step I'] = v_pairs['V4'] - a_v
                         v_steps_dict['Step J'] = v_pairs['V4'] + a_v
@@ -299,8 +299,9 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     v_steps_dict['Step S'] = (v_pairs['V1'] + v_pairs['V2']) / 2
 
                     '''
-                    t) If V1 is greater than VL, step the AC test source voltage to av above V1, else skip to step x).
+                    #t) If V1 is greater than VL, step the AC test source voltage to av above V1, else skip to step x).
                     '''
+                    
                     if v_pairs['V1'] > v_low:
                         v_steps_dict['Step T'] = v_pairs['V1'] + a_v
                         v_steps_dict['Step U'] = v_pairs['V1'] - a_v
