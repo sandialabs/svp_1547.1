@@ -106,9 +106,8 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             pv.power_on()  # Turn on DC so the EUT can be initialized
 
         # DAS soft channels
-        # TODO : add to library 1547
-        das_points = {'sc': ('Q_TARGET', 'Q_TARGET_MIN', 'Q_TARGET_MAX', 'Q_MEAS', 'V_TARGET', 'V_MEAS', 'event')}
-
+        #das_points = {'sc': ('Q_TARGET', 'Q_TARGET_MIN', 'Q_TARGET_MAX', 'Q_MEAS', 'V_TARGET', 'V_MEAS', 'event')}
+        das_points = p1547.get_sc_points()
         # initialize data acquisition system
         daq = das.das_init(ts, sc_points=das_points['sc'])
 
@@ -221,12 +220,13 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                 # ASK @Jay about this loop. Necessary here ? Could go inside your driver...
 
                 for i in range(10):
-                    if not eut.volt_var()['Ena']:
-                        ts.log_error('EUT VV Enable register not set to True. Trying again...')
-                        eut.volt_var(params={'Ena': True})
-                        ts.sleep(1)
-                    else:
-                        break
+                    if eut.volt_var() is not None:
+                        if not eut.volt_var()['Ena']:
+                            ts.log_error('EUT VV Enable register not set to True. Trying again...')
+                            eut.volt_var(params={'Ena': True})
+                            ts.sleep(1)
+                        else:
+                            break
                 # TODO autonomous vref adjustment to be included
                 # eut.autonomous_vref_adjustment(params={'Ena': False})
 
@@ -282,6 +282,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     l) Begin the return to VRef. If V4 is less than VH, step the AC test source voltage to av above V4,
                        else skip to step n).
                     '''
+
                     if v_pairs['V4'] < v_high:
                         v_steps_dict['Step I'] = v_pairs['V4'] - a_v
                         v_steps_dict['Step J'] = v_pairs['V4'] + a_v
@@ -298,8 +299,9 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     v_steps_dict['Step S'] = (v_pairs['V1'] + v_pairs['V2']) / 2
 
                     '''
-                    t) If V1 is greater than VL, step the AC test source voltage to av above V1, else skip to step x).
+                    #t) If V1 is greater than VL, step the AC test source voltage to av above V1, else skip to step x).
                     '''
+                    
                     if v_pairs['V1'] > v_low:
                         v_steps_dict['Step T'] = v_pairs['V1'] + a_v
                         v_steps_dict['Step U'] = v_pairs['V1'] - a_v
@@ -335,6 +337,8 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                                                             pwr_lvl=power,
                                                             target=v_step)
 
+
+
                         result_summary.write(lib_1547.write_rslt_sum(analysis=q_v_analysis, step=step_label,
                                                                 filename=dataset_filename))
 
@@ -347,6 +351,8 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     result_params['plot.title'] = dataset_filename.split('.csv')[0]
                     ts.result_file(dataset_filename, params=result_params)
                     result = script.RESULT_COMPLETE
+
+
 
     except script.ScriptFail, e:
         reason = str(e)
@@ -364,6 +370,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             ts.result_file(dataset_filename, params=result_params)
         ts.log_error('Test script exception: %s' % traceback.format_exc())
 
+
     finally:
         if daq is not None:
             daq.close()
@@ -380,6 +387,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             eut.close()
         if result_summary is not None:
             result_summary.close()
+
 
     return result
 
@@ -558,8 +566,8 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                 derive, active power, apparent power, reactive power, and power factor.
                 '''
                 """
-                Test start
-                """
+                 Test start
+                 """
                 step = 'Step G'
                 daq.sc['event'] = step
                 daq.data_sample()
@@ -816,7 +824,7 @@ def run(test_script):
     sys.exit(rc)
 
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.0')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.1')
 
 # VV test parameters
 info.param_group('vv', label='Test Parameters')
