@@ -414,7 +414,7 @@ def run(test_script):
 
     sys.exit(rc)
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.0')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.1')
 
 # FW test parameters
 info.param_group('fw', label='Test Parameters')
