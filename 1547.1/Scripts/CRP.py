@@ -218,12 +218,15 @@ def test_run():
         """
         d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
         voltage to Vin_nom. The EUT may limit active power throughout the test to meet reactive power requirements.
+        """
 
-        s) For an EUT with an input voltage range, repeat steps d) through o) for Vin_min and Vin_max.
         """
-        # TODO: Include step t)
+        s) Repeat steps d) through v) for additional reactive power settings: Qmax,ab, 0.5Qmax,inj, 0.5Qmax,ab.
+        t) For an EUT with an input voltage range, repeat steps d) through o) for Vin_min and Vin_max.
         """
-        t) Steps d) through q) may be repeated to test additional communication protocols - Run with another test.
+        # TODO: Include step u)
+        """
+        u) Steps d) through v) may be repeated to test additional protocols methods..
         """
 
         # For PV systems, this requires that Vmpp = Vin_nom and Pmpp = Prated.
@@ -235,8 +238,7 @@ def test_run():
                 pv.irradiance_set(1000.)
 
             """
-            e) Enable constant power factor mode and set the EUT power factor to PFmin,inj.
-            r) Repeat steps d) through o) for additional power factor settings: PFmin,ab, PFmid,inj, PFmid,ab.
+            e) Enable Constant Var mode and set the EUT power factor to Qmax,inj.
 
             Only the user-selected PF setting will be tested.
             """
@@ -264,9 +266,8 @@ def test_run():
                     ts.log('PF setting read: %s' % pf_setting)
 
                 """
-                f) Verify Constant Var mode is reported as active and that the power factor setting is reported 
-                as Qmax,inj.
-
+                f) Verify Constant Var mode is reported as active and that the power factor setting is reported as 
+                Qmax,inj.
                 """
                 step = 'Step F'
                 daq.sc['event'] = step
@@ -278,7 +279,7 @@ def test_run():
                 g) Step the EUT's active power to 20% of Prated or Pmin, whichever is less.
                 """
                 if pv is not None:
-                    step = 'Step H'
+                    step = 'Step G'
                     ts.log('Power step: setting PV simulator power to %s (%s)' % (p_min, step))
                     q_initial = lib_1547.get_initial(daq=daq, step=step)
                     pv.power_set(p_min)
@@ -320,8 +321,11 @@ def test_run():
                                                      target=pf_target)
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
+
+                """
+                j) Step the AC test source voltage to (VL + av).
+                """
                 if grid is not None:
-                    #   J) Step the AC test source voltage to (VL + av)
                     step = 'Step J'
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % ((v_min + a_v), step))
                     q_initial = lib_1547.get_initial(daq=daq, step=step)
@@ -334,7 +338,9 @@ def test_run():
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
 
-                    #   k) Step the AC test source voltage to (VH - av)
+                    """
+                    k) Step the AC test source voltage to (VH - av).
+                    """
                     step = 'Step K'
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % ((v_max - a_v), step))
                     q_initial = lib_1547.get_initial(daq=daq, step=step)
@@ -347,10 +353,11 @@ def test_run():
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
 
-                    #   l) Step the AC test source voltage to (VL + av)
-                    #   STD_CHANGE : We think at CanmetENERGY that this should be v_nom and not (v_min + a_v) before doing imbalance testing
+                    """
+                    l) Step the AC test source voltage to (VL + av).
+                    """
                     step = 'Step L'
-                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
+                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_min + a_v, step))
                     q_initial = lib_1547.get_initial(daq=daq, step=step)
                     grid.voltage(v_nom)
                     q_p_analysis = lib_1547.criteria(daq=daq,
@@ -442,7 +449,7 @@ def test_run():
                     daq.data_sample()
 
                 """
-                q) Verify all reactive/active power control functions are disabled.
+                r) Verify all reactive/active power control functions are disabled.
                 """
                 if eut is not None:
                     ts.log('Reactive/active power control functions are disabled.')
@@ -489,7 +496,6 @@ def test_run():
         if daq is not None:
             daq.close()
         if eut is not None:
-            eut.fixed_pf(params={'Ena': False, 'PF': 1.0})
             eut.close()
         if rs is not None:
             rs.close()
