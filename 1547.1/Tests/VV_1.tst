@@ -1,6 +1,6 @@
 <scriptConfig name="VV_1" script="VV">
   <params>
-    <param name="vv.test_1_t_r" type="float">0.1</param>
+    <param name="vv.test_1_t_r" type="float">5.0</param>
     <param name="eut.f_min" type="float">56.0</param>
     <param name="eut.f_nom" type="float">60.0</param>
     <param name="eut.f_max" type="float">66.0</param>
@@ -12,8 +12,8 @@
     <param name="eut.var_rated" type="float">2000.0</param>
     <param name="eut.p_rated" type="float">8000.0</param>
     <param name="eut.s_rated" type="float">10000.0</param>
-    <param name="vv.vref" type="string">All</param>
-    <param name="vv.irr" type="string">All</param>
+    <param name="vv.vref" type="string">100%</param>
+    <param name="vv.irr" type="string">100%</param>
     <param name="der.mode" type="string">Disabled</param>
     <param name="pvsim.mode" type="string">Disabled</param>
     <param name="hil.mode" type="string">Disabled</param>

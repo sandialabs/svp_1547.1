@@ -1,6 +1,6 @@
 <scriptConfig name="VW_1" script="VW">
   <params>
-    <param name="vw.test_1_tr" type="float">0.1</param>
+    <param name="vw.test_1_tr" type="float">10.0</param>
     <param name="eut.f_min" type="float">56.0</param>
     <param name="eut.f_nom" type="float">60.0</param>
     <param name="eut.f_max" type="float">66.0</param>
@@ -26,6 +26,5 @@
     <param name="eut_vw.sink_power" type="string">No</param>
     <param name="vw.mode" type="string">Normal</param>
     <param name="eut.phases" type="string">Three phase</param>
-    <param name="vw.vw_curve_units" type="string">Volts and Watts</param>
   </params>
 </scriptConfig>

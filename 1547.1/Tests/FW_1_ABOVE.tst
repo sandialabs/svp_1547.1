@@ -1,7 +1,7 @@
 <scriptConfig name="FW_1_ABOVE" script="FW">
   <params>
     <param name="eut_fw.p_small" type="float">0.05</param>
-    <param name="fw.test_1_tr" type="float">0.5</param>
+    <param name="fw.test_1_tr" type="float">5.0</param>
     <param name="eut.f_min" type="float">56.0</param>
     <param name="eut.f_nom" type="float">60.0</param>
     <param name="eut.f_max" type="float">66.0</param>
@@ -17,14 +17,13 @@
     <param name="fw.power_lvl" type="string">All</param>
     <param name="pvsim.mode" type="string">Disabled</param>
     <param name="hil.mode" type="string">Disabled</param>
-    <param name="eut.imbalance_resp_3" type="string">Disabled</param>
-    <param name="eut.imbalance_resp_1" type="string">Disabled</param>
     <param name="gridsim.mode" type="string">Disabled</param>
     <param name="fw.test_2" type="string">Disabled</param>
+    <param name="der.mode" type="string">Disabled</param>
     <param name="gridsim.auto_config" type="string">Disabled</param>
     <param name="das.mode" type="string">Disabled</param>
+    <param name="eut.imbalance_resp" type="string">EUT response to the average of the three-phase effective (RMS)</param>
     <param name="fw.test_1" type="string">Enabled</param>
-    <param name="eut.imbalance_resp_2" type="string">Enabled</param>
     <param name="eut_fw.absorb" type="string">No</param>
     <param name="eut.phases" type="string">Single phase</param>
   </params>

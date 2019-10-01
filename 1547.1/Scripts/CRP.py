@@ -114,7 +114,7 @@ def test_run():
 
         # get target power factors
         q_targets = {}
-        half_q_max_abs_enable
+
         if ts.param_value('crp.q_max_abs_enable') == 'Enabled':
             q_targets['crp_q_max_abs'] = float(ts.param_value('crp.q_max_abs_value'))
         if ts.param_value('crp.q_max_inj_enable') == 'Enabled':
@@ -151,8 +151,9 @@ def test_run():
 
         # pv simulator is initialized with test parameters and enabled
         pv = pvsim.pvsim_init(ts)
+        ts.log_debug('p_rated=%f' % (p_rated))
         if pv is not None:
-            pv.power_set(p_rated)
+            pv.power_set(round(p_rated, 2))
             pv.power_on()  # Turn on DC so the EUT can be initialized
 
         # DAS soft channels
@@ -184,6 +185,7 @@ def test_run():
             ts.log_debug('If not done already, set L/HVRT and trip parameters to the widest range of adjustability.')
 
         # Special considerations for CHIL ASGC/Typhoon startup #
+        """
         if chil is not None:
             inv_power = eut.measurements().get('W')
             timeout = 120.
@@ -202,7 +204,7 @@ def test_run():
                     raise der.DERError('Inverter did not start.')
             ts.log('Waiting for EUT to ramp up')
             ts.sleep(8)
-
+        """
         """
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
         """
@@ -258,13 +260,14 @@ def test_run():
                 #TODO have to verify input value for constant reactive power mode (Either in pu or var)
 
                 daq.sc['PF_TARGET'] = q_target
+                """
                 if eut is not None:
                     parameters = {'Ena': True, 'PF': pf_q_target}
                     ts.log('PF set: %s' % parameters)
                     eut.fixed_pf(params=parameters)
                     pf_setting = eut.fixed_pf()
                     ts.log('PF setting read: %s' % pf_setting)
-
+                """
                 """
                 f) Verify Constant Var mode is reported as active and that the power factor setting is reported as 
                 Qmax,inj.
@@ -287,7 +290,7 @@ def test_run():
                                                      tr=pf_response_time,
                                                      step=step,
                                                      initial_value=q_initial,
-                                                     target=pf_target)
+                                                     target=q_target)
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
 
@@ -303,7 +306,7 @@ def test_run():
                                                      tr=pf_response_time,
                                                      step=step,
                                                      initial_value=q_initial,
-                                                     target=pf_target)
+                                                     target=q_target)
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
                 """
@@ -318,7 +321,7 @@ def test_run():
                                                      tr=pf_response_time,
                                                      step=step,
                                                      initial_value=q_initial,
-                                                     target=pf_target)
+                                                     target=q_target)
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
 
@@ -334,7 +337,7 @@ def test_run():
                                                      tr=pf_response_time,
                                                      step=step,
                                                      initial_value=q_initial,
-                                                     target=pf_target)
+                                                     target=q_target)
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
 
@@ -349,7 +352,7 @@ def test_run():
                                                      tr=pf_response_time,
                                                      step=step,
                                                      initial_value=q_initial,
-                                                     target=pf_target)
+                                                     target=q_target)
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
 
@@ -364,7 +367,7 @@ def test_run():
                                                      tr=pf_response_time,
                                                      step=step,
                                                      initial_value=q_initial,
-                                                     target=pf_target)
+                                                     target=q_target)
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
 
@@ -381,7 +384,7 @@ def test_run():
                                                      tr=pf_response_time,
                                                      step=step,
                                                      initial_value=q_initial,
-                                                     target=pf_target)
+                                                     target=q_target)
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
 
@@ -398,7 +401,7 @@ def test_run():
                                                      tr=pf_response_time,
                                                      step=step,
                                                      initial_value=q_initial,
-                                                     target=pf_target)
+                                                     target=q_target)
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
 
@@ -414,7 +417,7 @@ def test_run():
                                                      tr=pf_response_time,
                                                      step=step,
                                                      initial_value=q_initial,
-                                                     target=pf_target)
+                                                     target=q_target)
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
 
@@ -430,7 +433,7 @@ def test_run():
                                                      tr=pf_response_time,
                                                      step=step,
                                                      initial_value=q_initial,
-                                                     target=pf_target)
+                                                     target=q_target)
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
                 """
@@ -441,7 +444,7 @@ def test_run():
                     #ts.log('PF set: %s' % parameters)
                     eut.fixed_var(params=parameters)
                     var_setting = eut.fixed_var()
-                    ts.log('Reactive Power setting read: %s' % pf_setting)
+                    ts.log('Reactive Power setting read: %s' % q_target)
                     daq.sc['event'] = 'Step Q'
                     daq.data_sample()
                     ts.sleep(4 * pf_response_time)
@@ -554,8 +557,6 @@ info.param('crp.pf_response_time', label='PF Response Time (secs)', default=10.0
 info.param('crp.v_in_nom', label='Test V_in_nom', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('crp.v_in_min', label='Test V_in_min', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('crp.v_in_max', label='Test V_in_max', default='Enabled', values=['Disabled', 'Enabled'])
-info.param('crp.imbalance_fix', label='Use minimum fix requirements from table 24 ?', \
-           default='No', values=['Yes', 'No'])
 
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)

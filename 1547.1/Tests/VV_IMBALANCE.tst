@@ -1,6 +1,6 @@
 <scriptConfig name="VV_IMBALANCE" script="VV">
   <params>
-    <param name="vv.test_1_t_r" type="float">0.1</param>
+    <param name="vv.test_1_t_r" type="float">5.0</param>
     <param name="eut.f_min" type="float">56.0</param>
     <param name="eut.f_nom" type="float">60.0</param>
     <param name="eut.f_max" type="float">66.0</param>
