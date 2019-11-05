@@ -269,29 +269,30 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
                 l) Begin the return to VRef. If V4 is less than VH, step the AC test source voltage to av above V4,
                    else skip to step n).
                 '''
-                p_steps_dict['Step G'] = p_min
 
-                p_steps_dict['Step H'] = p_pairs['P1'] - a_p
-                p_steps_dict['Step I'] = p_pairs['P1'] + a_p
-                p_steps_dict['Step J'] = (p_pairs['P1'] + p_pairs['P2']) / 2
-                p_steps_dict['Step K'] = p_pairs['P2'] - a_p
-                p_steps_dict['Step L'] = p_pairs['P2'] + a_p
-                p_steps_dict['Step M'] = (p_pairs['P2'] + p_pairs['P3']) / 2
-                p_steps_dict['Step N'] = p_pairs['P3'] - a_p
-                p_steps_dict['Step O'] = p_pairs['P3'] + a_p
-                p_steps_dict['Step P'] = p_rated
+                lib_1547.set_step_label(starting_label='G')
+                p_steps_dict[lib_1547.get_step_label()] = p_min
+
+                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P1'] - a_p
+                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P1'] + a_p
+                p_steps_dict[lib_1547.get_step_label()] = (p_pairs['P1'] + p_pairs['P2']) / 2
+                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P2'] - a_p
+                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P2'] + a_p
+                p_steps_dict[lib_1547.get_step_label()] = (p_pairs['P2'] + p_pairs['P3']) / 2
+                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P3'] - a_p
+                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P3'] + a_p
+                p_steps_dict[lib_1547.get_step_label()] = p_rated
 
                 # Begin the return to Pmin
-                p_steps_dict['Step Q'] = p_pairs['P3'] + a_p
-                p_steps_dict['Step R'] = p_pairs['P3'] - a_p
-                p_steps_dict['Step S'] = (p_pairs['P2'] + p_pairs['P3']) / 2
-
-                p_steps_dict['Step T'] = p_pairs['P2'] + a_p
-                p_steps_dict['Step U'] = p_pairs['P2'] - a_p
-                p_steps_dict['Step V'] = (p_pairs['P1'] + p_pairs['P2']) / 2
-                p_steps_dict['Step W'] = p_pairs['P1'] + a_p
-                p_steps_dict['Step X'] = p_pairs['P1'] - a_p
-                p_steps_dict['Step Y'] = p_min
+                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P3'] + a_p
+                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P3'] - a_p
+                p_steps_dict[lib_1547.get_step_label()] = (p_pairs['P2'] + p_pairs['P3']) / 2
+                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P2'] + a_p
+                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P2'] - a_p
+                p_steps_dict[lib_1547.get_step_label()] = (p_pairs['P1'] + p_pairs['P2']) / 2
+                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P1'] + a_p
+                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P1'] - a_p
+                p_steps_dict[lib_1547.get_step_label()] = p_min
 
 
                 dataset_filename = 'WV_%s_PWR_%d' % (wv_curve, power * 100)
@@ -474,7 +475,7 @@ info.param('eut_wv.p_prime_mode', label='Repeat Test with P(prime) value if EUT 
 
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)
-info.param('eut.phases', label='Phases', default='Single Phase', values=['Single phase', 'Split phase', 'Three phase'])
+info.param('eut.phases', label='Phases', default='Three phase', values=['Single phase', 'Split phase', 'Three phase'])
 info.param('eut.s_rated', label='Apparent power rating (VA)', default=10000.0)
 info.param('eut.p_rated', label='Output power rating (W)', default=8000.0)
 info.param('eut.p_min', label='Minimum Power Rating(W)', default=1000.)

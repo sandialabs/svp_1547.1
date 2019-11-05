@@ -1,9 +1,9 @@
 <scriptConfig name="VV_3" script="VV">
   <params>
-    <param name="vv.test_3_t_r" type="float">0.1</param>
     <param name="eut.f_min" type="float">56.0</param>
     <param name="eut.f_nom" type="float">60.0</param>
     <param name="eut.f_max" type="float">66.0</param>
+    <param name="vv.test_3_t_r" type="float">90.0</param>
     <param name="eut.v_low" type="float">116.0</param>
     <param name="eut.v_nom" type="float">120.0</param>
     <param name="eut.v_high" type="float">132.0</param>
