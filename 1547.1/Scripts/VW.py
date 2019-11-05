@@ -108,7 +108,8 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
 
         # DAS soft channels
         # TODO : add to library 1547
-        das_points = {'sc': ('P_TARGET', 'P_TARGET_MIN', 'P_TARGET_MAX', 'P_MEAS', 'V_TARGET','V_MEAS','event')}
+        #das_points = {'sc': ('P_TARGET', 'P_TARGET_MIN', 'P_TARGET_MAX', 'P_MEAS', 'V_TARGET','V_MEAS','event')}
+        das_points = lib_1547.get_sc_points()
 
         # initialize data acquisition system
         daq = das.das_init(ts, sc_points=das_points['sc'])
@@ -127,6 +128,8 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         eut = der.der_init(ts)
         if eut is not None:
             eut.config()
+            #Disable all functions on EUT
+            eut.deactivate_all_fct()
             ts.log_debug(eut.measurements())
             ts.log_debug(
                 'L/HVRT and trip parameters set to the widest range : v_min: {0} V, v_max: {1} V'.format(v_min, v_max))
@@ -176,6 +179,8 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
             t) Repeat steps d) through t) at EUT power set at 20% and 66% of rated power.
             '''
             for power in pwr_lvls:
+
+
                 '''
                 d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
                 voltage to Vin_nom. The EUT may limit active power throughout the test to meet reactive power requirements.
@@ -211,8 +216,6 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
                    be turned off.
                 '''
                 if eut is not None:
-                    # TODO : remove vw_curve unit
-                    vw_curve_units = ts.param_value('vw.vw_curve_units')
                     vw_curve_params = {'v': [int(v_pairs['V1']*(100./v_nom)),
                                              int(v_pairs['V2']*(100./v_nom))],
                                        'w': [int(v_pairs['P1']*(100./p_rated)),
@@ -238,24 +241,32 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
                 JAY NOTE: VRT requirements are such that VH should always be larger than V2 (1.1 pu). DER will operate
                 within the 0.88 - 1.1 pu range continuously.
                 '''
+                #Setting starting letter for label
+                lib_1547.set_step_label('G')
                 v_steps_dict = collections.OrderedDict()
-                v_steps_dict["Step G"] = v_pairs['V1'] - a_v
-                v_steps_dict["Step H"] = v_pairs['V1'] + a_v
-                v_steps_dict["Step I"] = (v_pairs['V2'] + v_pairs['V1']) / 2
-                v_steps_dict["Step J"] = v_pairs['V2'] - a_v
-                if v_pairs['V2'] < v_max:
-                    v_steps_dict["Step K"] = v_pairs['V2'] + a_v
-                    v_steps_dict["Step L"] = v_max - a_v
-                    v_steps_dict["Step M"] = v_pairs['V2'] + a_v
-                    v_steps_dict["Step N"] = v_pairs['V2'] - a_v
-                v_steps_dict["Step O"] = (v_pairs['V1'] + v_pairs['V2']) / 2
-                v_steps_dict["Step P"] = v_pairs['V1'] + a_v
-                v_steps_dict["Step Q"] = v_pairs['V1'] - a_v
-                # STD_CHANGE: Duplicated step R. Step R was changed for v_min + a_v
-                # v_steps_dict["Step R"] = v_min + a_v
-                # STD_CHANGE: Duplicated step R. Step S was changed for v_nom
-                # JAY NOTE: Agreed. Delete step R. Don't return to V_nom because this will be done in the next loop.
-                v_steps_dict["Step S"] = v_min + a_v
+                #Step G
+                v_steps_dict[lib_1547.get_step_label()] = v_min + a_v
+                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V1'] - a_v
+                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V1'] + a_v
+                v_steps_dict[lib_1547.get_step_label()] = (v_pairs['V2'] + v_pairs['V1']) / 2
+                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V2'] - a_v
+                #Step K
+                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V2'] + a_v
+                v_steps_dict[lib_1547.get_step_label()] = v_max - a_v
+                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V2'] + a_v
+                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V2'] - a_v
+                #Step P
+                v_steps_dict[lib_1547.get_step_label()] = (v_pairs['V1'] + v_pairs['V2']) / 2
+                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V1'] + a_v
+                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V1'] - a_v
+                v_steps_dict[lib_1547.get_step_label()] = v_min + a_v
+
+                if v_pairs['V2'] > v_max:
+                    del v_steps_dict['Step K']
+                    del v_steps_dict['Step L']
+                    del v_steps_dict['Step M']
+                    del v_steps_dict['Step N']
+                    del v_steps_dict['Step O']
 
                 # Ensure voltage step doesn't exceed the EUT boundaries and round V to 2 decimal places
                 for step, voltage in v_steps_dict.iteritems():
@@ -426,6 +437,8 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
         eut = der.der_init(ts)
         if eut is not None:
             eut.config()
+            #Disable all functions on EUT
+            eut.deactivate_all_fct()
             ts.log_debug(eut.measurements())
             ts.log_debug(
                 'L/HVRT and trip parameters set to the widest range : v_min: {0} V, v_max: {1} V'.format(v_min, v_max))
@@ -509,27 +522,18 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                     f) Verify volt-watt mode is reported as active and that the correct characteristic is reported
                     '''
                     eut.volt_watt(params=vw_params)
-                    # eut.volt_var(params={'Ena': True})
                     ts.log_debug('Initial EUT VW settings are %s' % eut.volt_watt())
                     ts.log_debug('curve points:  %s' % v_pairs)
 
-                    # STD_CHANGE: Remove step g) or add more information about the volt-var configuration.
-                    # Jay NOTE: Not sure if the committee is trying to test asymmetric VW/VV response here, but most
-                    # likely a typo since this is tested in VV section
-
-                    '''
-                    g) Verify volt-var mode is reported as active and that the correct characteristic is reported.
-                    '''
-                    ts.log('volt-var settings: %s' % eut.volt_var())
 
                 '''
-                h) Once steady state is reached, begin the adjustment of phase voltages.
+                g) Once steady state is reached, begin the adjustment of phase voltages.
                 '''
                 """
                 Test start
                 """
-                step = 'Step H'
-                daq.sc['event'] = step
+                lib_1547.set_step_label('G')
+                daq.sc['event'] = lib_1547.get_step_label()
                 daq.data_sample()
                 ts.log('Wait for steady state to be reached')
                 ts.sleep(4 * vw_response_time[vw_curve])
@@ -548,7 +552,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                 '''
 
                 if grid is not None:
-                    step = 'Step I'
+                    step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator to case A (IEEE 1547.1-Table 24)(%s)' % step)
                     p_initial = lib_1547.get_initial(daq=daq, step=step)
                     lib_1547.set_grid_asymmetric(grid=grid, case='case_a')
@@ -565,7 +569,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                 Step j) For multiphase units, step the AC test source voltage to VN.
                 '''
                 if grid is not None:
-                    step = 'Step J'
+                    step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
                     p_initial = lib_1547.get_initial(daq=daq, step=step)
                     grid.voltage(v_nom)
@@ -581,7 +585,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                 Step k) For multiphase units, step the AC test source voltage to Case B from Table 24
                 '''
                 if grid is not None:
-                    step = 'Step K'
+                    step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator to case B (IEEE 1547.1-Table 24)(%s)' % step)
                     p_initial = lib_1547.get_initial(daq=daq, step=step)
                     lib_1547.set_grid_asymmetric(grid=grid, case='case_b')
@@ -598,7 +602,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                 Step l) For multiphase units, step the AC test source voltage to VN.
                 '''
                 if grid is not None:
-                    step = 'Step L'
+                    step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
                     p_initial = lib_1547.get_initial(daq=daq, step=step)
                     grid.voltage(v_nom)

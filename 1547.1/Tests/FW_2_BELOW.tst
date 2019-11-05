@@ -1,7 +1,7 @@
 <scriptConfig name="FW_2_BELOW" script="FW">
   <params>
     <param name="eut_fw.p_small" type="float">0.05</param>
-    <param name="fw.test_2_tr" type="float">1.0</param>
+    <param name="fw.test_2_tr" type="float">0.1</param>
     <param name="eut.f_min" type="float">56.0</param>
     <param name="eut.f_nom" type="float">60.0</param>
     <param name="eut.f_max" type="float">66.0</param>

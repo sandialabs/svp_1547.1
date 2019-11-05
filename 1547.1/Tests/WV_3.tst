@@ -1,6 +1,5 @@
 <scriptConfig name="WV_3" script="WV">
   <params>
-    <param name="eut_wv.test_2_t_r" type="float">1.0</param>
     <param name="eut_wv.test_1_t_r" type="float">10.0</param>
     <param name="eut_wv.test_3_t_r" type="float">90.0</param>
     <param name="eut.v_low" type="float">116.0</param>
@@ -23,6 +22,6 @@
     <param name="eut_wv.test_3" type="string">Enabled</param>
     <param name="eut.abs_enable" type="string">No</param>
     <param name="eut_wv.mode" type="string">Normal</param>
-    <param name="eut.phases" type="string">Single phase</param>
+    <param name="eut.phases" type="string">Three phase</param>
   </params>
 </scriptConfig>

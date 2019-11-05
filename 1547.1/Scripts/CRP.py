@@ -112,7 +112,7 @@ def test_run():
         result_params = lib_1547.get_rslt_param_plot()
 
 
-        # get target power factors
+        #get target q relative value
         q_targets = {}
 
         if ts.param_value('crp.q_max_abs_enable') == 'Enabled':
@@ -123,6 +123,9 @@ def test_run():
             q_targets['crp_half_q_max_abs'] = 0.5*float(ts.param_value('crp.q_max_abs_value'))
         if ts.param_value('crp.half_q_max_inj_enable') == 'Enabled':
             q_targets['crp_half_q_max_inj'] = 0.5*float(ts.param_value('crp.q_max_inj_value'))
+
+        #get q max value
+        q_max_value = ts.param_value('crp.q_max_value')
 
         v_in_targets = {}
 
@@ -151,13 +154,13 @@ def test_run():
 
         # pv simulator is initialized with test parameters and enabled
         pv = pvsim.pvsim_init(ts)
-        ts.log_debug('p_rated=%f' % (p_rated))
         if pv is not None:
-            pv.power_set(round(p_rated, 2))
+            pv.power_set(p_rated)
             pv.power_on()  # Turn on DC so the EUT can be initialized
 
         # DAS soft channels
-        das_points = {'sc': ('V_MEAS', 'P_MEAS', 'Q_MEAS', 'Q_TARGET_MIN', 'Q_TARGET_MAX', 'PF_TARGET', 'event')}
+        #das_points = {'sc': ('V_MEAS', 'P_MEAS', 'Q_MEAS', 'Q_TARGET_MIN', 'Q_TARGET_MAX', 'PF_TARGET', 'event')}
+        das_points = lib_1547.get_sc_points()
 
         # initialize data acquisition
         daq = das.das_init(ts, sc_points=das_points['sc'])
@@ -185,7 +188,6 @@ def test_run():
             ts.log_debug('If not done already, set L/HVRT and trip parameters to the widest range of adjustability.')
 
         # Special considerations for CHIL ASGC/Typhoon startup #
-        """
         if chil is not None:
             inv_power = eut.measurements().get('W')
             timeout = 120.
@@ -204,7 +206,7 @@ def test_run():
                     raise der.DERError('Inverter did not start.')
             ts.log('Waiting for EUT to ramp up')
             ts.sleep(8)
-        """
+
         """
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
         """
@@ -220,15 +222,12 @@ def test_run():
         """
         d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
         voltage to Vin_nom. The EUT may limit active power throughout the test to meet reactive power requirements.
-        """
 
+        s) For an EUT with an input voltage range, repeat steps d) through o) for Vin_min and Vin_max.
         """
-        s) Repeat steps d) through v) for additional reactive power settings: Qmax,ab, 0.5Qmax,inj, 0.5Qmax,ab.
-        t) For an EUT with an input voltage range, repeat steps d) through o) for Vin_min and Vin_max.
+        # TODO: Include step t)
         """
-        # TODO: Include step u)
-        """
-        u) Steps d) through v) may be repeated to test additional protocols methods..
+        t) Steps d) through q) may be repeated to test additional communication protocols - Run with another test.
         """
 
         # For PV systems, this requires that Vmpp = Vin_nom and Pmpp = Prated.
@@ -240,39 +239,45 @@ def test_run():
                 pv.irradiance_set(1000.)
 
             """
-            e) Enable Constant Var mode and set the EUT power factor to Qmax,inj.
+            e) Enable constant power factor mode and set the EUT power factor to PFmin,inj.
+            r) Repeat steps d) through o) for additional power factor settings: PFmin,ab, PFmid,inj, PFmid,ab.
 
             Only the user-selected PF setting will be tested.
             """
             for q_test_name, q_target in q_targets.iteritems():
-                pf_q_target = pow(pow(s_rated, 2)-pow(q_target, 2), 0.5)
-                if q_test_name is 'crp_q_max_inj' or q_test_name is 'crp_half_q_max_inj':
-                    pf_q_target *= -1.0
-                ts.log('Starting data capture for pf = %s' % q_target)
+
+                # Setting up step label
+                lib_1547.set_step_label(starting_label='F')
+
+                q_target *= q_max_value
+
+                ts.log('Starting data capture for fixed Q relative = %s' % q_target)
+
                 if imbalance_fix == "Yes":
                     dataset_filename = ('{0}_{1}_FIX'.format(v_in_label.upper(), q_test_name.upper()))
                 else:
                     dataset_filename = ('{0}_{1}'.format(v_in_label.upper(), q_test_name.upper()))
+
                 ts.log('------------{}------------'.format(dataset_filename))
                 # Start the data acquisition systems
                 daq.data_capture(True)
 
-                #TODO have to verify input value for constant reactive power mode (Either in pu or var)
+                daq.sc['Q_TARGET'] = q_target
 
-                daq.sc['PF_TARGET'] = q_target
-                """
+                #TODO Implement this into der_fronius
                 if eut is not None:
-                    parameters = {'Ena': True, 'PF': pf_q_target}
-                    ts.log('PF set: %s' % parameters)
-                    eut.fixed_pf(params=parameters)
-                    pf_setting = eut.fixed_pf()
-                    ts.log('PF setting read: %s' % pf_setting)
+                    parameters = {'Ena': True, 'Q_rel': q_target}
+                    ts.log('Parameters set: %s' % parameters)
+                    eut.fixed_var(params=parameters)
+                    vars_setting = eut.fixed_var()
+                    ts.log('fixed vars setting read: %s' % vars_setting)
+
                 """
+                f) Verify Constant Var mode is reported as active and that the power factor setting is reported 
+                as Qmax,inj.
+
                 """
-                f) Verify Constant Var mode is reported as active and that the power factor setting is reported as 
-                Qmax,inj.
-                """
-                step = 'Step F'
+                step = lib_1547.get_step_label()
                 daq.sc['event'] = step
                 daq.data_sample()
                 ts.log('Wait for steady state to be reached')
@@ -282,7 +287,7 @@ def test_run():
                 g) Step the EUT's active power to 20% of Prated or Pmin, whichever is less.
                 """
                 if pv is not None:
-                    step = 'Step G'
+                    step = lib_1547.get_step_label()
                     ts.log('Power step: setting PV simulator power to %s (%s)' % (p_min, step))
                     q_initial = lib_1547.get_initial(daq=daq, step=step)
                     pv.power_set(p_min)
@@ -298,7 +303,7 @@ def test_run():
                 h) Step the EUT's active power to 5% of Prated or Pmin, whichever is less.
                 """
                 if pv is not None:
-                    step = 'Step H'
+                    step = lib_1547.get_step_label()
                     ts.log('Power step: setting PV simulator power to %s (%s)' % (p_min, step))
                     q_initial = lib_1547.get_initial(daq=daq, step=step)
                     pv.power_set(p_min)
@@ -313,7 +318,7 @@ def test_run():
                 i) Step the EUT's available active power to Prated.
                 """
                 if pv is not None:
-                    step = 'Step I'
+                    step = lib_1547.get_step_label()
                     ts.log('Power step: setting PV simulator power to %s (%s)' % (p_rated, step))
                     q_initial = lib_1547.get_initial(daq=daq, step=step)
                     pv.power_set(p_rated)
@@ -324,12 +329,9 @@ def test_run():
                                                      target=q_target)
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
-
-                """
-                j) Step the AC test source voltage to (VL + av).
-                """
                 if grid is not None:
-                    step = 'Step J'
+                    #   J) Step the AC test source voltage to (VL + av)
+                    step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % ((v_min + a_v), step))
                     q_initial = lib_1547.get_initial(daq=daq, step=step)
                     grid.voltage(v_min + a_v)
@@ -341,10 +343,8 @@ def test_run():
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
 
-                    """
-                    k) Step the AC test source voltage to (VH - av).
-                    """
-                    step = 'Step K'
+                    #   k) Step the AC test source voltage to (VH - av)
+                    step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % ((v_max - a_v), step))
                     q_initial = lib_1547.get_initial(daq=daq, step=step)
                     grid.voltage(v_max - a_v)
@@ -356,11 +356,22 @@ def test_run():
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
 
-                    """
-                    l) Step the AC test source voltage to (VL + av).
-                    """
-                    step = 'Step L'
-                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_min + a_v, step))
+                    #   l) Step the AC test source voltage to (VL + av)
+                    step = lib_1547.get_step_label()
+                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % ((v_min + a_v), step))
+                    q_initial = lib_1547.get_initial(daq=daq, step=step)
+                    grid.voltage(v_min + a_v)
+                    q_p_analysis = lib_1547.criteria(daq=daq,
+                                                     tr=pf_response_time,
+                                                     step=step,
+                                                     initial_value=q_initial,
+                                                     target=q_target)
+                    result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
+                                                                 filename=dataset_filename))
+
+                    #   m) For multiphase units, step the AC test source voltage to VN
+                    step = lib_1547.get_step_label()
+                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
                     q_initial = lib_1547.get_initial(daq=daq, step=step)
                     grid.voltage(v_nom)
                     q_p_analysis = lib_1547.criteria(daq=daq,
@@ -372,11 +383,11 @@ def test_run():
                                                                  filename=dataset_filename))
 
                 '''
-                m) For multiphase units, step the AC test source voltage to Case A from Table 24.
+                n) For multiphase units, step the AC test source voltage to Case A from Table 24.
                 '''
 
                 if grid is not None:
-                    step = 'Step M'
+                    step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator to case A (IEEE 1547.1-Table 24)(%s)' % step)
                     q_initial = lib_1547.get_initial(daq=daq, step=step)
                     lib_1547.set_grid_asymmetric(grid=grid, case='case_a')
@@ -389,11 +400,11 @@ def test_run():
                                                                  filename=dataset_filename))
 
                 """
-                n) For multiphase units, step the AC test source voltage to VN.
+                o) For multiphase units, step the AC test source voltage to VN.
                 """
 
                 if grid is not None:
-                    step = 'Step n'
+                    step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
                     q_initial = lib_1547.get_initial(daq=daq, step=step)
                     grid.voltage(v_nom)
@@ -406,10 +417,10 @@ def test_run():
                                                                  filename=dataset_filename))
 
                 """
-                o) For multiphase units, step the AC test source voltage to Case B from Table 24.
+                p) For multiphase units, step the AC test source voltage to Case B from Table 24.
                 """
                 if grid is not None:
-                    step = 'Step O'
+                    step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator to case B (IEEE 1547.1-Table 24)(%s)' % step)
                     q_initial = lib_1547.get_initial(daq=daq, step=step)
                     lib_1547.set_grid_asymmetric(grid=grid, case='case_b')
@@ -422,10 +433,10 @@ def test_run():
                                                                  filename=dataset_filename))
 
                 """
-                p) For multiphase units, step the AC test source voltage to VN
+                q) For multiphase units, step the AC test source voltage to VN
                 """
                 if grid is not None:
-                    step = 'Step P'
+                    step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
                     q_initial = lib_1547.get_initial(daq=daq, step=step)
                     grid.voltage(v_nom)
@@ -437,22 +448,22 @@ def test_run():
                     result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
                                                                  filename=dataset_filename))
                 """
-                q) Disable constant power factor mode. Power factor should return to unity.
+                r) Disable constant power factor mode. Power factor should return to unity.
                 """
                 if eut is not None:
                     parameters = {'Ena': False}
                     #ts.log('PF set: %s' % parameters)
                     eut.fixed_var(params=parameters)
                     var_setting = eut.fixed_var()
-                    ts.log('Reactive Power setting read: %s' % q_target)
-                    daq.sc['event'] = 'Step Q'
+                    ts.log('Reactive Power setting read: %s' % vars_setting)
+                    daq.sc['event'] = lib_1547.get_step_label()
                     daq.data_sample()
                     ts.sleep(4 * pf_response_time)
                     daq.sc['event'] = 'T_settling_done'
                     daq.data_sample()
 
                 """
-                r) Verify all reactive/active power control functions are disabled.
+                q) Verify all reactive/active power control functions are disabled.
                 """
                 if eut is not None:
                     ts.log('Reactive/active power control functions are disabled.')
@@ -499,6 +510,7 @@ def test_run():
         if daq is not None:
             daq.close()
         if eut is not None:
+            eut.fixed_var(params={'Ena': False})
             eut.close()
         if rs is not None:
             rs.close()
@@ -541,13 +553,13 @@ def run(test_script):
     sys.exit(rc)
 
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.0')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.1')
 
 # CPF test parameters
 info.param_group('crp', label='Test Parameters')
-info.param('crp.q_max_abs_value', label='Qmax,inj value', default=-500)
-info.param('crp.q_max_inj_value', label='Qmax,abs value', default=500)
-
+info.param('crp.q_max_abs_value', label='Qmax,inj value (pu)', default=-1)
+info.param('crp.q_max_inj_value', label='Qmax,abs value (pu)', default=1)
+info.param('crp.q_max_value', label='Qmax value (vars)', default=4400)
 info.param('crp.q_max_abs_enable', label='Qmax,abs activation', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('crp.q_max_inj_enable', label='Qmax,inj activation', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('crp.half_q_max_abs_enable', label='0.5*Qmax,abs activation', default='Enabled', values=['Disabled', 'Enabled'])
@@ -557,6 +569,8 @@ info.param('crp.pf_response_time', label='PF Response Time (secs)', default=10.0
 info.param('crp.v_in_nom', label='Test V_in_nom', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('crp.v_in_min', label='Test V_in_min', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('crp.v_in_max', label='Test V_in_max', default='Enabled', values=['Disabled', 'Enabled'])
+info.param('crp.imbalance_fix', label='Use minimum fix requirements from table 24 ?', \
+           default='No', values=['Yes', 'No'])
 
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)

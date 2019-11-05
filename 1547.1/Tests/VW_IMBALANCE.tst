@@ -1,6 +1,6 @@
 <scriptConfig name="VW_IMBALANCE" script="VW">
   <params>
-    <param name="vw.test_1_tr" type="float">10.0</param>
+    <param name="vw.test_1_tr" type="float">0.1</param>
     <param name="eut.f_min" type="float">56.0</param>
     <param name="eut.f_nom" type="float">60.0</param>
     <param name="eut.f_max" type="float">66.0</param>

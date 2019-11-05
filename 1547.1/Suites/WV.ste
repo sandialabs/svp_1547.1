@@ -1,6 +1,8 @@
 <suite globals="True" name="WV">
   <members>
     <member name="WV_1.tst" />
+    <member name="WV_2.tst" />
+    <member name="WV_3.tst" />
   </members>
   <params>
     <param name="eut.v_low" type="float">116.0</param>
@@ -18,6 +20,6 @@
     <param name="das.mode" type="string">Disabled</param>
     <param name="hil.mode" type="string">Disabled</param>
     <param name="eut.abs_enable" type="string">No</param>
-    <param name="eut.phases" type="string">Single phase</param>
+    <param name="eut.phases" type="string">Three phase</param>
   </params>
 </suite>

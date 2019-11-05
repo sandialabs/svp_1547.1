@@ -21,6 +21,6 @@
     <param name="eut_wv.test_1" type="string">Enabled</param>
     <param name="eut.abs_enable" type="string">No</param>
     <param name="eut_wv.mode" type="string">Normal</param>
-    <param name="eut.phases" type="string">Single phase</param>
+    <param name="eut.phases" type="string">Three phase</param>
   </params>
 </scriptConfig>
