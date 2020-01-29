@@ -303,9 +303,20 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
 
                 for step_label, p_step in p_steps_dict.iteritems():
                     ts.log('Power step: setting Grid power to %s (W)(%s)' % (p_step, step_label))
-                    q_initial = lib_1547.get_initial(daq=daq, step=step_label)
+                    q_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
                     if pv is not None:
                         pv.power_set(p_step)
+
+                    lib_1547.process_data(
+                        daq=daq,
+                        tr=wv_response_time[wv_curve],
+                        step=step_label,
+                        initial_value=q_initial,
+                        curve=wv_curve,
+                        pwr_lvl=power,
+                        #target=p_step
+                    )
+                    '''
                     p_q_analysis = lib_1547.criteria(   daq=daq,
                                                         tr=wv_response_time[wv_curve],
                                                         step=step_label,
@@ -317,7 +328,7 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
 
                     result_summary.write(lib_1547.write_rslt_sum(analysis=p_q_analysis, step=step_label,
                                                             filename=dataset_filename))
-
+                    '''
                 ts.log('Sampling complete')
                 dataset_filename = dataset_filename + ".csv"
                 daq.data_capture(False)
@@ -451,7 +462,7 @@ def run(test_script):
     sys.exit(rc)
 
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.2')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.3')
 
 # VV test parameters
 info.param_group('eut_wv', label='Test Parameters')

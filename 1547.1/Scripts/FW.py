@@ -326,21 +326,23 @@ def test_run():
                     daq.data_capture(True)
 
                     for step_label, f_step in f_steps_dic[mode].iteritems():
-                        p_initial = lib_1547.get_initial(daq=daq, step=step_label)
+                        p_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
                         ts.log('Frequency step: setting Grid simulator frequency to %s (%s)' % (f_step, step_label))
                         if grid is not None:
                             grid.freq(f_step)
-                        f_p_analysis = lib_1547.criteria(daq=daq,
-                                                         tr=fw_param['tr'],
-                                                         step=step_label,
-                                                         initial_value=p_initial,
-                                                         target=f_step,
-                                                         mode=mode,
-                                                         curve =fw_curve,
-                                                         pwr_lvl=power)
+                        lib_1547.process_data(
+                            daq=daq,
+                            tr=fw_param['tr'],
+                            step=step_label,
+                            initial_value=p_initial,
+                            #target=f_step,
+                            #mode=mode,
+                            curve =fw_curve,
+                            pwr_lvl=power)
+                        '''
                         result_summary.write(lib_1547.write_rslt_sum(analysis=f_p_analysis, step=step_label,
                                                                      filename=dataset_filename))
-
+                        '''
                     dataset_filename = dataset_filename + ".csv"
                     daq.data_capture(False)
                     ds = daq.data_capture_dataset()
@@ -422,7 +424,7 @@ def run(test_script):
 
     sys.exit(rc)
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.2')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.3')
 
 # FW test parameters
 info.param_group('fw', label='Test Parameters')
