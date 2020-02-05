@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project>
+    <General>
+        <att_name>Project</att_name>
+        <att_description>This is a project!</att_description>
+        <att_ip_address>10.1.2.2:25289</att_ip_address>
+        <att_hashcode></att_hashcode>
+        <att_autosave>ON</att_autosave>
+        <att_filename>C:\Users\DETLDAQ\OPAL-RT\RT-LABv2019.1_Workspace\PHIL_Phase_Jump\models\Phase_Jump_A_B_A\Phase_Jump_A_B_A.llp</att_filename>
+    </General>
+    <Optionals>
+        <att_donotask_loadcfg_at_prjopen>0</att_donotask_loadcfg_at_prjopen>
+        <att_project_locked>0</att_project_locked>
+    </Optionals>
+    <Models>
+        <Model>
+            <Path>
+                <Relative>Phase_Jump_A_B_A.mdl</Relative>
+                <Absolute>C:/Users/DETLDAQ/OPAL-RT/RT-LABv2019.1_Workspace/PHIL_Phase_Jump/models/Phase_Jump_A_B_A/Phase_Jump_A_B_A.mdl</Absolute>
+                <UNC>C:/Users/DETLDAQ/OPAL-RT/RT-LABv2019.1_Workspace/PHIL_Phase_Jump/models/Phase_Jump_A_B_A/Phase_Jump_A_B_A.mdl</UNC>
+            </Path>
+        </Model>
+    </Models>
+</Project>
