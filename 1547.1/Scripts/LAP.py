@@ -206,13 +206,15 @@ def test_run():
                                       'RmpDecTmm': 0,
                                       'RmpIncTmm': 0}
                                   })
-            eut.freq_watt(params={
-                'Ena': True,
-                'curve': 1,
-                'dbf': 0.036,
-                'kof': 0.05,
-                'RspTms': 5
-                })
+            eut.freq_watt(
+                params={
+                    'Ena': True,
+                    'curve': 1,
+                    'dbf': 0.036,
+                    'kof': 0.05,
+                    'RspTms': 5
+                }
+            )
             try:
                 eut.vrt_stay_connected_high(params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000,
                                                     'V1': v_max, 'Tms2': 0.16, 'V2': v_max})
@@ -274,6 +276,7 @@ def test_run():
         h) Repeat steps b) through g) twice for a total of three repetitions
         """
 
+
         for n_iter in n_iters :
             for act_pwrs_limit in act_pwrs_limits:
                 """
@@ -283,10 +286,8 @@ def test_run():
                     - Begin recording EUT active power
                  """
                 ts.log('Starting test no. %s with active power limit to %s ' % (n_iter, act_pwrs_limit))
-                a_v = lib_1547.MSA_V * 1.5
-                a_f = lib_1547.MSA_F * 1.5
-                # For PV systems, this requires that Vmpp = Vin_nom and Pmpp = Prated.
 
+                # For PV systems, this requires that Vmpp = Vin_nom and Pmpp = Prated.
                 if pv is not None:
                     pv.iv_curve_config(pmp=p_rated, vmp=v_nom_in)
                     pv.irradiance_set(1000.)
@@ -315,20 +316,28 @@ def test_run():
                 ts.log('EUT Config: setting Active Power Limit to %s (%s)' % (act_pwrs_limit, step))
                 if eut is not None:
                     # limit maximum power
-                    eut.limit_max_power(params={'MaxLimWEna': True,
-                                                'MaxLimW_PCT': act_pwrs_limit*100,
-                                                'WinTms': 0,
-                                                'RmpTms': 0,
-                                                'RvrtTms': 0.0})
-                lib_1547.process_data(daq=daq,
-                                      tr=tr_min,
-                                      step=step,
-                                      initial_value=initial_values,
-                                      pwr_lvl=act_pwrs_limit,
-                                      y_target=act_pwrs_limit,
-                                      result_summary=result_summary,
-                                      filename=filename
-                                      )
+                    eut.limit_max_power(
+                        params={
+                            'MaxLimWEna': True,
+                            'MaxLimW_PCT': act_pwrs_limit*100,
+                            'WinTms': 0,
+                            'RmpTms': 0,
+                            'RvrtTms': 0.0
+                        }
+                    )
+                step_dict = {'V': v_nom, 'F': f_nom}
+                target_dict = {'P': act_pwrs_limit}
+                lib_1547.process_data(
+                    daq=daq,
+                    tr=tr_min,
+                    step=step,
+                    initial_value=initial_values,
+                    pwr_lvl=act_pwrs_limit,
+                    x_target=step_dict,
+                    y_target=target_dict,
+                    result_summary=result_summary,
+                    filename=filename
+                )
 
 
                 """
@@ -336,7 +345,7 @@ def test_run():
                       state
                     - Return AC test frequency to nominal and Hold until new states reached
                 """
-                f_steps = [59,f_nom]
+                f_steps = [59, f_nom]
                 step = lib_1547.get_step_label()
                 if grid is not None:
                     for f_step in f_steps:
@@ -344,15 +353,19 @@ def test_run():
                         ts.log('Frequency step: setting Grid simulator frequency to %s (%s)' % (f_step, step_))
                         initial_values = lib_1547.get_initial_value(daq=daq,step=step_)
                         grid.freq(f_step)
-                        lib_1547.process_data(daq=daq,
-                                              tr=tr_min,
-                                              step=step_,
-                                              initial_value=initial_values,
-                                              pwr_lvl=act_pwrs_limit,
-                                              x_target=f_step,
-                                              result_summary=result_summary,
-                                              filename=filename
-                                              )
+                        step_dict = {'V': v_nom, 'F': f_step}
+                        #target_dict = {'P': None}
+                        lib_1547.process_data(
+                            daq=daq,
+                            tr=tr_min,
+                            step=step_,
+                            initial_value=initial_values,
+                            pwr_lvl=act_pwrs_limit,
+                            x_target=step_dict,
+                            #y_target=target_dict,
+                            result_summary=result_summary,
+                            filename=filename
+                        )
 
 
                 """
@@ -368,16 +381,19 @@ def test_run():
                         ts.log('Frequency step: setting Grid simulator frequency to %s (%s)' % (f_step, step_))
                         initial_values = lib_1547.get_initial_value(daq=daq,step=step_)
                         grid.freq(f_step)
-                        lib_1547.process_data(daq=daq,
-                                              tr=tr_min,
-                                              step=step_,
-                                              initial_value=initial_values,
-                                              pwr_lvl=act_pwrs_limit,
-                                              x_target=f_step,
-                                              y_target=None,
-                                              result_summary=result_summary,
-                                              filename=filename
-                                              )
+                        step_dict = {'V': v_nom, 'F': f_step}
+                        target_dict = {'P': None}
+                        lib_1547.process_data(
+                            daq=daq,
+                            tr=tr_min,
+                            step=step_,
+                            initial_value=initial_values,
+                            pwr_lvl=act_pwrs_limit,
+                            x_target=step_dict,
+                            y_target=None, #Calculated directly in P1547 lib
+                            result_summary=result_summary,
+                            filename=filename
+                        )
 
                 """
                 f)  - Increase the voltage of the AC test to 1.08 times nominal and hold until EUT active power 
@@ -392,17 +408,17 @@ def test_run():
                         ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_step, step_))
                         initial_values = lib_1547.get_initial_value(daq=daq,step=step_)
                         grid.voltage(v_step)
-                        lib_1547.process_data(daq=daq,
-                                              tr=tr_vw,
-                                              step=step_,
-                                              initial_value=initial_values,
-                                              pwr_lvl=act_pwrs_limit,
-                                              curve=None,
-                                              x_target=v_step,
-                                              y_target=None,
-                                              result_summary=result_summary,
-                                              filename=filename
-                                              )
+                        lib_1547.process_data(
+                            daq=daq,
+                            tr=tr_vw,
+                            step=step_,
+                            initial_value=initial_values,
+                            pwr_lvl=act_pwrs_limit,
+                            x_target=v_step,
+                            y_target=None, #Calculated directly in P1547 lib
+                            result_summary=result_summary,
+                            filename=filename
+                        )
 
                 ts.log('Sampling complete')
                 dataset_filename = filename + ".csv"
@@ -413,6 +429,7 @@ def test_run():
                 result_params['plot.title'] = dataset_filename.split('.csv')[0]
                 ts.result_file(dataset_filename, params=result_params)
                 result = script.RESULT_COMPLETE
+
     except script.ScriptFail, e:
         reason = str(e)
         if reason:
@@ -483,7 +500,7 @@ def run(test_script):
 
     sys.exit(rc)
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.3')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.3.0')
 
 # CPF test parameters
 info.param_group('lap', label='Test Parameters')

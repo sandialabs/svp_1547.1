@@ -2,9 +2,9 @@
   <params>
     <param name="cpf.pf_mid_inj_value" type="float">-0.95</param>
     <param name="cpf.pf_min_inj_value" type="float">-0.9</param>
-    <param name="cpf.pf_response_time" type="float">0.1</param>
     <param name="cpf.pf_min_ab_value" type="float">0.9</param>
     <param name="cpf.pf_mid_ab_value" type="float">0.95</param>
+    <param name="cpf.pf_response_time" type="float">10.0</param>
     <param name="eut.f_min" type="float">56.0</param>
     <param name="eut.f_nom" type="float">60.0</param>
     <param name="eut.f_max" type="float">66.0</param>

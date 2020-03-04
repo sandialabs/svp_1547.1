@@ -45,6 +45,11 @@ import collections
 import cmath
 import math
 
+VV = 'VV'
+V = 'V'
+F = 'F'
+P = 'P'
+Q = 'Q'
 
 def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
 
@@ -84,7 +89,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
         """
         A separate module has been create for the 1547.1 Standard
         """
-        lib_1547 = p1547.module_1547(ts=ts, aif='VV')
+        lib_1547 = p1547.module_1547(ts=ts, aif=VV)
         ts.log_debug("1547.1 Library configured for %s" % lib_1547.get_test_name())
 
         # result params
@@ -192,27 +197,14 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             pv.iv_curve_config(pmp=p_rated, vmp=v_in_nom)
             pv.irradiance_set(1000.)
 
-
         '''
         gg) Repeat steps g) through dd) for characteristics 2 and 3.
         '''
         for vv_curve in vv_curves:
             ts.log('Starting test with characteristic curve %s' % (vv_curve))
             v_pairs = lib_1547.get_params(curve=vv_curve)
+            ts.log_debug('v_pairs:%s' % v_pairs)
             ts.log_debug(v_pairs)
-
-
-            '''
-            # ASK @Jay about this loop. Necessary here ? Could go inside your driver...
-            for i in range(10):
-                if eut.volt_var() is not None:
-                    if not eut.volt_var()['Ena']:
-                        ts.log_error('EUT VV Enable register not set to True. Trying again...')
-                        eut.volt_var(params={'Ena': True})
-                        ts.sleep(1)
-                    else:
-                        break
-            '''
 
             '''
             ff) Repeat test steps d) through ee) at EUT power set at 20% and 66% of rated power.
@@ -315,11 +307,11 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     v_steps_dict[lib_1547.get_step_label()] = v_ref*v_nom
 
 
-                    for step, voltage in v_steps_dict.iteritems():
-                        v_steps_dict.update({step: round(voltage, 2)})
-                        if voltage > v_high:
+                    for step, target in v_steps_dict.iteritems():
+                        v_steps_dict.update({step: round(target, 2)})
+                        if target > v_high:
                             v_steps_dict.update({step: v_high})
-                        elif voltage < v_low:
+                        elif target < v_low:
                             v_steps_dict.update({step: v_low})
 
                     #Skips steps when V4 is higher than Vmax of EUT
@@ -346,9 +338,10 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     daq.data_capture(True)
 
                     for step_label, v_step in v_steps_dict.iteritems():
+                        v_step_dict_updated = {V: v_step}
                         ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_step, step_label))
                         q_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
-
+                        ts.log_debug(q_initial)
                         if grid is not None:
                             grid.voltage(v_step)
                         lib_1547.process_data(
@@ -358,16 +351,12 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                             initial_value=q_initial,
                             curve=vv_curve,
                             pwr_lvl=power,
-                            x_target=v_step,
+                            x_target=v_step_dict_updated,
                             y_target=None,
                             result_summary=result_summary,
                             filename=dataset_filename
                         )
 
-
-
-                        #result_summary.write(lib_1547.write_rslt_sum(analysis=q_v_analysis, step=step_label,
-                        #                                        filename=dataset_filename))
 
                     ts.log('Sampling complete')
                     dataset_filename = dataset_filename + ".csv"
@@ -497,8 +486,6 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
         pv.power_on()  # Turn on DC so the EUT can be initialized
 
         # DAS soft channels
-        # TODO : add to library 1547
-        #das_points = {'sc': ('Q_TARGET', 'Q_TARGET_MIN', 'Q_TARGET_MAX', 'Q_MEAS', 'V_TARGET', 'V_MEAS', 'event')}
         das_points = lib_1547.get_sc_points()
 
         # initialize data acquisition system
@@ -554,6 +541,7 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                  '''
                 #Setting up v_pairs value corresponding to desired curve
                 v_pairs = lib_1547.get_params(curve=vv_curve)
+                ts.log_debug('v_pairs:%s' % v_pairs)
                 #Setting up step label
                 lib_1547.set_step_label(starting_label='G')
 
@@ -569,18 +557,6 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                     ts.log_debug('Sending VV points: %s' % vv_curve_params)
                     eut.volt_var(params={'Ena': True, 'curve': vv_curve_params})
 
-                    # ASK @Jay about this loop. Necessary here ? Could go inside your driver...
-
-                    for i in range(10):
-                        if not eut.volt_var()['Ena']:
-                            ts.log_error('EUT VV Enable register not set to True. Trying again...')
-                            eut.volt_var(params={'Ena': True})
-                            ts.sleep(1)
-                        else:
-                            break
-                    # TODO autonomous vref adjustment to be included
-                    # eut.autonomous_vref_adjustment(params={'Ena': False})
-
                 '''
                 f) Verify volt-var mode is reported as active and that the correct characteristic is reported.
                 '''
@@ -595,9 +571,7 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                 response for at least 4 times the maximum expected response time after the stimulus, and measure or
                 derive, active power, apparent power, reactive power, and power factor.
                 '''
-                """
-                 Test start
-                 """
+
                 step = lib_1547.get_step_label()
 
                 daq.sc['event'] = step
@@ -624,13 +598,7 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                     ts.log('Voltage step: setting Grid simulator to case A (IEEE 1547.1-Table 24)(%s)' % step)
                     q_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
                     lib_1547.set_grid_asymmetric(grid=grid, case='case_a')
-                    '''
-                    q_v_analysis = lib_1547.criteria(   daq=daq,
-                                                        tr=vv_response_time[vv_curve],
-                                                        step=step,
-                                                        initial_value=q_initial,
-                                                        curve=vv_curve)
-                    '''
+
                     lib_1547.process_data(
                         daq=daq,
                         tr=vv_response_time[vv_curve],
@@ -876,7 +844,7 @@ def run(test_script):
     sys.exit(rc)
 
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.3')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.3.0')
 
 # VV test parameters
 info.param_group('vv', label='Test Parameters')

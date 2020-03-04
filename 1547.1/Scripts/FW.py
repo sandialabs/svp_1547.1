@@ -216,11 +216,13 @@ def test_run():
                 if eut is not None:
                     if mode == 'Below':
                         ts.log_debug("Config EUT's absorb power at -50%% of P rated")
-                        eut.limit_max_power(params={
+                        eut.limit_max_power(
+                            params={
                             'MaxLimWEna': True,
                             'MaxLimW_PCT': 50
                             #'MaxLimW': round(p_rated / 2.0, 2) * -1
-                        })
+                            }
+                        )
                     else:
                         ts.log_debug("Config EUT's absorb power to %s (P\'min)" % p_min_prime)
                         eut.limit_max_power(params={
@@ -235,7 +237,7 @@ def test_run():
             '''
             for fw_curve in fw_curves:
                 ts.log('Starting test with characteristic curve %s' % (fw_curve))
-                fw_param = lib_1547.get_params(fw_curve)
+                fw_param = lib_1547.get_params(curve=fw_curve)
                 a_f = lib_1547.MSA_F *1.5
 
                 lib_1547.set_step_label(starting_label='G')
@@ -328,6 +330,7 @@ def test_run():
                     for step_label, f_step in f_steps_dic[mode].iteritems():
                         p_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
                         ts.log('Frequency step: setting Grid simulator frequency to %s (%s)' % (f_step, step_label))
+                        step_dict = {'F': f_step}
                         if grid is not None:
                             grid.freq(f_step)
                         lib_1547.process_data(
@@ -335,14 +338,14 @@ def test_run():
                             tr=fw_param['tr'],
                             step=step_label,
                             initial_value=p_initial,
-                            #target=f_step,
-                            #mode=mode,
-                            curve =fw_curve,
-                            pwr_lvl=power)
-                        '''
-                        result_summary.write(lib_1547.write_rslt_sum(analysis=f_p_analysis, step=step_label,
-                                                                     filename=dataset_filename))
-                        '''
+                            x_target=step_dict,
+                            #y_target=None, #automatically calculated in p1547
+                            curve=fw_curve,
+                            pwr_lvl=power,
+                            result_summary=result_summary,
+                            filename=dataset_filename
+                        )
+
                     dataset_filename = dataset_filename + ".csv"
                     daq.data_capture(False)
                     ds = daq.data_capture_dataset()
@@ -424,7 +427,7 @@ def run(test_script):
 
     sys.exit(rc)
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.3')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.3.0')
 
 # FW test parameters
 info.param_group('fw', label='Test Parameters')

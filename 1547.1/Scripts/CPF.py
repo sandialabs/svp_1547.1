@@ -164,7 +164,7 @@ def test_run():
         daq = das.das_init(ts, sc_points=das_points['sc'])
 
         if daq is not None:
-            daq.sc['V_MEAS'] = 100
+            daq.sc['V_MEAS'] = 120
             daq.sc['P_MEAS'] = 100
             daq.sc['Q_MEAS'] = 100
             daq.sc['Q_TARGET_MIN'] = 100
@@ -285,26 +285,20 @@ def test_run():
                     step = lib_1547.get_step_label()
                     ts.log('Power step: setting PV simulator power to %s (%s)' % (p_min,step))
                     initial_values = lib_1547.get_initial_value(daq=daq,step=step)
-                    pv.power_set(p_min)
-                    lib_1547.process_data(daq=daq,
-                                          tr=pf_response_time,
-                                          step=step,
-                                          #curve=vw_curve,
-                                          pwr_lvl=1.0,
-                                          x_target=pf_target,
-                                          initial_value=initial_values,
-                                          result_summary=result_summary,
-                                          filename=dataset_filename
-                                          )
-                    '''
-                    q_p_analysis = lib_1547.criteria(daq=daq,
-                                                     tr=pf_response_time,
-                                                     step=step,
-                                                     initial_value=q_initial,
-                                                     target=pf_target)
-                    result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
-                                                                filename=dataset_filename))
-                    '''
+                    step_dict = {'V': v_nom, 'P': p_min, 'PF': pf_target}
+                    pv.power_set(step_dict['P'])
+                    lib_1547.process_data(
+                        daq=daq,
+                        tr=pf_response_time,
+                        step=step,
+                        #curve=vw_curve,
+                        pwr_lvl=1.0,
+                        x_target=step_dict,
+                        initial_value=initial_values,
+                        result_summary=result_summary,
+                        filename=dataset_filename
+                    )
+
                 """
                 h) Step the EUT's available active power to Prated.
                 """
@@ -312,167 +306,118 @@ def test_run():
                     step = lib_1547.get_step_label()
                     ts.log('Power step: setting PV simulator power to %s (%s)' % (p_rated,step))
                     initial_values = lib_1547.get_initial_value(daq=daq, step=step)
-                    pv.power_set(p_rated)
-                    '''
-                    q_p_analysis = lib_1547.criteria(daq=daq,
-                                                     tr=pf_response_time,
-                                                     step=step,
-                                                     initial_value=q_initial,
-                                                     target=pf_target)
-                    result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
-                                                                 filename=dataset_filename))
-                    '''
-                    lib_1547.process_data(daq=daq,
-                                          tr=pf_response_time,
-                                          step=step,
-                                          #curve=vw_curve,
-                                          pwr_lvl=1.0,
-                                          x_target=pf_target,
-                                          initial_value=initial_values,
-                                          result_summary=result_summary,
-                                          filename=dataset_filename
-                                          )
+                    step_dict = {'V': v_nom, 'P': p_rated, 'PF': pf_target}
+                    pv.power_set(step_dict['P'])
+                    lib_1547.process_data(
+                        daq=daq,
+                        tr=pf_response_time,
+                        step=step,
+                        #curve=vw_curve,
+                        pwr_lvl=1.0,
+                        x_target=step_dict,
+                        initial_value=initial_values,
+                        result_summary=result_summary,
+                        filename=dataset_filename
+                    )
 
                 if grid is not None:
 
                     # i) Step the AC test source voltage to (VL + av)
                     step = lib_1547.get_step_label()
-                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % ((v_min + a_v),step))
+                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % ((v_min + a_v), step))
                     #q_initial = lib_1547.get_initial(daq=daq,step=step)
                     initial_values = lib_1547.get_initial_value(daq=daq, step=step)
-                    grid.voltage(v_min + a_v)
+                    step_dict = {'V': v_min + a_v, 'P': p_rated, 'PF': pf_target}
+                    grid.voltage(step_dict['V'])
+                    lib_1547.process_data(
+                        daq=daq,
+                        tr=pf_response_time,
+                        step=step,
+                        pwr_lvl=1.0,
+                        x_target=step_dict,
+                        initial_value=initial_values,
+                        result_summary=result_summary,
+                        filename=dataset_filename
+                    )
 
-                    lib_1547.process_data(daq=daq,
-                                          tr=pf_response_time,
-                                          step=step,
-                                          #curve=vw_curve,
-                                          pwr_lvl=1.0,
-                                          x_target=pf_target,
-                                          initial_value=initial_values,
-                                          result_summary=result_summary,
-                                          filename=dataset_filename
-                                          )
-                    '''
-                    q_p_analysis = lib_1547.criteria(daq=daq,
-                                                     tr=pf_response_time,
-                                                     step=step,
-                                                     initial_value=q_initial,
-                                                     target=pf_target)
-                    result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
-                                                                              filename=dataset_filename))
-
-                    '''
                     #   j) Step the AC test source voltage to (VH - av)
                     step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % ((v_max - a_v),step))
                     initial_values = lib_1547.get_initial_value(daq=daq, step=step)
-                    #q_initial = lib_1547.get_initial(daq=daq,step=step)
-                    grid.voltage(v_max - a_v)
-                    lib_1547.process_data(daq=daq,
-                                          tr=pf_response_time,
-                                          step=step,
-                                          #curve=vw_curve,
-                                          pwr_lvl=1.0,
-                                          x_target=pf_target,
-                                          initial_value=initial_values,
-                                          result_summary=result_summary,
-                                          filename=dataset_filename
-                                          )
-                    '''
-                    q_p_analysis = lib_1547.criteria(daq=daq,
-                                                     tr=pf_response_time,
-                                                     step=step,
-                                                     initial_value=q_initial,
-                                                     target=pf_target)
-                    result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
-                                                                              filename=dataset_filename))
+                    step_dict = {'V': v_min - a_v, 'P': p_rated, 'PF': pf_target}
+                    grid.voltage(step_dict['V'])
+                    lib_1547.process_data(
+                        daq=daq,
+                        tr=pf_response_time,
+                        step=step,
+                        #curve=vw_curve,
+                        pwr_lvl=1.0,
+                        x_target=step_dict,
+                        initial_value=initial_values,
+                        result_summary=result_summary,
+                        filename=dataset_filename
+                    )
 
-                    '''
                     #   k) Step the AC test source voltage to (VL + av)
                     step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
                     #q_initial = lib_1547.get_initial(daq=daq,step=step)
                     initial_values = lib_1547.get_initial_value(daq=daq, step=step)
-                    grid.voltage(v_nom)
-                    lib_1547.process_data(daq=daq,
-                                          tr=pf_response_time,
-                                          step=step,
-                                          #curve=vw_curve,
-                                          pwr_lvl=1.0,
-                                          x_target=pf_target,
-                                          initial_value=initial_values,
-                                          result_summary=result_summary,
-                                          filename=dataset_filename
-                                          )
-                    '''
-                    q_p_analysis = lib_1547.criteria(daq=daq,
-                                                     tr=pf_response_time,
-                                                     step=step,
-                                                     initial_value=q_initial,
-                                                     target=pf_target)
-                    result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
-                                                                              filename=dataset_filename))
-                    '''
-                """
-                l) For multiphase units, step the AC test source voltage to Case B from Table 24.
-                """
+                    step_dict = {'V': v_min + a_v, 'P': p_rated, 'PF': pf_target}
+                    grid.voltage(step_dict['V'])
+                    lib_1547.process_data(
+                        daq=daq,
+                        tr=pf_response_time,
+                        step=step,
+                        #curve=vw_curve,
+                        pwr_lvl=1.0,
+                        x_target=step_dict,
+                        initial_value=initial_values,
+                        result_summary=result_summary,
+                        filename=dataset_filename
+                    )
+
+
                 if grid is not None and phases is 'Three phase':
+                    """
+                    l) For multiphase units, step the AC test source voltage to Vnom.
+                    """
                     step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
-                    initial_values = lib_1547.get_initial(daq=daq,step=step)
-                    grid.voltage(v_nom)
-                    lib_1547.process_data(daq=daq,
-                                          tr=pf_response_time,
-                                          step=step,
-                                          #curve=vw_curve,
-                                          pwr_lvl=1.0,
-                                          x_target=pf_target,
-                                          initial_value=initial_values,
-                                          result_summary=result_summary,
-                                          filename=dataset_filename
-                                          )
-                    '''
-                    q_p_analysis = lib_1547.criteria(daq=daq,
-                                                     tr=pf_response_time,
-                                                     step=step,
-                                                     initial_value=q_initial,
-                                                     target=pf_target)
-                    result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
-                                                                               filename=dataset_filename))
-                    '''
-                '''
-                m) For multiphase units, step the AC test source voltage to Case A from Table 24.
-                '''
+                    initial_values = lib_1547.get_initial_value(daq=daq, step=step)
+                    step_dict = {'V': v_nom, 'P': p_rated, 'PF': pf_target}
+                    grid.voltage(step_dict['V'])
+                    lib_1547.process_data(
+                        daq=daq,
+                        tr=pf_response_time,
+                        step=step,
+                        pwr_lvl=1.0,
+                        x_target=step_dict,
+                        initial_value=initial_values,
+                        result_summary=result_summary,
+                        filename=dataset_filename
+                    )
 
                 if grid is not None and phases is 'Three phase':
+                    """
+                    m) For multiphase units, step the AC test source voltage to Case A from Table 24.
+                    """
                     step = lib_1547.get_step_label()
-                    ts.log('Voltage step: setting Grid simulator to case A (IEEE 1547.1-Table 24)(%s)' % step)
+                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
                     initial_values = lib_1547.get_initial_value(daq=daq, step=step)
-
-                    #q_initial = lib_1547.get_initial(daq=daq,step=step)
-
+                    step_dict = {'V': v_nom*(1.07+0.91+0.91)/3, 'P': p_rated, 'PF': pf_target}
                     lib_1547.set_grid_asymmetric(grid=grid, case='case_a')
-                    lib_1547.process_data(daq=daq,
-                                          tr=pf_response_time,
-                                          step=step,
-                                          # curve=vw_curve,
-                                          pwr_lvl=1.0,
-                                          x_target=pf_target,
-                                          initial_value=initial_values,
-                                          result_summary=result_summary,
-                                          filename=dataset_filename
-                                          )
-                    '''
-                    q_p_analysis = lib_1547.criteria(daq=daq,
-                                                     tr=pf_response_time,
-                                                     step=step,
-                                                     initial_value=q_initial,
-                                                     target=pf_target)
-                    result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
-                                                                              filename=dataset_filename))
-                    '''
-
-
+                    #grid.voltage(step_dict['V'])
+                    lib_1547.process_data(
+                        daq=daq,
+                        tr=pf_response_time,
+                        step=step,
+                        pwr_lvl=1.0,
+                        x_target=step_dict,
+                        initial_value=initial_values,
+                        result_summary=result_summary,
+                        filename=dataset_filename
+                    )
                 """
                 n) For multiphase units, step the AC test source voltage to VN.
                 """
@@ -480,81 +425,63 @@ def test_run():
                 if grid is not None and phases is 'Three phase':
                     step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
-                    q_initial = lib_1547.get_initial(daq=daq,step=step)
-                    grid.voltage(v_nom)
-                    lib_1547.process_data(daq=daq,
-                                          tr=pf_response_time,
-                                          step=step,
-                                          #curve=vw_curve,
-                                          pwr_lvl=1.0,
-                                          x_target=pf_target,
-                                          initial_value=initial_values,
-                                          result_summary=result_summary,
-                                          filename=dataset_filename
-                                          )
-                    '''
-                    q_p_analysis = lib_1547.criteria(daq=daq,
-                                                     tr=pf_response_time,
-                                                     step=step,
-                                                     initial_value=q_initial,
-                                                     target=pf_target)
-                    result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
-                                                                               filename=dataset_filename))
-                    '''
-                """
+                    initial_values = lib_1547.get_initial_value(daq=daq, step=step)
+                    step_dict = {'V': v_nom, 'P': p_rated, 'PF': pf_target}
+                    grid.voltage(step_dict['V'])
+                    lib_1547.process_data(
+                        daq=daq,
+                        tr=pf_response_time,
+                        step=step,
+                        pwr_lvl=1.0,
+                        x_target=step_dict,
+                        initial_value=initial_values,
+                        result_summary=result_summary,
+                        filename=dataset_filename
+                    )
+
+                '''
                 o) For multiphase units, step the AC test source voltage to Case B from Table 24.
-                """
+                '''
                 if grid is not None and phases is 'Three phase':
                     step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator to case B (IEEE 1547.1-Table 24)(%s)' % step)
-                    q_initial = lib_1547.get_initial(daq=daq,step=step)
+                    initial_values = lib_1547.get_initial_value(daq=daq, step=step)
+                    # TODO READJUST WITH INVERTER CALCULATION WITH IMBALANCED GRID
+                    step_dict = {'V': v_nom*(0.91+1.07+1.07)/3, 'P': p_rated, 'PF': pf_target}
                     lib_1547.set_grid_asymmetric(grid=grid, case='case_b')
+                    lib_1547.process_data(
+                        daq=daq,
+                        tr=pf_response_time,
+                        step=step,
+                        pwr_lvl=1.0,
+                        x_target=step_dict,
+                        initial_value=initial_values,
+                        result_summary=result_summary,
+                        filename=dataset_filename
+                    )
 
-                    lib_1547.process_data(daq=daq,
-                                          tr=pf_response_time,
-                                          step=step,
-                                          #curve=vw_curve,
-                                          pwr_lvl=1.0,
-                                          x_target=pf_target,
-                                          initial_value=initial_values,
-                                          result_summary=result_summary,
-                                          filename=dataset_filename
-                                          )
-                    '''
-                    q_p_analysis = lib_1547.criteria(daq=daq,
-                                                     tr=pf_response_time,
-                                                     step=step,
-                                                     initial_value=q_initial,
-                                                     target=pf_target)
-                    result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
-                                                                              filename=dataset_filename))
-                    '''
+
+
                 """
-                p) For multiphase units, step the AC test source voltage to VN
+                p) For multiphase units, step the AC test source voltage to Vnom.
                 """
                 if grid is not None and phases is 'Three phase':
                     step = lib_1547.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
-                    initial_values = lib_1547.get_initial(daq=daq,step=step)
-                    grid.voltage(v_nom)
-                    lib_1547.process_data(daq=daq,
-                                          tr=pf_response_time,
-                                          step=step,
-                                          #curve=vw_curve,
-                                          pwr_lvl=1.0,
-                                          initial_value=initial_values,
-                                          result_summary=result_summary,
-                                          filename=dataset_filename
-                                          )
-                    '''
-                    q_p_analysis = lib_1547.criteria(daq=daq,
-                                                     tr=pf_response_time,
-                                                     step=step,
-                                                     initial_value=q_initial,
-                                                     target=pf_target)
-                    result_summary.write(lib_1547.write_rslt_sum(analysis=q_p_analysis, step=step,
-                                                                              filename=dataset_filename))
-                    '''
+                    initial_values = lib_1547.get_initial_value(daq=daq, step=step)
+                    step_dict = {'V': v_nom, 'P': p_rated, 'PF': pf_target}
+                    grid.voltage(step_dict['V'])
+                    lib_1547.process_data(
+                        daq=daq,
+                        tr=pf_response_time,
+                        step=step,
+                        pwr_lvl=1.0,
+                        x_target=step_dict,
+                        initial_value=initial_values,
+                        result_summary=result_summary,
+                        filename=dataset_filename
+                    )
+
                 """
                 q) Disable constant power factor mode. Power factor should return to unity.
                 """
@@ -565,7 +492,7 @@ def test_run():
                     step = lib_1547.get_step_label()
                     pf_setting = eut.fixed_pf()
                     ts.log('PF setting read: %s' % pf_setting)
-                    daq.sc['event'] = 'Step %s' % (step)
+                    daq.sc['event'] = 'Step %s' % step
                     daq.data_sample()
                     ts.sleep(2*pf_response_time)
                     daq.sc['event'] = 'T_settling_done'
@@ -581,7 +508,6 @@ def test_run():
                     #meas = eut.measurements()
                     #ts.log('EUT PF is now: %s' % (data.get('AC_PF_1')))
                     #ts.log('EUT Power: %s, EUT Reactive Power: %s' % (meas['W'], meas['VAr']))
-
 
 
                 ts.log('Sampling complete')
@@ -664,7 +590,7 @@ def run(test_script):
 
     sys.exit(rc)
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.3')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.3.0')
 
 # CPF test parameters
 info.param_group('cpf', label='Test Parameters')

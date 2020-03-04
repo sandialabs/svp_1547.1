@@ -1,6 +1,6 @@
 <scriptConfig name="VV_IMBALANCE_FIX" script="VV">
   <params>
-    <param name="vv.test_1_t_r" type="float">0.1</param>
+    <param name="vv.test_1_t_r" type="float">10.0</param>
     <param name="eut.f_min" type="float">56.0</param>
     <param name="eut.f_nom" type="float">60.0</param>
     <param name="eut.f_max" type="float">66.0</param>
@@ -22,6 +22,6 @@
     <param name="vv.test_1" type="string">Enabled</param>
     <param name="vv.mode" type="string">Imbalanced grid</param>
     <param name="eut.phases" type="string">Three phase</param>
-    <param name="vv.imbalance_fix" type="string">Yes</param>
+    <param name="vv.imbalance_fix" type="string">fix_ang</param>
   </params>
 </scriptConfig>
