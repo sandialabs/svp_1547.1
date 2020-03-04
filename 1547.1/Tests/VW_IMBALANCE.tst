@@ -1,6 +1,6 @@
 <scriptConfig name="VW_IMBALANCE" script="VW">
   <params>
-    <param name="vw.test_1_tr" type="float">0.1</param>
+    <param name="vw.test_1_tr" type="float">10.0</param>
     <param name="eut.f_min" type="float">56.0</param>
     <param name="eut.f_nom" type="float">60.0</param>
     <param name="eut.f_max" type="float">66.0</param>
@@ -22,7 +22,7 @@
     <param name="vw.test_1" type="string">Enabled</param>
     <param name="vw.mode" type="string">Imbalanced grid</param>
     <param name="eut_vw.sink_power" type="string">No</param>
-    <param name="vw.imbalance_fix" type="string">No</param>
     <param name="eut.phases" type="string">Three phase</param>
+    <param name="vw.imbalance_fix" type="string">std</param>
   </params>
 </scriptConfig>

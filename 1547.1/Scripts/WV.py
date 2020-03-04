@@ -190,7 +190,6 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
         voltage to Vin_nom. The EUT may limit active power throughout the test to meet reactive power requirements.
         For an EUT with an input voltage range.
         '''
-        ts.log('%s %s' % (p_rated, v_in_nom))
 
         if pv is not None:
             pv.iv_curve_config(pmp=p_rated, vmp=v_in_nom)
@@ -295,7 +294,7 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
                 p_steps_dict[lib_1547.get_step_label()] = p_min
 
 
-                dataset_filename = 'WV_%s_PWR_%d' % (wv_curve, power * 100)
+                filename = 'WV_%s_PWR_%d' % (wv_curve, power * 100)
                 ts.log('------------{}------------'.format(dataset_filename))
 
                 # Start the data acquisition systems
@@ -304,8 +303,10 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
                 for step_label, p_step in p_steps_dict.iteritems():
                     ts.log('Power step: setting Grid power to %s (W)(%s)' % (p_step, step_label))
                     q_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
+
+                    step_dict = {'V': v_nom, 'P': p_step}
                     if pv is not None:
-                        pv.power_set(p_step)
+                        pv.power_set(step_dict['P'])
 
                     lib_1547.process_data(
                         daq=daq,
@@ -314,23 +315,13 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
                         initial_value=q_initial,
                         curve=wv_curve,
                         pwr_lvl=power,
-                        #target=p_step
+                        x_target=step_dict,
+                        result_summary = result_summary,
+                        filename = filename
                     )
-                    '''
-                    p_q_analysis = lib_1547.criteria(   daq=daq,
-                                                        tr=wv_response_time[wv_curve],
-                                                        step=step_label,
-                                                        initial_value=q_initial,
-                                                        curve=wv_curve,
-                                                        pwr_lvl=power,
-                                                        target=p_step)
-                    ts.log_debug(p_q_analysis)
 
-                    result_summary.write(lib_1547.write_rslt_sum(analysis=p_q_analysis, step=step_label,
-                                                            filename=dataset_filename))
-                    '''
                 ts.log('Sampling complete')
-                dataset_filename = dataset_filename + ".csv"
+                dataset_filename = filename + ".csv"
                 daq.data_capture(False)
                 ds = daq.data_capture_dataset()
                 ts.log('Saving file: %s' % dataset_filename)
@@ -426,9 +417,6 @@ def test_run():
     finally:
         # create result workbook
         excelfile = ts.config_name() + '.xlsx'
-        ts.log_debug(excelfile)
-        ts.log_debug(ts.results_dir())
-        ts.log_debug(ts.result_dir())
         rslt.result_workbook(excelfile, ts.results_dir(), ts.result_dir())
         ts.result_file(excelfile)
 
@@ -462,7 +450,7 @@ def run(test_script):
     sys.exit(rc)
 
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.2.3')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.3.0')
 
 # VV test parameters
 info.param_group('eut_wv', label='Test Parameters')
