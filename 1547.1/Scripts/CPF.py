@@ -229,7 +229,7 @@ def test_run():
         """
 
         # For PV systems, this requires that Vmpp = Vin_nom and Pmpp = Prated.
-        for v_in_label, v_in in v_in_targets.iteritems():
+        for v_in_label, v_in in v_in_targets.items():
             ts.log('Starting test %s at v_in = %s' % (v_in_label, v_in))
             a_v = lib_1547.MSA_V * 1.5
             if pv is not None:
@@ -242,7 +242,7 @@ def test_run():
 
             Only the user-selected PF setting will be tested.
             """
-            for pf_test_name, pf_target in pf_targets.iteritems():
+            for pf_test_name, pf_target in pf_targets.items():
 
                 if grid is not None:
                     grid.voltage(v_nom)
@@ -520,7 +520,7 @@ def test_run():
                 ts.result_file(dataset_filename, params=result_params)
                 result = script.RESULT_COMPLETE
 
-    except script.ScriptFail, e:
+    except script.ScriptFail as e:
         reason = str(e)
         if reason:
             ts.log_error(reason)
@@ -584,7 +584,7 @@ def run(test_script):
         if result == script.RESULT_FAIL:
             rc = 1
 
-    except Exception, e:
+    except Exception as e:
         ts.log_error('Test script exception: %s' % traceback.format_exc())
         rc = 1
 

@@ -144,7 +144,7 @@ def test_run():
         else:
             act_pwrs_limits = [0.66, 0.33, 0.0]
         # 5.13.2 Procedure asks for three repetitions
-        n_iters = range(1,int(ts.param_value('lap.iter'))+1)
+        n_iters = list(range(1,int(ts.param_value('lap.iter'))+1))
 
         # Take the highest value for the steady state wait time
         tr_min = min(ts.param_value('fw.test_1_tr'),ts.param_value('vw.test_1_tr'))
@@ -218,22 +218,22 @@ def test_run():
             try:
                 eut.vrt_stay_connected_high(params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000,
                                                     'V1': v_max, 'Tms2': 0.16, 'V2': v_max})
-            except Exception, e:
+            except Exception as e:
                 ts.log_error('Could not set VRT Stay Connected High curve. %s' % e)
             try:
                 eut.frt_stay_connected_high(params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000,
                                                     'Hz1': f_max, 'Tms2': 160, 'Hz2': f_max})
-            except Exception, e:
+            except Exception as e:
                 ts.log_error('Could not set FRT Stay Connected High curve. %s' % e)
             try:
                 eut.vrt_stay_connected_low(params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000,
                                                    'V1': v_min, 'Tms2': 0.16, 'V2': v_min})
-            except Exception, e:
+            except Exception as e:
                 ts.log_error('Could not set VRT Stay Connected Low curve. %s' % e)
             try:
                 eut.frt_stay_connected_low(params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000,
                                                     'Hz1': f_min, 'Tms2': 160, 'Hz2': f_min})
-            except Exception, e:
+            except Exception as e:
                 ts.log_error('Could not set FRT Stay Connected Low curve. %s' % e)
             #eut.config()
                 ts.log_debug('If not done already, set L/HVRT and trip parameters to the widest range of adjustability.')
@@ -430,7 +430,7 @@ def test_run():
                 ts.result_file(dataset_filename, params=result_params)
                 result = script.RESULT_COMPLETE
 
-    except script.ScriptFail, e:
+    except script.ScriptFail as e:
         reason = str(e)
         if reason:
             ts.log_error(reason)
@@ -494,7 +494,7 @@ def run(test_script):
         if result == script.RESULT_FAIL:
             rc = 1
 
-    except Exception, e:
+    except Exception as e:
         ts.log_error('Test script exception: %s' % traceback.format_exc())
         rc = 1
 
