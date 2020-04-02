@@ -204,7 +204,7 @@ def watt_var_mode(wv_curves, wv_response_time):
         eut.deactivate_all_fct()
 
         for wv_curve in wv_curves:
-            ts.log('Starting test with characteristic curve %s' % (wv_curve))
+            ts.log('Starting test with characteristic curve %s' % wv_curve)
             p_pairs = lib_1547.get_params(curve=wv_curve)
 
             if eut is not None:
@@ -219,7 +219,9 @@ def watt_var_mode(wv_curves, wv_response_time):
                                            p_pairs['Q2']*(100./var_rated),
                                            p_pairs['Q3']*(100./var_rated)]}
                 ts.log_debug('Sending WV points: %s' % wv_curve_params)
-                eut.watt_var(params={'Ena': True, 'NPt': 4, 'curve': wv_curve_params})
+                ts.log_debug('Time Constant Set to: %s' % wv_response_time[wv_curve])
+                eut.watt_var(params={'Ena': True, 'NPt': 4, 'RmpTms': wv_response_time[wv_curve],
+                                     'curve': wv_curve_params})
 
                 '''
                 f) Record applicable settings.
@@ -283,7 +285,7 @@ def watt_var_mode(wv_curves, wv_response_time):
             p_steps_dict[lib_1547.get_step_label()] = p_min  # Y
 
             filename = 'WV_%s' % wv_curve
-            ts.log('------------{}------------'.format(dataset_filename))
+            ts.log('------------{}------------'.format(filename))
 
             # Start the data acquisition systems
             daq.data_capture(True)
@@ -305,7 +307,8 @@ def watt_var_mode(wv_curves, wv_response_time):
                     pwr_lvl=1.0,
                     x_target=step_dict,
                     result_summary=result_summary,
-                    filename=filename
+                    filename=filename,
+                    number_of_tr=1  # WV only evaluates the open loop response time after 1 * Tr
                 )
 
             ts.log('Sampling complete')
@@ -351,11 +354,6 @@ def watt_var_mode(wv_curves, wv_response_time):
             eut.close()
         if result_summary is not None:
             result_summary.close()
-
-        # create result workbook
-        excelfile = ts.config_name() + '.xlsx'
-        rslt.result_workbook(excelfile, ts.results_dir(), ts.result_dir())
-        ts.result_file(excelfile)
 
     return result
 
