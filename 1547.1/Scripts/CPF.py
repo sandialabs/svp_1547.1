@@ -93,9 +93,6 @@ def test_run():
         phases = ts.param_value('eut.phases')
         pf_response_time = ts.param_value('cpf.pf_response_time')
 
-        # Pass/fail accuracies
-        pf_msa = ts.param_value('eut.pf_msa')
-
         # Imbalance configuration
         imbalance_fix = ts.param_value('cpf.imbalance_fix')
 
@@ -231,7 +228,7 @@ def test_run():
         # For PV systems, this requires that Vmpp = Vin_nom and Pmpp = Prated.
         for v_in_label, v_in in v_in_targets.iteritems():
             ts.log('Starting test %s at v_in = %s' % (v_in_label, v_in))
-            a_v = lib_1547.MSA_V * 1.5
+            a_v = lib_1547.MRA_V * 1.5
             if pv is not None:
                 pv.iv_curve_config(pmp=p_rated, vmp=v_in)
                 pv.irradiance_set(1000.)

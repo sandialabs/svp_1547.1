@@ -24,6 +24,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Questions can be directed to support@sunspec.org
 
+Script for IEEE 1547.1 - Section 5.14.7 - Test for active power-reactive power mode (watt-var)
 """
 
 import sys
@@ -106,7 +107,7 @@ def watt_var_mode(wv_curves, wv_response_time):
         das_points = lib_1547.get_sc_points()
         # initialize data acquisition system
         daq = das.das_init(ts, sc_points=das_points['sc'])
-        daq.sc['P_TARGET'] = v_nom
+        daq.sc['P_TARGET'] = p_min
         daq.sc['Q_TARGET'] = 100
         daq.sc['Q_TARGET_MIN'] = 100
         daq.sc['Q_TARGET_MAX'] = 100
@@ -210,17 +211,15 @@ def watt_var_mode(wv_curves, wv_response_time):
             if eut is not None:
                 # Activate watt-var function with following parameters
                 # SunSpec convention is to use percentages for P and Q points.
-                wv_curve_params = {'w': [p_pairs['P0']*(100./p_rated),
-                                         p_pairs['P1']*(100./p_rated),
+                wv_curve_params = {'w': [p_pairs['P1']*(100./p_rated),
                                          p_pairs['P2']*(100./p_rated),
                                          p_pairs['P3']*(100./p_rated)],
-                                   'var': [p_pairs['Q0']*(100./var_rated),
-                                           p_pairs['Q1']*(100./var_rated),
+                                   'var': [p_pairs['Q1']*(100./var_rated),
                                            p_pairs['Q2']*(100./var_rated),
                                            p_pairs['Q3']*(100./var_rated)]}
                 ts.log_debug('Sending WV points: %s' % wv_curve_params)
                 ts.log_debug('Time Constant Set to: %s' % wv_response_time[wv_curve])
-                eut.watt_var(params={'Ena': True, 'NPt': 4, 'RmpTms': wv_response_time[wv_curve],
+                eut.watt_var(params={'Ena': True, 'NPt': 3, 'RmpTms': wv_response_time[wv_curve],
                                      'curve': wv_curve_params})
 
                 '''
@@ -259,7 +258,7 @@ def watt_var_mode(wv_curves, wv_response_time):
             '''
 
             p_steps_dict = collections.OrderedDict()
-            a_p = lib_1547.MSA_P * 1.5
+            a_p = lib_1547.MRA_P * 1.5
 
             lib_1547.set_step_label(starting_label='G')
             p_steps_dict[lib_1547.get_step_label()] = p_min  # G
@@ -291,12 +290,18 @@ def watt_var_mode(wv_curves, wv_response_time):
             daq.data_capture(True)
 
             for step_label, p_step in p_steps_dict.iteritems():
-                ts.log('Power step: setting available power to %s W (Step %s)' % (p_step, step_label))
+                ts.log('Power step: setting available power to %s W (%s)' % (p_step, step_label))
                 p_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
 
                 step_dict = {'V': v_nom, 'P': p_step}
                 if pv is not None:
                     pv.power_set(step_dict['P'])
+
+                # WV requires 2 things to pass the test:
+                # 1) After 1*Tr, the Q must be 90% * (Q_final - Q_initial) + Q_initial.
+                #    Accuracy requirements are from 1547.1 4.2 with X = Tr, Y = Q(Tr)
+                # 2) After 2*Tr, the Q must be within the MRA of the VW curve
+                #    Accuracy requirements are from 1547.1 4.2 with X = P_final, Y = Q_final
 
                 lib_1547.process_data(
                     daq=daq,
@@ -308,7 +313,7 @@ def watt_var_mode(wv_curves, wv_response_time):
                     x_target=step_dict,
                     result_summary=result_summary,
                     filename=filename,
-                    number_of_tr=1  # WV only evaluates the open loop response time after 1 * Tr
+                    number_of_tr=2
                 )
 
             ts.log('Sampling complete')

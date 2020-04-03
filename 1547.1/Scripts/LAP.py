@@ -66,7 +66,6 @@ def test_run():
     fw_curves = []
     fw_response_time = [0, 0, 0]
 
-
     try:
         cat = ts.param_value('eut.cat')
         cat2 = ts.param_value('eut.cat2')
@@ -115,10 +114,6 @@ def test_run():
         # VW parameters
         absorb = {}
         absorb['ena'] = ts.param_value('eut_vw.sink_power')
-
-
-        # Pass/fail accuracies
-        pf_msa = ts.param_value('eut.pf_msa')
 
         """
         A separate module has been create for the 1547.1 Standard

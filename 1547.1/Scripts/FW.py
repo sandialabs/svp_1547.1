@@ -238,7 +238,7 @@ def test_run():
             for fw_curve in fw_curves:
                 ts.log('Starting test with characteristic curve %s' % (fw_curve))
                 fw_param = lib_1547.get_params(curve=fw_curve)
-                a_f = lib_1547.MSA_F *1.5
+                a_f = lib_1547.MRA_F * 1.5
 
                 lib_1547.set_step_label(starting_label='G')
                 f_steps_dic[mode] = collections.OrderedDict()
@@ -259,7 +259,6 @@ def test_run():
                         if frequency > f_max:
                             ts.log("{0} frequency step (value : {1}) changed to fH (f_max)".format(step, frequency))
                             f_steps_dic[mode].update({step: f_max})
-
 
                 elif mode == 'Below':  # 1547.1 (5.15.3.2):
                     f_steps_dic[mode][lib_1547.get_step_label()] = (f_nom + fw_param['dbf']) - a_f
@@ -300,7 +299,7 @@ def test_run():
                             'RspTms': fw_param['tr']
                         }
                         ts.log_debug(params)
-                        settings=eut.freq_watt(params)
+                        settings = eut.freq_watt(params)
                         '''
                         f) Verify freq-watt mode is reported as active and that 
                             the correct characteristic is reported. 
