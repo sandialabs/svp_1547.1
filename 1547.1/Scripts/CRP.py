@@ -338,12 +338,28 @@ def test_run():
                 daq.sc['Q_TARGET_MIN'] = q_meas - 1.5 * lib_1547.MRA_Q
                 daq.sc['Q_TARGET_MAX'] = q_meas + 1.5 * lib_1547.MRA_Q
                 if daq.sc['Q_TARGET_MIN'] <= daq.sc['Q_MEAS'] <= daq.sc['Q_TARGET_MAX']:
-                    daq.sc['90 % _BY_TR = 1'] = 'Pass'
+                    daq.sc['90%_BY_TR=1'] = 'Pass'
                 else:
-                    daq.sc['90 % _BY_TR = 1'] = 'Fail'
+                    daq.sc['90%_BY_TR=1'] = 'Fail'
                 daq.data_sample()
-                result_summary.write(lib_1547.write_rslt_sum(analysis=analysis, step=step_label,
-                                                             filename=dataset_filename))
+
+                # 90%_BY_TR=1, V_MEAS, V_TARGET, P_MEAS, P_TARGET, Q_MEAS, Q_TARGET, Q_TARGET_MIN,
+                # Q_TARGET_MAX, PF_MEAS, STEP, FILENAME
+                row_data = []
+                row_data.append(str(daq.sc['90%_BY_TR=1']))
+                row_data.append(str(lib_1547.get_measurement_total(data=data, type_meas='V', log=False)))
+                row_data.append('None')
+                row_data.append(str(lib_1547.get_measurement_total(data=data, type_meas='P', log=False)))
+                row_data.append('None')
+                row_data.append(str(daq.sc['Q_MEAS']))
+                row_data.append(str(daq.sc['Q_TARGET']))
+                row_data.append(str(daq.sc['Q_TARGET_MIN']))
+                row_data.append(str(daq.sc['Q_TARGET_MAX']))
+                row_data.append(str(lib_1547.get_measurement_total(data=data, type_meas='PF', log=False)))
+                row_data.append(str(step_label))
+                row_data.append(str(dataset_filename))
+                row_data_str = ','.join(row_data) + '\n'
+                result_summary.write(row_data_str)
 
                 ts.log('Sampling complete')
                 dataset_filename = dataset_filename + ".csv"
