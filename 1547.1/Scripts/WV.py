@@ -173,6 +173,8 @@ def watt_var_mode(wv_curves, wv_response_time):
         if pv is not None:
             pv.iv_curve_config(pmp=p_rated, vmp=v_in_nom)
             pv.irradiance_set(1000.)
+            ts.log('Waiting for EUT to power up. Sleeping 30 sec.')
+            ts.sleep(30)
 
         '''
         d) Set all voltage trip parameters to default settings.

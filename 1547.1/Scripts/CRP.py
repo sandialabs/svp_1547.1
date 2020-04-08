@@ -110,7 +110,7 @@ def test_run():
         # result params
         result_params = lib_1547.get_rslt_param_plot()
 
-        #get target q relative value
+        # get target q relative value
         q_targets = {}
         if ts.param_value('crp.q_max_abs_enable') == 'Enabled':
             q_targets['crp_q_max_abs'] = float(ts.param_value('crp.q_max_abs_value'))
@@ -120,9 +120,7 @@ def test_run():
             q_targets['crp_half_q_max_abs'] = 0.5*float(ts.param_value('crp.q_max_abs_value'))
         if ts.param_value('crp.half_q_max_inj_enable') == 'Enabled':
             q_targets['crp_half_q_max_inj'] = 0.5*float(ts.param_value('crp.q_max_inj_value'))
-
-        #get q max value
-        #q_max_value = ts.param_value('crp.q_max_value')
+        ts.log('Evaluating the following Reactive Power Targets: %s' % q_targets)
 
         v_in_targets = {}
         if v_nom_in_enabled == 'Enabled':
@@ -154,12 +152,12 @@ def test_run():
         das_points = lib_1547.get_sc_points()  # DAS soft channels
         daq = das.das_init(ts, sc_points=das_points['sc'])  # initialize data acquisition
         if daq is not None:
-            daq.sc['V_MEAS'] = 100
-            daq.sc['P_MEAS'] = 100
-            daq.sc['Q_MEAS'] = 100
-            daq.sc['Q_TARGET_MIN'] = 100
-            daq.sc['Q_TARGET_MAX'] = 100
-            daq.sc['PF_TARGET'] = 1
+            daq.sc['V_MEAS'] = None
+            daq.sc['P_MEAS'] = None
+            daq.sc['Q_MEAS'] = None
+            daq.sc['Q_TARGET_MIN'] = None
+            daq.sc['Q_TARGET_MAX'] = None
+            daq.sc['PF_TARGET'] = None
             daq.sc['event'] = 'None'
             ts.log('DAS device: %s' % daq.info())
 
@@ -170,7 +168,8 @@ def test_run():
             pv.power_on()  # Turn on DC so the EUT can be initialized
             if callable(getattr(daq, "set_dc_measurement", None)):  # for DAQs that don't natively have dc measurements
                 daq.set_dc_measurement(pv)  # send pv obj to daq to get dc measurements
-                ts.sleep(0.5)
+                ts.log('Waiting for EUT to power up. Sleeping 30 sec.')
+                ts.sleep(30)
 
         """
         b) Set all voltage trip parameters to the widest range of adjustability. Disable all reactive/active power
@@ -230,6 +229,7 @@ def test_run():
             if pv is not None:
                 pv.iv_curve_config(pmp=p_rated, vmp=v_in)
                 pv.irradiance_set(1000.)
+                ts.sleep(40.)  # Give EUT time to track new I-V Curve
 
             """
             t) Repeat steps d) through s) for additional reactive power settings: Qmax,ab, 0.5Qmax,inj, 0.5Qmax,ab.
@@ -240,7 +240,7 @@ def test_run():
             e) Enable constant power factor mode and set the EUT power factor to PFmin,inj.
             """
             for q_test_name, q_target in q_targets.iteritems():
-                dataset_filename = 'CRP_%s_q_targ=%s' % (q_test_name, q_target)
+                dataset_filename = '%s_v=%0.1f' % (q_test_name, v_in)
                 ts.log('------------{}------------'.format(dataset_filename))
 
                 q_target *= var_rated
@@ -315,7 +315,8 @@ def test_run():
                         y_target=q_target,
                         initial_value=initial_values,
                         result_summary=result_summary,
-                        filename=dataset_filename
+                        filename=dataset_filename,
+                        number_of_tr=1
                     )
 
                 """
@@ -325,17 +326,24 @@ def test_run():
                 if eut is not None:
                     ts.log('Reactive Power disabled. Readback: %s' % eut.reactive_power(params={'Ena': False}))
 
-                    step_label = lib_1547.get_step_label()
-                    lib_1547.process_data(
-                        daq=daq,
-                        tr=response_time,
-                        step=step_label,
-                        pwr_lvl=1.0,
-                        y_target=0.0,
-                        initial_value=lib_1547.get_initial_value(daq=daq, step=step_label),
-                        result_summary=result_summary,
-                        filename=dataset_filename
-                    )
+                step_label = lib_1547.get_step_label()
+                ts.log('Waiting %s seconds to get the next Tr data for analysis...' % response_time)
+                ts.sleep(response_time)
+                daq.data_sample()  # sample new data
+                data = daq.data_capture_read()  # Return dataset created from last data capture
+                q_meas = lib_1547.get_measurement_total(data=data, type_meas='Q', log=False)
+                daq.sc['Q_MEAS'] = q_meas
+                daq.sc['Q_TARGET'] = 0.0
+                daq.sc['EVENT'] = "{0}_TR_1".format(step_label)
+                daq.sc['Q_TARGET_MIN'] = q_meas - 1.5 * lib_1547.MRA_Q
+                daq.sc['Q_TARGET_MAX'] = q_meas + 1.5 * lib_1547.MRA_Q
+                if daq.sc['Q_TARGET_MIN'] <= daq.sc['Q_MEAS'] <= daq.sc['Q_TARGET_MAX']:
+                    daq.sc['90 % _BY_TR = 1'] = 'Pass'
+                else:
+                    daq.sc['90 % _BY_TR = 1'] = 'Fail'
+                daq.data_sample()
+                result_summary.write(lib_1547.write_rslt_sum(analysis=analysis, step=step_label,
+                                                             filename=dataset_filename))
 
                 ts.log('Sampling complete')
                 dataset_filename = dataset_filename + ".csv"
@@ -385,7 +393,7 @@ def test_run():
 
         # create result workbook
         excelfile = ts.config_name() + '.xlsx'
-        rslt.result_workbook(excelfile, ts.results_dir(), ts.result_dir())
+        rslt.result_workbook(excelfile, ts.results_dir(), ts.result_dir(), ts=ts)
         ts.result_file(excelfile)
 
     return result
@@ -458,7 +466,7 @@ info.param('eut.imbalance_resp', label='EUT response to phase imbalance is calcu
                    'EUT response to the positive sequence of voltages'])
 
 # EUT CPF parameters
-info.param_group('eut_crp', label='CPF - EUT Parameters', glob=True)
+info.param_group('eut_crp', label='CRP - EUT Parameters', glob=True)
 info.param('eut_crp.v_in_min', label='V_in_min: Nominal input voltage (Vdc)', default=300)
 info.param('eut_crp.v_in_max', label='V_in_max: Nominal input voltage (Vdc)', default=500)
 info.param('eut_crp.sink_power', label='Can the EUT sink power, e.g., is it a battery system', default='No',
