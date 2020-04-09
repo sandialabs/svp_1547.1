@@ -55,6 +55,7 @@ def test_run():
     chil = None
     result_summary = None
     dataset_filename = None
+    v_nom = None
 
     try:
 

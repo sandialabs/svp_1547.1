@@ -141,16 +141,22 @@ def test_run():
             chil.config()
 
         # grid simulator is initialized with test parameters and enabled
-        grid = gridsim.gridsim_init(ts)  # Turn on AC so the EUT can be initialized
+        grid = gridsim.gridsim_init(ts, support_interfaces={'hil': chil})  # Turn on AC so the EUT can be initialized
         if grid is not None:
-            # for HIL-based gridsim objects, link the chil parameters to voltage/frequency simulink parameters
-            if callable(getattr(grid, "gridsim_info", None)):
-                if grid.gridsim_info()['mode'] == 'Opal':
-                    grid.config(hil_object=chil)
             grid.voltage(v_nom)
 
+        # pv simulator is initialized with test parameters and enabled
+        pv = pvsim.pvsim_init(ts)
+        if pv is not None:
+            pv.power_set(p_rated)
+            pv.power_on()  # Turn on DC so the EUT can be initialized
+            start_up = 60
+            ts.log('Waiting for EUT to power up. Sleeping %s sec.' % start_up)
+            ts.sleep(start_up)
+
         das_points = lib_1547.get_sc_points()  # DAS soft channels
-        daq = das.das_init(ts, sc_points=das_points['sc'])  # initialize data acquisition
+        # initialize data acquisition
+        daq = das.das_init(ts, sc_points=das_points['sc'], support_interfaces={'pvsim': pv, 'hil': chil})
         if daq is not None:
             daq.sc['V_MEAS'] = None
             daq.sc['P_MEAS'] = None
@@ -160,16 +166,6 @@ def test_run():
             daq.sc['PF_TARGET'] = None
             daq.sc['event'] = 'None'
             ts.log('DAS device: %s' % daq.info())
-
-        # pv simulator is initialized with test parameters and enabled
-        pv = pvsim.pvsim_init(ts)
-        if pv is not None:
-            pv.power_set(p_rated)
-            pv.power_on()  # Turn on DC so the EUT can be initialized
-            if callable(getattr(daq, "set_dc_measurement", None)):  # for DAQs that don't natively have dc measurements
-                daq.set_dc_measurement(pv)  # send pv obj to daq to get dc measurements
-                ts.log('Waiting for EUT to power up. Sleeping 30 sec.')
-                ts.sleep(30)
 
         """
         b) Set all voltage trip parameters to the widest range of adjustability. Disable all reactive/active power
@@ -229,7 +225,7 @@ def test_run():
             if pv is not None:
                 pv.iv_curve_config(pmp=p_rated, vmp=v_in)
                 pv.irradiance_set(1000.)
-                ts.sleep(40.)  # Give EUT time to track new I-V Curve
+                ts.sleep(60.)  # Give EUT time to track new I-V Curve
 
             """
             t) Repeat steps d) through s) for additional reactive power settings: Qmax,ab, 0.5Qmax,inj, 0.5Qmax,ab.
@@ -335,12 +331,14 @@ def test_run():
                 daq.sc['Q_MEAS'] = q_meas
                 daq.sc['Q_TARGET'] = 0.0
                 daq.sc['EVENT'] = "{0}_TR_1".format(step_label)
-                daq.sc['Q_TARGET_MIN'] = q_meas - 1.5 * lib_1547.MRA_Q
-                daq.sc['Q_TARGET_MAX'] = q_meas + 1.5 * lib_1547.MRA_Q
+                daq.sc['Q_TARGET_MIN'] = daq.sc['Q_TARGET'] - 1.5 * lib_1547.MRA_Q
+                daq.sc['Q_TARGET_MAX'] = daq.sc['Q_TARGET'] + 1.5 * lib_1547.MRA_Q
                 if daq.sc['Q_TARGET_MIN'] <= daq.sc['Q_MEAS'] <= daq.sc['Q_TARGET_MAX']:
                     daq.sc['90%_BY_TR=1'] = 'Pass'
                 else:
                     daq.sc['90%_BY_TR=1'] = 'Fail'
+                ts.log_debug('Disabled CRP: q_min [%s] <= q_meas [%s] <= q_max [%s] = %s' %
+                             (daq.sc['Q_TARGET_MIN'], daq.sc['Q_MEAS'], daq.sc['Q_TARGET_MAX'], daq.sc['90%_BY_TR=1']))
                 daq.data_sample()
 
                 # 90%_BY_TR=1, V_MEAS, V_TARGET, P_MEAS, P_TARGET, Q_MEAS, Q_TARGET, Q_TARGET_MIN,
