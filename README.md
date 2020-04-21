@@ -7,11 +7,11 @@ Hence, Python 3.7+ is required.
 
 ## Contribution
 
-For the contribution list, please refer to [Contribution section](doc/CONTRIB.md)
+For the contribution list, please refer to [Contribution section](/1547.1/doc/CONTRIB.md)
 
 ### Installation
 
-Please refer to the [Install section](doc/INSTALL.md) for detailed instruction
+Please refer to the [Install section](/1547.1/doc/INSTALL.md) for detailed instruction
 
 ### SVP Scripts
 
