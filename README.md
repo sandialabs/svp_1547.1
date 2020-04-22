@@ -1,4 +1,5 @@
-###P1547.1 Compliance Python Test Scripts 
+## P1547.1 Compliance Python Test Scripts
+
 
 ---
 
@@ -16,37 +17,37 @@ Please refer to the [Install section](/1547.1/doc/INSTALL.md) for detailed instr
 ### SVP Scripts
 
 Current compliance test scripts available:
-####Voltage regulation
+#### Voltage regulation
    Constant power factor (CPF):
-   -[x] Constant power factor mode 
+   - [x] Constant power factor mode 
 
    Volt-reactive power (VV):
-   -[x] Volt-var mode
-   -[ ] Volt-var mode(Vref Test)
-   -[x] Volt-var mode with an imbalanced grid
+   - [x] Volt-var mode
+   - [ ] Volt-var mode(Vref Test)
+   - [x] Volt-var mode with an imbalanced grid
 
    Active power-reactive power (VW):
-   -[x] Active power-reactive mode
-   -[x] Active power-reactive mode with an imbalanced grid
-   -[x] Active power-reactive power (WV)
+   - [x] Active power-reactive mode
+   - [x] Active power-reactive mode with an imbalanced grid
+   - [x] Active power-reactive power (WV)
    
    Constant reactive power (CRP):
-   -[x] Constant reactive power mode 
+   - [x] Constant reactive power mode 
 
-####Frequency support
--[x] Frequency-watt or Frequency-droop - above nominal frequency (FW)
--[x] Frequency-watt or Frequency-droop - below nominal frequency (FW)
+#### Frequency support
+- [x] Frequency-watt or Frequency-droop - above nominal frequency (FW)
+- [x] Frequency-watt or Frequency-droop - below nominal frequency (FW)
 
-####Prioritization of DER responses
--[x] Test for voltage and frequency regulation priority (PRI)
+#### Prioritization of DER responses
+- [x] Test for voltage and frequency regulation priority (PRI)
 
-####Limitation of overvoltage contribution
--[ ] Ground fault overvoltage (GFOV) test
--[ ] Load rejection overvoltage (LROV) test
+#### Limitation of overvoltage contribution
+- [ ] Ground fault overvoltage (GFOV) test
+- [ ] Load rejection overvoltage (LROV) test
 
-####Varia
--[ ] Interoperability test
--[ ] Nameplate data test
+#### Varia
+- [ ] Interoperability test
+- [ ] Nameplate data test
 
 ### Support
 
