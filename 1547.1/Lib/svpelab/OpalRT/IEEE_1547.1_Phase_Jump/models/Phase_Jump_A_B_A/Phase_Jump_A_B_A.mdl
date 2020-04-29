@@ -6,7 +6,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.676"
+    ComputedModelVersion    "1.774"
     NumModelReferences	    0
     NumTestPointedSignals   0
     NumProvidedFunctions    0
@@ -17,7 +17,7 @@ Model {
     PreCompExecutionDomainType "Unset"
     IsExportFunctionModel   0
     NumParameterArguments   0
-    NumExternalFileReferences 9
+    NumExternalFileReferences 31
     ExternalFileReference {
       Reference		      "artemis/ARTEMIS/ARTEMIS Guide"
       Path		      "Phase_Jump_A_B_A/ARTEMIS Guide1"
@@ -28,6 +28,114 @@ Model {
       Reference		      "rtlab/OpComm"
       Path		      "Phase_Jump_A_B_A/SC_Meter/OpComm"
       SID		      "26950"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "powerlib_meascontrol/PLL/PLL"
+      Path		      "Phase_Jump_A_B_A/SM_Source/AC_FREQ_1raw"
+      SID		      "27198"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "powerlib_meascontrol/PLL/PLL"
+      Path		      "Phase_Jump_A_B_A/SM_Source/AC_FREQ_2raw"
+      SID		      "27244"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "powerlib_meascontrol/PLL/PLL"
+      Path		      "Phase_Jump_A_B_A/SM_Source/AC_FREQ_3raw"
+      SID		      "27245"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "powerlib_meascontrol/Measurements/RMS"
+      Path		      "Phase_Jump_A_B_A/SM_Source/AC_IRMS_1"
+      SID		      "27187"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "powerlib_meascontrol/Measurements/RMS"
+      Path		      "Phase_Jump_A_B_A/SM_Source/AC_IRMS_2"
+      SID		      "27188"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "powerlib_meascontrol/Measurements/RMS"
+      Path		      "Phase_Jump_A_B_A/SM_Source/AC_IRMS_3"
+      SID		      "27189"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "pePowerMeasurement/Power\nMeasurement"
+      Path		      "Phase_Jump_A_B_A/SM_Source/AC_P_Q_1"
+      SID		      "27241"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "pePowerMeasurement/Power\nMeasurement"
+      Path		      "Phase_Jump_A_B_A/SM_Source/AC_P_Q_2"
+      SID		      "27242"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "pePowerMeasurement/Power\nMeasurement"
+      Path		      "Phase_Jump_A_B_A/SM_Source/AC_P_Q_3"
+      SID		      "27243"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "powerlib_meascontrol/Measurements/RMS"
+      Path		      "Phase_Jump_A_B_A/SM_Source/AC_VRMS_1"
+      SID		      "27173"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "powerlib_meascontrol/Measurements/RMS"
+      Path		      "Phase_Jump_A_B_A/SM_Source/AC_VRMS_2"
+      SID		      "27182"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "powerlib_meascontrol/Measurements/RMS"
+      Path		      "Phase_Jump_A_B_A/SM_Source/AC_VRMS_3"
+      SID		      "27183"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "powerlib_meascontrol/Measurements/Fourier"
+      Path		      "Phase_Jump_A_B_A/SM_Source/Fourier"
+      SID		      "27650"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "powerlib_meascontrol/Measurements/Fourier"
+      Path		      "Phase_Jump_A_B_A/SM_Source/Fourier1"
+      SID		      "27661"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "powerlib_meascontrol/Measurements/Fourier"
+      Path		      "Phase_Jump_A_B_A/SM_Source/Fourier2"
+      SID		      "27662"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "powerlib_meascontrol/Measurements/Fourier"
+      Path		      "Phase_Jump_A_B_A/SM_Source/Fourier3"
+      SID		      "27660"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "powerlib_meascontrol/Measurements/Fourier"
+      Path		      "Phase_Jump_A_B_A/SM_Source/Fourier4"
+      SID		      "27663"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "powerlib_meascontrol/Measurements/Fourier"
+      Path		      "Phase_Jump_A_B_A/SM_Source/Fourier5"
+      SID		      "27664"
       Type		      "LIBRARY_BLOCK"
     }
     ExternalFileReference {
@@ -49,6 +157,18 @@ Model {
       Type		      "LIBRARY_BLOCK"
     }
     ExternalFileReference {
+      Reference		      "simulink/Math\nOperations/MinMax\nRunning\nResettable"
+      Path		      "Phase_Jump_A_B_A/SM_Source/MinMax Running Resettable"
+      SID		      "27786"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "simulink/Math\nOperations/MinMax\nRunning\nResettable"
+      Path		      "Phase_Jump_A_B_A/SM_Source/MinMax Running Resettable1"
+      SID		      "27803"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
       Reference		      "rtio_opalrt_ml605ex1/OpCtrl ML605EX1"
       Path		      "Phase_Jump_A_B_A/SM_Source/OpCtrl ML605EX1"
       SID		      "27018"
@@ -61,9 +181,21 @@ Model {
       Type		      "LIBRARY_BLOCK"
     }
     ExternalFileReference {
+      Reference		      "rtlab/DataLogging/OpTrigger"
+      Path		      "Phase_Jump_A_B_A/SM_Source/OpTrigger2"
+      SID		      "27269"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
       Reference		      "rtlab/DataLogging/OpWriteFile"
       Path		      "Phase_Jump_A_B_A/SM_Source/OpWriteFile1"
       SID		      "27150"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "rtlab/DataLogging/OpWriteFile"
+      Path		      "Phase_Jump_A_B_A/SM_Source/OpWriteFile2"
+      SID		      "27270"
       Type		      "LIBRARY_BLOCK"
     }
     ExternalFileReference {
@@ -118,7 +250,7 @@ Model {
 	$PropName		"ExplorerBarInfo"
 	$ObjectID		4
 	$ClassName		"Simulink.ExplorerBarInfo"
-	Visible			[0]
+	Visible			[1]
       }
       Array {
 	Type			"Simulink.EditorInfo"
@@ -128,18 +260,18 @@ Model {
 	  IsActive		  [0]
 	  ViewObjType		  "SimulinkTopLevel"
 	  LoadSaveID		  "0"
-	  Extents		  [3759.0, 1200.0]
-	  ZoomFactor		  [1.5]
-	  Offset		  [931.64150943396157, 383.68507599580727]
+	  Extents		  [2074.0, 1083.0]
+	  ZoomFactor		  [1.4999999999999998]
+	  Offset		  [866.55660377358481, 276.44339622641508]
 	}
 	Object {
 	  $ObjectID		  6
 	  IsActive		  [1]
 	  ViewObjType		  "SimulinkSubsys"
 	  LoadSaveID		  "26957"
-	  Extents		  [1878.0, 1014.0]
-	  ZoomFactor		  [1.0]
-	  Offset		  [866.16981132075489, 813.0]
+	  Extents		  [1878.0, 981.0]
+	  ZoomFactor		  [0.6]
+	  Offset		  [1602.9220024621272, -72.782811173465348]
 	}
 	PropName		"EditorsInfo"
       }
@@ -170,8 +302,8 @@ Model {
   }
   HideAutomaticNames	  on
   ARTEMISmethode_block_infos "$$__separator__$$Phase_Jump_A_B_A/ARTEMIS Guide1$$__separator__$$"
-  PhysicalModelingChecksum "556214610"
-  PhysicalModelingParameterChecksum "2258640809"
+  PhysicalModelingChecksum "1259703998"
+  PhysicalModelingParameterChecksum "2888679252"
   PhysicalModelingProducts "Power_System_Blocks"
   Created		  "Mon Jul 03 09:25:10 2017"
   Creator		  "DETLDAQ"
@@ -179,9 +311,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "DETLDAQ"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Tue Feb 04 15:58:48 2020"
-  RTWModifiedTimeStamp	  502731451
-  ModelVersionFormat	  "1.%<AutoIncrement:676>"
+  LastModifiedDate	  "Wed Apr 29 11:16:40 2020"
+  RTWModifiedTimeStamp	  510058560
+  ModelVersionFormat	  "1.%<AutoIncrement:774>"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
   LibraryLinkDisplay	  "disabled"
@@ -300,7 +432,7 @@ Model {
 	  DisabledProps		  []
 	  Description		  ""
 	  StartTime		  "0.0"
-	  StopTime		  "101.5"
+	  StopTime		  "170"
 	  AbsTol		  "auto"
 	  AutoScaleAbsTol	  on
 	  FixedStep		  "Ts"
@@ -324,7 +456,7 @@ Model {
 	  ZeroCrossControl	  "UseLocalSettings"
 	  ZeroCrossAlgorithm	  "Nonadaptive"
 	  AlgebraicLoopSolver	  "TrustRegion"
-	  SolverInfoToggleStatus  off
+	  SolverInfoToggleStatus  on
 	  IsAutoAppliedInSIP	  off
 	  SolverResetMethod	  "Fast"
 	  PositivePriorityOrder	  off
@@ -592,21 +724,21 @@ Model {
 	  TargetBitPerLongLong	  64
 	  TargetBitPerFloat	  32
 	  TargetBitPerDouble	  64
-	  TargetBitPerPointer	  32
-	  TargetBitPerSizeT	  32
-	  TargetBitPerPtrDiffT	  32
+	  TargetBitPerPointer	  64
+	  TargetBitPerSizeT	  64
+	  TargetBitPerPtrDiffT	  64
 	  TargetLargestAtomicInteger "Char"
 	  TargetLargestAtomicFloat "None"
 	  TargetShiftRightIntArith on
-	  TargetLongLongMode	  off
-	  TargetIntDivRoundTo	  "Undefined"
-	  TargetEndianess	  "Unspecified"
-	  TargetWordSize	  32
+	  TargetLongLongMode	  on
+	  TargetIntDivRoundTo	  "Zero"
+	  TargetEndianess	  "LittleEndian"
+	  TargetWordSize	  64
 	  TargetPreprocMaxBitsSint 32
 	  TargetPreprocMaxBitsUint 32
-	  TargetHWDeviceType	  "Specified"
-	  TargetUnknown		  on
-	  ProdEqTarget		  on
+	  TargetHWDeviceType	  "MATLAB Host"
+	  TargetUnknown		  off
+	  ProdEqTarget		  off
 	  UseEmbeddedCoderFeatures on
 	  UseSimulinkCoderFeatures on
 	}
@@ -1019,9 +1151,9 @@ Model {
 	PropName		"Components"
       }
       Name		      "Configuration"
-      ExtraOptions	      ""
+      ExtraOptions	      "-aBlockCommentType=\"BlockPathComment\" -aIgnoreTestpoints=0 "
       CurrentDlgPage	      "Solver"
-      ConfigPrmDlgPosition    [ 130, 103, 1370, 1126 ]
+      ConfigPrmDlgPosition    [ 71, 71, 1311, 1017 ]
     }
     PropName		    "ConfigurationSets"
   }
@@ -1097,6 +1229,17 @@ Model {
     ToolTip		    "on"
   }
   BlockParameterDefaults {
+    Block {
+      BlockType		      Abs
+      ZeroCross		      on
+      SampleTime	      "-1"
+      OutMin		      "[]"
+      OutMax		      "[]"
+      OutDataTypeStr	      "Inherit: Same as input"
+      LockScale		      off
+      RndMeth		      "Floor"
+      SaturateOnIntegerOverflow	on
+    }
     Block {
       BlockType		      BusCreator
       DisplayOption	      "none"
@@ -1174,6 +1317,30 @@ Model {
       Interpolate	      on
     }
     Block {
+      BlockType		      Logic
+      Operator		      "AND"
+      Inputs		      "2"
+      IconShape		      "rectangular"
+      AllPortsSameDT	      on
+      OutDataTypeStr	      "Inherit: Logical (see Configuration Parameters: Optimization)"
+      SampleTime	      "-1"
+    }
+    Block {
+      BlockType		      Math
+      Operator		      "exp"
+      OutputSignalType	      "auto"
+      SampleTime	      "-1"
+      OutMin		      "[]"
+      OutMax		      "[]"
+      OutDataTypeStr	      "Inherit: Same as first input"
+      LockScale		      off
+      RndMeth		      "Floor"
+      SaturateOnIntegerOverflow	on
+      IntermediateResultsDataTypeStr "Inherit: Inherit via internal rule"
+      AlgorithmType	      "Newton-Raphson"
+      Iterations	      "3"
+    }
+    Block {
       BlockType		      Mux
       Inputs		      "4"
       DisplayOption	      "none"
@@ -1220,6 +1387,15 @@ Model {
       SampleTime	      "-1"
     }
     Block {
+      BlockType		      RelationalOperator
+      Operator		      ">="
+      InputSameDT	      on
+      OutDataTypeStr	      "Inherit: Logical (see Configuration Parameters: Optimization)"
+      ZeroCross		      on
+      SampleTime	      "-1"
+      RndMeth		      "Nearest"
+    }
+    Block {
       BlockType		      Saturate
       UpperLimitSource	      "Dialog"
       UpperLimit	      "0.5"
@@ -1237,6 +1413,21 @@ Model {
     Block {
       BlockType		      Scope
       DefaultConfigurationName "Simulink.scopes.TimeScopeBlockCfg"
+    }
+    Block {
+      BlockType		      Sqrt
+      Operator		      "sqrt"
+      OutputSignalType	      "auto"
+      SampleTime	      "-1"
+      OutMin		      "[]"
+      OutMax		      "[]"
+      OutDataTypeStr	      "Inherit: Same as first input"
+      LockScale		      off
+      RndMeth		      "Floor"
+      SaturateOnIntegerOverflow	on
+      IntermediateResultsDataTypeStr "Inherit: Inherit via internal rule"
+      AlgorithmType	      "Exact"
+      Iterations	      "3"
     }
     Block {
       BlockType		      SubSystem
@@ -1358,7 +1549,7 @@ Model {
     ShowPageBoundaries	    off
     ZoomFactor		    "150"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    "27172"
+    SIDHighWatermark	    "27843"
     Block {
       BlockType		      Reference
       Name		      "ARTEMIS Guide1"
@@ -1539,7 +1730,7 @@ Model {
 	TiledPaperMargins	[0.500000, 0.500000, 0.500000, 0.500000]
 	TiledPageScale		1
 	ShowPageBoundaries	off
-	ZoomFactor		"125"
+	ZoomFactor		"280"
 	Block {
 	  BlockType		  Inport
 	  Name			  "A"
@@ -1600,7 +1791,7 @@ Model {
 	  Ports			  [6, 6]
 	  Position		  [330, 301, 415, 599]
 	  ZOrder		  11065
-	  LibraryVersion	  "1.522"
+	  LibraryVersion	  "1.537"
 	  SourceBlock		  "rtlab/OpComm"
 	  SourceType		  "RT-LAB OpComm"
 	  ContentPreviewEnabled	  off
@@ -1619,6 +1810,32 @@ Model {
 	  from_console		  "0"
 	  warning_done		  off
 	  writeOpCommFile	  off
+	}
+	Block {
+	  BlockType		  Scope
+	  Name			  "Scope"
+	  SID			  "27437"
+	  Ports			  [2]
+	  Position		  [650, 291, 675, 504]
+	  ZOrder		  12226
+	  ScopeSpecificationString "Simulink.scopes.TimeScopeBlockCfg('CurrentConfiguration', extmgr.ConfigurationSet(extmgr."
+	  "Configuration('Core','General UI',true),extmgr.Configuration('Core','Source UI',true),extmgr.Configuration('Sources"
+	  "','WiredSimulink',true,'DataLoggingVariableName','ScopeData1'),extmgr.Configuration('Visuals','Time Domain',true,'S"
+	  "erializedDisplays',{struct('MinYLimReal','-10','MaxYLimReal','10','YLabelReal','','MinYLimMag','0','MaxYLimMag','10"
+	  "','LegendVisibility','Off','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0 0],'AxesTickColor',[0.68"
+	  "6274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.0666666666666667;0.0745098039215686 0.623529"
+	  "411764706 1;1 0.411764705882353 0.16078431372549;0.392156862745098 0.831372549019608 0.0745098039215686;0.717647058"
+	  "823529 0.274509803921569 1;0.0588235294117647 1 1;1 0.0745098039215686 0.650980392156863],'Title','%<SignalLabel>',"
+	  "'LinePropertiesCache',{{}},'UserDefinedChannelNames',{{}},'NumLines',0,'LineNames',{{[]}},'ShowContent',true,'Place"
+	  "ment',1)},'DisplayPropertyDefaults',struct('MinYLimReal','-10','MaxYLimReal','10','YLabelReal','','MinYLimMag','0',"
+	  "'MaxYLimMag','10','LegendVisibility','Off','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0 0],'Axes"
+	  "TickColor',[0.686274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[0.0745098039215686 0.6235294117647"
+	  "06 1;1 0.411764705882353 0.16078431372549;1 1 0.0666666666666667;0.717647058823529 0.274509803921569 1;0.3921568627"
+	  "45098 0.831372549019608 0.0745098039215686;0.0588235294117647 1 1;1 0.0745098039215686 0.650980392156863])),extmgr."
+	  "Configuration('Tools','Plot Navigation',true),extmgr.Configuration('Tools','Measurements',true,'Version','2018b')),"
+	  "'Version','2018b','Position',[589.433962264151 333.396226415094 560 420])"
+	  NumInputPorts		  "2"
+	  Floating		  off
 	}
 	Block {
 	  BlockType		  ToWorkspace
@@ -1702,8 +1919,18 @@ Model {
 	  ZOrder		  1
 	  SrcBlock		  "OpComm"
 	  SrcPort		  1
-	  DstBlock		  "To Workspace"
-	  DstPort		  1
+	  Points		  [32, 0]
+	  Branch {
+	    ZOrder		    14
+	    Points		    [0, 20]
+	    DstBlock		    "Scope"
+	    DstPort		    1
+	  }
+	  Branch {
+	    ZOrder		    13
+	    DstBlock		    "To Workspace"
+	    DstPort		    1
+	  }
 	}
 	Line {
 	  ZOrder		  2
@@ -1744,8 +1971,18 @@ Model {
 	  ZOrder		  7
 	  SrcBlock		  "OpComm"
 	  SrcPort		  4
-	  DstBlock		  "To Workspace3"
-	  DstPort		  1
+	  Points		  [30, 0]
+	  Branch {
+	    ZOrder		    16
+	    Points		    [0, -25]
+	    DstBlock		    "Scope"
+	    DstPort		    2
+	  }
+	  Branch {
+	    ZOrder		    15
+	    DstBlock		    "To Workspace3"
+	    DstPort		    1
+	  }
 	}
 	Line {
 	  ZOrder		  8
@@ -1812,7 +2049,443 @@ Model {
 	TiledPaperMargins	[0.500000, 0.500000, 0.500000, 0.500000]
 	TiledPageScale		1
 	ShowPageBoundaries	off
-	ZoomFactor		"100"
+	ZoomFactor		"60"
+	Block {
+	  BlockType		  Constant
+	  Name			  "80% Threshold"
+	  SID			  "27440"
+	  Position		  [2715, 685, 2745, 715]
+	  ZOrder		  12793
+	  HideAutomaticName	  off
+	  Value			  "0.80"
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "AC_FREQ_1"
+	  SID			  "27257"
+	  Position		  [2880, 1435, 2900, 1455]
+	  ZOrder		  12731
+	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "AC_FREQ_1raw"
+	  SID			  "27198"
+	  Ports			  [1, 2]
+	  Position		  [2760, 1437, 2835, 1468]
+	  ZOrder		  12672
+	  LibraryVersion	  "1.167"
+	  FontName		  "Arial"
+	  SourceBlock		  "powerlib_meascontrol/PLL/PLL"
+	  SourceType		  "PLL"
+	  SourceProductName	  "Simscape Power Systems"
+	  SourceProductBaseCode	  "PS"
+	  ContentPreviewEnabled	  on
+	  Fmin			  "45"
+	  Par_Init		  "[0, 60]"
+	  ParK			  "[180, 3200, 1]"
+	  TcD			  "1e-4"
+	  MaxRateChangeFreq	  "12"
+	  FilterCutOffFreq	  "25"
+	  Ts			  "0"
+	  AGC			  on
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "AC_FREQ_2"
+	  SID			  "27258"
+	  Position		  [2880, 1485, 2900, 1505]
+	  ZOrder		  12732
+	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "AC_FREQ_2raw"
+	  SID			  "27244"
+	  Ports			  [1, 2]
+	  Position		  [2760, 1487, 2835, 1518]
+	  ZOrder		  12718
+	  LibraryVersion	  "1.167"
+	  FontName		  "Arial"
+	  SourceBlock		  "powerlib_meascontrol/PLL/PLL"
+	  SourceType		  "PLL"
+	  SourceProductName	  "Simscape Power Systems"
+	  SourceProductBaseCode	  "PS"
+	  ContentPreviewEnabled	  on
+	  Fmin			  "45"
+	  Par_Init		  "[0, 60]"
+	  ParK			  "[180, 3200, 1]"
+	  TcD			  "1e-4"
+	  MaxRateChangeFreq	  "12"
+	  FilterCutOffFreq	  "25"
+	  Ts			  "0"
+	  AGC			  on
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "AC_FREQ_3"
+	  SID			  "27259"
+	  Position		  [2880, 1535, 2900, 1555]
+	  ZOrder		  12733
+	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "AC_FREQ_3raw"
+	  SID			  "27245"
+	  Ports			  [1, 2]
+	  Position		  [2760, 1537, 2835, 1568]
+	  ZOrder		  12719
+	  LibraryVersion	  "1.167"
+	  FontName		  "Arial"
+	  SourceBlock		  "powerlib_meascontrol/PLL/PLL"
+	  SourceType		  "PLL"
+	  SourceProductName	  "Simscape Power Systems"
+	  SourceProductBaseCode	  "PS"
+	  ContentPreviewEnabled	  on
+	  Fmin			  "45"
+	  Par_Init		  "[0, 60]"
+	  ParK			  "[180, 3200, 1]"
+	  TcD			  "1e-4"
+	  MaxRateChangeFreq	  "12"
+	  FilterCutOffFreq	  "25"
+	  Ts			  "0"
+	  AGC			  on
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "AC_IRMS_1"
+	  SID			  "27187"
+	  Ports			  [1, 1]
+	  Position		  [2785, 970, 2835, 1010]
+	  ZOrder		  12661
+	  LibraryVersion	  "1.167"
+	  FontName		  "Arial"
+	  SourceBlock		  "powerlib_meascontrol/Measurements/RMS"
+	  SourceType		  "RMS"
+	  SourceProductName	  "Simscape Power Systems"
+	  SourceProductBaseCode	  "PS"
+	  ContentPreviewEnabled	  on
+	  TrueRMS		  on
+	  Freq			  "60"
+	  RMSInit		  "120"
+	  Ts			  "0"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "AC_IRMS_2"
+	  SID			  "27188"
+	  Ports			  [1, 1]
+	  Position		  [2785, 1025, 2835, 1065]
+	  ZOrder		  12662
+	  LibraryVersion	  "1.167"
+	  FontName		  "Arial"
+	  SourceBlock		  "powerlib_meascontrol/Measurements/RMS"
+	  SourceType		  "RMS"
+	  SourceProductName	  "Simscape Power Systems"
+	  SourceProductBaseCode	  "PS"
+	  ContentPreviewEnabled	  on
+	  TrueRMS		  on
+	  Freq			  "60"
+	  RMSInit		  "120"
+	  Ts			  "0"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "AC_IRMS_3"
+	  SID			  "27189"
+	  Ports			  [1, 1]
+	  Position		  [2785, 1080, 2835, 1120]
+	  ZOrder		  12663
+	  LibraryVersion	  "1.167"
+	  FontName		  "Arial"
+	  SourceBlock		  "powerlib_meascontrol/Measurements/RMS"
+	  SourceType		  "RMS"
+	  SourceProductName	  "Simscape Power Systems"
+	  SourceProductBaseCode	  "PS"
+	  ContentPreviewEnabled	  on
+	  TrueRMS		  on
+	  Freq			  "60"
+	  RMSInit		  "120"
+	  Ts			  "0"
+	}
+	Block {
+	  BlockType		  Product
+	  Name			  "AC_PF_1"
+	  SID			  "27204"
+	  Ports			  [2, 1]
+	  Position		  [2710, 1817, 2740, 1848]
+	  ZOrder		  12678
+	  Inputs		  "*/"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  RndMeth		  "Floor"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Product
+	  Name			  "AC_PF_2"
+	  SID			  "27248"
+	  Ports			  [2, 1]
+	  Position		  [2710, 1897, 2740, 1928]
+	  ZOrder		  12722
+	  Inputs		  "*/"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  RndMeth		  "Floor"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Product
+	  Name			  "AC_PF_3"
+	  SID			  "27249"
+	  Ports			  [2, 1]
+	  Position		  [2710, 1957, 2740, 1988]
+	  ZOrder		  12723
+	  Inputs		  "*/"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  RndMeth		  "Floor"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "AC_P_1"
+	  SID			  "27250"
+	  Position		  [2880, 1150, 2900, 1170]
+	  ZOrder		  12724
+	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "AC_P_2"
+	  SID			  "27251"
+	  Position		  [2880, 1250, 2900, 1270]
+	  ZOrder		  12725
+	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "AC_P_3"
+	  SID			  "27252"
+	  Position		  [2880, 1349, 2900, 1371]
+	  ZOrder		  12726
+	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "AC_P_Q_1"
+	  SID			  "27241"
+	  Ports			  [2, 2]
+	  Position		  [2755, 1139, 2835, 1221]
+	  ZOrder		  12715
+	  LibraryVersion	  "1.22"
+	  SourceBlock		  "pePowerMeasurement/Power\nMeasurement"
+	  SourceType		  "Power Measurement"
+	  LabelModeActiveChoice	  "Continuous"
+	  ContentPreviewEnabled	  on
+	  F			  "60"
+	  K			  "[0 1 2 3]"
+	  Ts			  "0"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "AC_P_Q_2"
+	  SID			  "27242"
+	  Ports			  [2, 2]
+	  Position		  [2755, 1239, 2835, 1321]
+	  ZOrder		  12716
+	  LibraryVersion	  "1.22"
+	  SourceBlock		  "pePowerMeasurement/Power\nMeasurement"
+	  SourceType		  "Power Measurement"
+	  LabelModeActiveChoice	  "Continuous"
+	  ContentPreviewEnabled	  on
+	  F			  "60"
+	  K			  "[0 1 2 3]"
+	  Ts			  "0"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "AC_P_Q_3"
+	  SID			  "27243"
+	  Ports			  [2, 2]
+	  Position		  [2755, 1339, 2835, 1421]
+	  ZOrder		  12717
+	  LibraryVersion	  "1.22"
+	  SourceBlock		  "pePowerMeasurement/Power\nMeasurement"
+	  SourceType		  "Power Measurement"
+	  LabelModeActiveChoice	  "Continuous"
+	  ContentPreviewEnabled	  on
+	  F			  "60"
+	  K			  "[0 1 2 3]"
+	  Ts			  "0"
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "AC_Q_1"
+	  SID			  "27253"
+	  Position		  [2880, 1189, 2900, 1211]
+	  ZOrder		  12727
+	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "AC_Q_2"
+	  SID			  "27255"
+	  Position		  [2880, 1290, 2900, 1310]
+	  ZOrder		  12729
+	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "AC_Q_3"
+	  SID			  "27256"
+	  Position		  [2880, 1389, 2900, 1411]
+	  ZOrder		  12730
+	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Sqrt
+	  Name			  "AC_S_1"
+	  SID			  "27209"
+	  Position		  [2810, 1605, 2840, 1635]
+	  ZOrder		  12680
+	}
+	Block {
+	  BlockType		  Sqrt
+	  Name			  "AC_S_2"
+	  SID			  "27246"
+	  Position		  [2810, 1675, 2840, 1705]
+	  ZOrder		  12720
+	}
+	Block {
+	  BlockType		  Sqrt
+	  Name			  "AC_S_3"
+	  SID			  "27247"
+	  Position		  [2810, 1745, 2840, 1775]
+	  ZOrder		  12721
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "AC_VRMS_1"
+	  SID			  "27173"
+	  Ports			  [1, 1]
+	  Position		  [2785, 780, 2835, 820]
+	  ZOrder		  12647
+	  LibraryVersion	  "1.167"
+	  FontName		  "Arial"
+	  SourceBlock		  "powerlib_meascontrol/Measurements/RMS"
+	  SourceType		  "RMS"
+	  SourceProductName	  "Simscape Power Systems"
+	  SourceProductBaseCode	  "PS"
+	  ContentPreviewEnabled	  on
+	  TrueRMS		  on
+	  Freq			  "60"
+	  RMSInit		  "120"
+	  Ts			  "0"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "AC_VRMS_2"
+	  SID			  "27182"
+	  Ports			  [1, 1]
+	  Position		  [2785, 835, 2835, 875]
+	  ZOrder		  12656
+	  LibraryVersion	  "1.167"
+	  FontName		  "Arial"
+	  SourceBlock		  "powerlib_meascontrol/Measurements/RMS"
+	  SourceType		  "RMS"
+	  SourceProductName	  "Simscape Power Systems"
+	  SourceProductBaseCode	  "PS"
+	  ContentPreviewEnabled	  on
+	  TrueRMS		  on
+	  Freq			  "60"
+	  RMSInit		  "120"
+	  Ts			  "0"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "AC_VRMS_3"
+	  SID			  "27183"
+	  Ports			  [1, 1]
+	  Position		  [2785, 890, 2835, 930]
+	  ZOrder		  12657
+	  LibraryVersion	  "1.167"
+	  FontName		  "Arial"
+	  SourceBlock		  "powerlib_meascontrol/Measurements/RMS"
+	  SourceType		  "RMS"
+	  SourceProductName	  "Simscape Power Systems"
+	  SourceProductBaseCode	  "PS"
+	  ContentPreviewEnabled	  on
+	  TrueRMS		  on
+	  Freq			  "60"
+	  RMSInit		  "120"
+	  Ts			  "0"
+	}
+	Block {
+	  BlockType		  Abs
+	  Name			  "Abs"
+	  SID			  "27827"
+	  Position		  [2485, -55, 2515, -25]
+	  ZOrder		  12946
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Abs
+	  Name			  "Abs1"
+	  SID			  "27828"
+	  Position		  [2485, 40, 2515, 70]
+	  ZOrder		  12947
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Abs
+	  Name			  "Abs2"
+	  SID			  "27829"
+	  Position		  [2485, 130, 2515, 160]
+	  ZOrder		  12948
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Add"
+	  SID			  "27203"
+	  Ports			  [2, 1]
+	  Position		  [2770, 1672, 2800, 1703]
+	  ZOrder		  12677
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Add1"
+	  SID			  "27206"
+	  Ports			  [2, 1]
+	  Position		  [2770, 1602, 2800, 1633]
+	  ZOrder		  12682
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
 	Block {
 	  BlockType		  Sum
 	  Name			  "Add2"
@@ -1891,14 +2564,49 @@ Model {
 	  SaturateOnIntegerOverflow off
 	}
 	Block {
+	  BlockType		  Sum
+	  Name			  "Add8"
+	  SID			  "27210"
+	  Ports			  [2, 1]
+	  Position		  [2770, 1742, 2800, 1773]
+	  ZOrder		  12686
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Add9"
+	  SID			  "27442"
+	  Ports			  [3, 1]
+	  Position		  [2930, 826, 2975, 884]
+	  ZOrder		  12795
+	  Inputs		  "+++"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
 	  BlockType		  BusCreator
-	  Name			  "Bus\nCreator5"
-	  SID			  "27140"
-	  Ports			  [7, 1]
-	  Position		  [2400, 604, 2405, 796]
-	  ZOrder		  12626
+	  Name			  "Bus\nCreator1"
+	  SID			  "27260"
+	  Ports			  [13, 1]
+	  Position		  [3910, 239, 3915, 621]
+	  ZOrder		  12739
 	  ShowName		  off
-	  Inputs		  "7"
+	  Inputs		  "13"
+	  DisplayOption		  "bar"
+	  InheritFromInputs	  on
+	}
+	Block {
+	  BlockType		  BusCreator
+	  Name			  "Bus\nCreator2"
+	  SID			  "27813"
+	  Ports			  [13, 1]
+	  Position		  [3910, 654, 3915, 1036]
+	  ZOrder		  12932
+	  ShowName		  off
+	  Inputs		  "13"
 	  DisplayOption		  "bar"
 	  InheritFromInputs	  on
 	}
@@ -1906,7 +2614,7 @@ Model {
 	  BlockType		  Clock
 	  Name			  "Clock"
 	  SID			  "26964"
-	  Position		  [730, 1400, 750, 1420]
+	  Position		  [730, 1385, 750, 1405]
 	  ZOrder		  12488
 	  Decimation		  "30"
 	}
@@ -1914,15 +2622,47 @@ Model {
 	  BlockType		  Clock
 	  Name			  "Clock1"
 	  SID			  "26965"
-	  Position		  [730, 1470, 750, 1490]
+	  Position		  [730, 1455, 750, 1475]
 	  ZOrder		  12490
+	  Decimation		  "30"
+	}
+	Block {
+	  BlockType		  Clock
+	  Name			  "Clock10"
+	  SID			  "27429"
+	  Position		  [3640, 1145, 3660, 1165]
+	  ZOrder		  12779
+	  Decimation		  "30"
+	}
+	Block {
+	  BlockType		  Clock
+	  Name			  "Clock11"
+	  SID			  "27430"
+	  Position		  [3640, 1205, 3660, 1225]
+	  ZOrder		  12781
+	  Decimation		  "30"
+	}
+	Block {
+	  BlockType		  Clock
+	  Name			  "Clock12"
+	  SID			  "27805"
+	  Position		  [3170, 550, 3190, 570]
+	  ZOrder		  12925
+	  ShowName		  off
+	}
+	Block {
+	  BlockType		  Clock
+	  Name			  "Clock13"
+	  SID			  "27833"
+	  Position		  [3735, 55, 3755, 75]
+	  ZOrder		  12955
 	  Decimation		  "30"
 	}
 	Block {
 	  BlockType		  Clock
 	  Name			  "Clock2"
 	  SID			  "27159"
-	  Position		  [705, 1565, 725, 1585]
+	  Position		  [705, 1540, 725, 1560]
 	  ZOrder		  12635
 	  Decimation		  "30"
 	}
@@ -1930,7 +2670,7 @@ Model {
 	  BlockType		  Clock
 	  Name			  "Clock3"
 	  SID			  "27160"
-	  Position		  [705, 1635, 725, 1655]
+	  Position		  [705, 1610, 725, 1630]
 	  ZOrder		  12637
 	  Decimation		  "30"
 	}
@@ -1938,7 +2678,7 @@ Model {
 	  BlockType		  Clock
 	  Name			  "Clock4"
 	  SID			  "27129"
-	  Position		  [790, 2035, 810, 2055]
+	  Position		  [790, 2050, 810, 2070]
 	  ZOrder		  12596
 	  Decimation		  "30"
 	}
@@ -1946,7 +2686,7 @@ Model {
 	  BlockType		  Clock
 	  Name			  "Clock5"
 	  SID			  "27130"
-	  Position		  [790, 2095, 810, 2115]
+	  Position		  [790, 2110, 810, 2130]
 	  ZOrder		  12598
 	  Decimation		  "30"
 	}
@@ -1954,7 +2694,7 @@ Model {
 	  BlockType		  Clock
 	  Name			  "Clock6"
 	  SID			  "27165"
-	  Position		  [705, 1735, 725, 1755]
+	  Position		  [705, 1710, 725, 1730]
 	  ZOrder		  12641
 	  Decimation		  "30"
 	}
@@ -1962,17 +2702,25 @@ Model {
 	  BlockType		  Clock
 	  Name			  "Clock7"
 	  SID			  "27166"
-	  Position		  [705, 1805, 725, 1825]
+	  Position		  [705, 1780, 725, 1800]
 	  ZOrder		  12643
 	  Decimation		  "30"
 	}
 	Block {
 	  BlockType		  Clock
 	  Name			  "Clock8"
-	  SID			  "27141"
-	  Position		  [2320, 825, 2340, 845]
-	  ZOrder		  12624
+	  SID			  "27790"
+	  Position		  [3110, 45, 3130, 65]
+	  ZOrder		  12910
 	  ShowName		  off
+	}
+	Block {
+	  BlockType		  Clock
+	  Name			  "Clock9"
+	  SID			  "27832"
+	  Position		  [3735, -5, 3755, 15]
+	  ZOrder		  12953
+	  Decimation		  "30"
 	}
 	Block {
 	  BlockType		  Constant
@@ -2077,7 +2825,7 @@ Model {
 	  BlockType		  Constant
 	  Name			  "Constant21"
 	  SID			  "26979"
-	  Position		  [1795, 1685, 1825, 1715]
+	  Position		  [1835, 1700, 1865, 1730]
 	  ZOrder		  12567
 	  ShowName		  off
 	  Value			  "0"
@@ -2086,7 +2834,7 @@ Model {
 	  BlockType		  Constant
 	  Name			  "Constant22"
 	  SID			  "26980"
-	  Position		  [1795, 1785, 1825, 1815]
+	  Position		  [1795, 1800, 1825, 1830]
 	  ZOrder		  12568
 	  ShowName		  off
 	  Value			  "0"
@@ -2095,7 +2843,7 @@ Model {
 	  BlockType		  Constant
 	  Name			  "Constant23"
 	  SID			  "26981"
-	  Position		  [1795, 1835, 1825, 1865]
+	  Position		  [1795, 1850, 1825, 1880]
 	  ZOrder		  12569
 	  ShowName		  off
 	  Value			  "0"
@@ -2104,7 +2852,7 @@ Model {
 	  BlockType		  Constant
 	  Name			  "Constant24"
 	  SID			  "26982"
-	  Position		  [1795, 1885, 1825, 1915]
+	  Position		  [1795, 1900, 1825, 1930]
 	  ZOrder		  12570
 	  ShowName		  off
 	  Value			  "0"
@@ -2117,6 +2865,30 @@ Model {
 	  ZOrder		  12522
 	  ShowName		  off
 	  Value			  "509.604013"
+	}
+	Block {
+	  BlockType		  Switch
+	  Name			  "Count when Neg"
+	  SID			  "27476"
+	  Position		  [3330, 565, 3390, 605]
+	  ZOrder		  12802
+	  BackgroundColor	  "yellow"
+	  HideAutomaticName	  off
+	  Criteria		  "u2 ~= 0"
+	  InputSameDT		  off
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Switch
+	  Name			  "Count when Neg1"
+	  SID			  "27791"
+	  Position		  [3265, 90, 3325, 130]
+	  ZOrder		  12911
+	  BackgroundColor	  "yellow"
+	  HideAutomaticName	  off
+	  Criteria		  "u2 ~= 0"
+	  InputSameDT		  off
+	  SaturateOnIntegerOverflow off
 	}
 	Block {
 	  BlockType		  Demux
@@ -2145,29 +2917,199 @@ Model {
 	  Name			  "Demux3"
 	  SID			  "26987"
 	  Ports			  [1, 3]
-	  Position		  [1610, 1536, 1615, 1684]
+	  Position		  [1540, 1511, 1545, 1679]
 	  ZOrder		  12572
 	  ShowName		  off
 	  Outputs		  "3"
 	  DisplayOption		  "bar"
 	  Port {
 	    PortNumber		    1
-	    Name		    "Va"
+	    Name		    "B"
 	  }
 	  Port {
 	    PortNumber		    2
-	    Name		    "A"
+	    Name		    "B"
 	  }
 	  Port {
 	    PortNumber		    3
-	    Name		    "C"
+	    Name		    "B"
 	  }
+	}
+	Block {
+	  BlockType		  Switch
+	  Name			  "End Capture Pulse End"
+	  SID			  "27834"
+	  Position		  [3810, 45, 3885, 85]
+	  ZOrder		  12954
+	  BackgroundColor	  "yellow"
+	  HideAutomaticName	  off
+	  Criteria		  "u2 > Threshold"
+	  Threshold		  "130"
+	  InputSameDT		  off
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Switch
+	  Name			  "End Capture Pulse Start"
+	  SID			  "27835"
+	  Position		  [3930, -15, 3990, 25]
+	  ZOrder		  12952
+	  BackgroundColor	  "yellow"
+	  HideAutomaticName	  off
+	  Criteria		  "u2 > Threshold"
+	  Threshold		  "90"
+	  InputSameDT		  off
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  RelationalOperator
+	  Name			  "Equal"
+	  SID			  "27681"
+	  Ports			  [2, 1]
+	  Position		  [1020, 2112, 1050, 2143]
+	  ZOrder		  12860
+	  Operator		  "=="
+	  InputSameDT		  off
+	  OutDataTypeStr	  "boolean"
+	  RndMeth		  "Simplest"
+	}
+	Block {
+	  BlockType		  Constant
+	  Name			  "FaultStopCount1"
+	  SID			  "27800"
+	  Position		  [3080, -75, 3110, -45]
+	  ZOrder		  12920
+	  HideAutomaticName	  off
+	  Value			  "305.5"
+	}
+	Block {
+	  BlockType		  Constant
+	  Name			  "FaultStopCount2"
+	  SID			  "27480"
+	  Position		  [3140, 465, 3175, 495]
+	  ZOrder		  12806
+	  HideAutomaticName	  off
+	  Value			  "305.5"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Fourier"
+	  SID			  "27650"
+	  Ports			  [1, 2]
+	  Position		  [2315, -83, 2350, -52]
+	  ZOrder		  12830
+	  LibraryVersion	  "1.167"
+	  FontName		  "Arial"
+	  SourceBlock		  "powerlib_meascontrol/Measurements/Fourier"
+	  SourceType		  "Fourier"
+	  SourceProductName	  "Simscape Power Systems"
+	  SourceProductBaseCode	  "PS"
+	  ContentPreviewEnabled	  on
+	  Freq			  "60"
+	  n			  "1"
+	  InInit		  "[0, 0]"
+	  Ts			  "0"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Fourier1"
+	  SID			  "27661"
+	  Ports			  [1, 2]
+	  Position		  [2315, 12, 2350, 43]
+	  ZOrder		  12841
+	  LibraryVersion	  "1.167"
+	  FontName		  "Arial"
+	  SourceBlock		  "powerlib_meascontrol/Measurements/Fourier"
+	  SourceType		  "Fourier"
+	  SourceProductName	  "Simscape Power Systems"
+	  SourceProductBaseCode	  "PS"
+	  ContentPreviewEnabled	  on
+	  Freq			  "60"
+	  n			  "1"
+	  InInit		  "[0, 0]"
+	  Ts			  "0"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Fourier2"
+	  SID			  "27662"
+	  Ports			  [1, 2]
+	  Position		  [2315, 52, 2350, 83]
+	  ZOrder		  12842
+	  LibraryVersion	  "1.167"
+	  FontName		  "Arial"
+	  SourceBlock		  "powerlib_meascontrol/Measurements/Fourier"
+	  SourceType		  "Fourier"
+	  SourceProductName	  "Simscape Power Systems"
+	  SourceProductBaseCode	  "PS"
+	  ContentPreviewEnabled	  on
+	  Freq			  "60"
+	  n			  "1"
+	  InInit		  "[0, 0]"
+	  Ts			  "0"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Fourier3"
+	  SID			  "27660"
+	  Ports			  [1, 2]
+	  Position		  [2315, -43, 2350, -12]
+	  ZOrder		  12840
+	  LibraryVersion	  "1.167"
+	  FontName		  "Arial"
+	  SourceBlock		  "powerlib_meascontrol/Measurements/Fourier"
+	  SourceType		  "Fourier"
+	  SourceProductName	  "Simscape Power Systems"
+	  SourceProductBaseCode	  "PS"
+	  ContentPreviewEnabled	  on
+	  Freq			  "60"
+	  n			  "1"
+	  InInit		  "[0, 0]"
+	  Ts			  "0"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Fourier4"
+	  SID			  "27663"
+	  Ports			  [1, 2]
+	  Position		  [2315, 112, 2350, 143]
+	  ZOrder		  12843
+	  LibraryVersion	  "1.167"
+	  FontName		  "Arial"
+	  SourceBlock		  "powerlib_meascontrol/Measurements/Fourier"
+	  SourceType		  "Fourier"
+	  SourceProductName	  "Simscape Power Systems"
+	  SourceProductBaseCode	  "PS"
+	  ContentPreviewEnabled	  on
+	  Freq			  "60"
+	  n			  "1"
+	  InInit		  "[0, 0]"
+	  Ts			  "0"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "Fourier5"
+	  SID			  "27664"
+	  Ports			  [1, 2]
+	  Position		  [2315, 157, 2350, 188]
+	  ZOrder		  12844
+	  LibraryVersion	  "1.167"
+	  FontName		  "Arial"
+	  SourceBlock		  "powerlib_meascontrol/Measurements/Fourier"
+	  SourceType		  "Fourier"
+	  SourceProductName	  "Simscape Power Systems"
+	  SourceProductBaseCode	  "PS"
+	  ContentPreviewEnabled	  on
+	  Freq			  "60"
+	  n			  "1"
+	  InInit		  "[0, 0]"
+	  Ts			  "0"
 	}
 	Block {
 	  BlockType		  Constant
 	  Name			  "Frequency\nPhase A"
 	  SID			  "26988"
-	  Position		  [1080, 1447, 1110, 1463]
+	  Position		  [1080, 1432, 1110, 1448]
 	  ZOrder		  12479
 	  Value			  "60"
 	}
@@ -2175,7 +3117,7 @@ Model {
 	  BlockType		  Constant
 	  Name			  "Frequency\nPhase B"
 	  SID			  "26989"
-	  Position		  [1080, 1602, 1110, 1618]
+	  Position		  [1080, 1587, 1110, 1603]
 	  ZOrder		  12482
 	  Value			  "60"
 	}
@@ -2183,7 +3125,7 @@ Model {
 	  BlockType		  Constant
 	  Name			  "Frequency\nPhase C"
 	  SID			  "26990"
-	  Position		  [1085, 1762, 1115, 1778]
+	  Position		  [1085, 1757, 1115, 1773]
 	  ZOrder		  12483
 	  Value			  "60"
 	}
@@ -2210,11 +3152,11 @@ Model {
 	Block {
 	  BlockType		  From
 	  Name			  "From10"
-	  SID			  "27143"
-	  Position		  [2155, 667, 2255, 703]
-	  ZOrder		  12629
+	  SID			  "27816"
+	  Position		  [3755, 777, 3850, 793]
+	  ZOrder		  12937
 	  ShowName		  off
-	  GotoTag		  "Voltage_C"
+	  GotoTag		  "Current_B"
 	  TagVisibility		  "global"
 	}
 	Block {
@@ -2230,41 +3172,81 @@ Model {
 	Block {
 	  BlockType		  From
 	  Name			  "From12"
-	  SID			  "27144"
-	  Position		  [2255, 707, 2355, 743]
-	  ZOrder		  12630
-	  ShowName		  off
-	  GotoTag		  "Current_A"
-	  TagVisibility		  "global"
-	}
-	Block {
-	  BlockType		  From
-	  Name			  "From13"
-	  SID			  "27145"
-	  Position		  [2145, 732, 2245, 768]
-	  ZOrder		  12631
-	  ShowName		  off
-	  GotoTag		  "Current_B"
-	  TagVisibility		  "global"
-	}
-	Block {
-	  BlockType		  From
-	  Name			  "From14"
-	  SID			  "27146"
-	  Position		  [2255, 757, 2355, 793]
-	  ZOrder		  12632
+	  SID			  "27817"
+	  Position		  [3755, 806, 3850, 824]
+	  ZOrder		  12938
 	  ShowName		  off
 	  GotoTag		  "Current_C"
 	  TagVisibility		  "global"
 	}
 	Block {
 	  BlockType		  From
-	  Name			  "From15"
-	  SID			  "27171"
-	  Position		  [2155, 792, 2255, 828]
-	  ZOrder		  12646
+	  Name			  "From13"
+	  SID			  "27818"
+	  Position		  [3755, 836, 3850, 854]
+	  ZOrder		  12939
 	  ShowName		  off
 	  GotoTag		  "Trigger"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From14"
+	  SID			  "27819"
+	  Position		  [3755, 657, 3855, 673]
+	  ZOrder		  12933
+	  ShowName		  off
+	  GotoTag		  "Voltage_A"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From15"
+	  SID			  "27820"
+	  Position		  [3755, 687, 3855, 703]
+	  ZOrder		  12934
+	  ShowName		  off
+	  GotoTag		  "Voltage_B"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From16"
+	  SID			  "27175"
+	  Position		  [2630, 892, 2730, 928]
+	  ZOrder		  12651
+	  ShowName		  off
+	  GotoTag		  "Voltage_C"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From17"
+	  SID			  "27176"
+	  Position		  [2630, 972, 2730, 1008]
+	  ZOrder		  12652
+	  ShowName		  off
+	  GotoTag		  "Current_A"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From18"
+	  SID			  "27177"
+	  Position		  [2630, 1027, 2730, 1063]
+	  ZOrder		  12653
+	  ShowName		  off
+	  GotoTag		  "Current_B"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From19"
+	  SID			  "27178"
+	  Position		  [2630, 1082, 2730, 1118]
+	  ZOrder		  12654
+	  ShowName		  off
+	  GotoTag		  "Current_C"
 	  TagVisibility		  "global"
 	}
 	Block {
@@ -2279,6 +3261,106 @@ Model {
 	}
 	Block {
 	  BlockType		  From
+	  Name			  "From20"
+	  SID			  "27190"
+	  Position		  [2630, 1142, 2730, 1178]
+	  ZOrder		  12664
+	  ShowName		  off
+	  GotoTag		  "Voltage_A"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From21"
+	  SID			  "27180"
+	  Position		  [2630, 782, 2730, 818]
+	  ZOrder		  12649
+	  ShowName		  off
+	  GotoTag		  "Voltage_A"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From22"
+	  SID			  "27181"
+	  Position		  [2630, 837, 2730, 873]
+	  ZOrder		  12650
+	  ShowName		  off
+	  GotoTag		  "Voltage_B"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From23"
+	  SID			  "27191"
+	  Position		  [2630, 1182, 2730, 1218]
+	  ZOrder		  12665
+	  ShowName		  off
+	  GotoTag		  "Current_A"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From24"
+	  SID			  "27192"
+	  Position		  [2630, 1242, 2730, 1278]
+	  ZOrder		  12667
+	  ShowName		  off
+	  GotoTag		  "Voltage_B"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From25"
+	  SID			  "27193"
+	  Position		  [2630, 1282, 2730, 1318]
+	  ZOrder		  12668
+	  ShowName		  off
+	  GotoTag		  "Current_B"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From26"
+	  SID			  "27195"
+	  Position		  [2630, 1342, 2730, 1378]
+	  ZOrder		  12670
+	  ShowName		  off
+	  GotoTag		  "Voltage_C"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From27"
+	  SID			  "27196"
+	  Position		  [2630, 1382, 2730, 1418]
+	  ZOrder		  12671
+	  ShowName		  off
+	  GotoTag		  "Current_C"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From28"
+	  SID			  "27222"
+	  Position		  [2630, 1537, 2730, 1573]
+	  ZOrder		  12698
+	  ShowName		  off
+	  GotoTag		  "Voltage_C"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From29"
+	  SID			  "27223"
+	  Position		  [2630, 1437, 2730, 1473]
+	  ZOrder		  12696
+	  ShowName		  off
+	  GotoTag		  "Voltage_A"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
 	  Name			  "From3"
 	  SID			  "26995"
 	  Position		  [1390, 691, 1500, 719]
@@ -2289,12 +3371,200 @@ Model {
 	}
 	Block {
 	  BlockType		  From
+	  Name			  "From30"
+	  SID			  "27224"
+	  Position		  [2630, 1487, 2730, 1523]
+	  ZOrder		  12697
+	  ShowName		  off
+	  GotoTag		  "Voltage_B"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From31"
+	  SID			  "27225"
+	  Position		  [2630, 1582, 2690, 1618]
+	  ZOrder		  12699
+	  ShowName		  off
+	  GotoTag		  "P_A"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From32"
+	  SID			  "27226"
+	  Position		  [2630, 1617, 2690, 1653]
+	  ZOrder		  12700
+	  ShowName		  off
+	  GotoTag		  "Q_A"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From33"
+	  SID			  "27227"
+	  Position		  [2630, 1652, 2690, 1688]
+	  ZOrder		  12701
+	  ShowName		  off
+	  GotoTag		  "P_B"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From34"
+	  SID			  "27228"
+	  Position		  [2630, 1687, 2690, 1723]
+	  ZOrder		  12702
+	  ShowName		  off
+	  GotoTag		  "Q_B"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From35"
+	  SID			  "27229"
+	  Position		  [2630, 1722, 2690, 1758]
+	  ZOrder		  12703
+	  ShowName		  off
+	  GotoTag		  "P_C"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From36"
+	  SID			  "27230"
+	  Position		  [2630, 1757, 2690, 1793]
+	  ZOrder		  12704
+	  ShowName		  off
+	  GotoTag		  "Q_C"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From37"
+	  SID			  "27235"
+	  Position		  [2630, 1832, 2675, 1868]
+	  ZOrder		  12709
+	  ShowName		  off
+	  GotoTag		  "S_A"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From38"
+	  SID			  "27236"
+	  Position		  [2630, 1912, 2680, 1948]
+	  ZOrder		  12710
+	  ShowName		  off
+	  GotoTag		  "S_B"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From39"
+	  SID			  "27237"
+	  Position		  [2630, 1977, 2685, 2013]
+	  ZOrder		  12711
+	  ShowName		  off
+	  GotoTag		  "S_C"
+	}
+	Block {
+	  BlockType		  From
 	  Name			  "From4"
-	  SID			  "27147"
-	  Position		  [2155, 607, 2255, 643]
-	  ZOrder		  12627
+	  SID			  "27814"
+	  Position		  [3755, 716, 3855, 734]
+	  ZOrder		  12935
+	  ShowName		  off
+	  GotoTag		  "Voltage_C"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From40"
+	  SID			  "27238"
+	  Position		  [2630, 1797, 2675, 1833]
+	  ZOrder		  12712
+	  ShowName		  off
+	  GotoTag		  "P_A"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From41"
+	  SID			  "27239"
+	  Position		  [2630, 1872, 2675, 1908]
+	  ZOrder		  12713
+	  ShowName		  off
+	  GotoTag		  "P_B"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From42"
+	  SID			  "27240"
+	  Position		  [2630, 1937, 2675, 1973]
+	  ZOrder		  12714
+	  ShowName		  off
+	  GotoTag		  "P_C"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From43"
+	  SID			  "27262"
+	  Position		  [3755, 301, 3855, 319]
+	  ZOrder		  12742
+	  ShowName		  off
+	  GotoTag		  "Voltage_C"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From44"
+	  SID			  "27263"
+	  Position		  [3755, 332, 3850, 348]
+	  ZOrder		  12743
+	  ShowName		  off
+	  GotoTag		  "Current_A"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From45"
+	  SID			  "27264"
+	  Position		  [3755, 362, 3850, 378]
+	  ZOrder		  12744
+	  ShowName		  off
+	  GotoTag		  "Current_B"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From46"
+	  SID			  "27265"
+	  Position		  [3755, 391, 3850, 409]
+	  ZOrder		  12745
+	  ShowName		  off
+	  GotoTag		  "Current_C"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From47"
+	  SID			  "27266"
+	  Position		  [3755, 421, 3850, 439]
+	  ZOrder		  12746
+	  ShowName		  off
+	  GotoTag		  "Trigger"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From48"
+	  SID			  "27267"
+	  Position		  [3755, 242, 3855, 258]
+	  ZOrder		  12740
 	  ShowName		  off
 	  GotoTag		  "Voltage_A"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From49"
+	  SID			  "27268"
+	  Position		  [3755, 272, 3855, 288]
+	  ZOrder		  12741
+	  ShowName		  off
+	  GotoTag		  "Voltage_B"
 	  TagVisibility		  "global"
 	}
 	Block {
@@ -2309,6 +3579,106 @@ Model {
 	}
 	Block {
 	  BlockType		  From
+	  Name			  "From50"
+	  SID			  "27654"
+	  Position		  [2170, -83, 2270, -47]
+	  ZOrder		  12834
+	  ShowName		  off
+	  GotoTag		  "Current_A"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From51"
+	  SID			  "27655"
+	  Position		  [2170, 12, 2270, 48]
+	  ZOrder		  12835
+	  ShowName		  off
+	  GotoTag		  "Current_B"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From52"
+	  SID			  "27656"
+	  Position		  [2170, 112, 2270, 148]
+	  ZOrder		  12836
+	  ShowName		  off
+	  GotoTag		  "Current_C"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From53"
+	  SID			  "27657"
+	  Position		  [2170, 157, 2270, 193]
+	  ZOrder		  12839
+	  ShowName		  off
+	  GotoTag		  "Voltage_C"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From54"
+	  SID			  "27658"
+	  Position		  [2170, -43, 2270, -7]
+	  ZOrder		  12837
+	  ShowName		  off
+	  GotoTag		  "Voltage_A"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From55"
+	  SID			  "27659"
+	  Position		  [2170, 52, 2270, 88]
+	  ZOrder		  12838
+	  ShowName		  off
+	  GotoTag		  "Voltage_B"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From56"
+	  SID			  "27683"
+	  Position		  [2960, -8, 3050, 18]
+	  ZOrder		  12862
+	  ShowName		  off
+	  GotoTag		  "JumpComplete"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From57"
+	  SID			  "27712"
+	  Position		  [2925, 497, 3015, 523]
+	  ZOrder		  12870
+	  ShowName		  off
+	  GotoTag		  "JumpComplete"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From58"
+	  SID			  "27739"
+	  Position		  [3755, 449, 3850, 471]
+	  ZOrder		  12876
+	  ShowName		  off
+	  GotoTag		  "Total_RMS_Current"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From59"
+	  SID			  "27742"
+	  Position		  [3755, 479, 3850, 501]
+	  ZOrder		  12879
+	  ShowName		  off
+	  GotoTag		  "T_Curr_80"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
 	  Name			  "From6"
 	  SID			  "26997"
 	  Position		  [1390, 563, 1495, 597]
@@ -2319,12 +3689,121 @@ Model {
 	}
 	Block {
 	  BlockType		  From
+	  Name			  "From60"
+	  SID			  "27743"
+	  Position		  [3755, 509, 3850, 531]
+	  ZOrder		  12880
+	  ShowName		  off
+	  GotoTag		  "T_Phase_Realign"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From61"
+	  SID			  "27821"
+	  Position		  [3755, 864, 3850, 886]
+	  ZOrder		  12940
+	  ShowName		  off
+	  GotoTag		  "Total_RMS_Current"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From62"
+	  SID			  "27822"
+	  Position		  [3755, 894, 3850, 916]
+	  ZOrder		  12941
+	  ShowName		  off
+	  GotoTag		  "T_Curr_80"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From63"
+	  SID			  "27823"
+	  Position		  [3755, 924, 3850, 946]
+	  ZOrder		  12942
+	  ShowName		  off
+	  GotoTag		  "T_Phase_Realign"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From64"
+	  SID			  "27801"
+	  Position		  [2685, 569, 2795, 591]
+	  ZOrder		  12921
+	  GotoTag		  "Total_RMS_Current"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From65"
+	  SID			  "27810"
+	  Position		  [3755, 539, 3850, 561]
+	  ZOrder		  12929
+	  ShowName		  off
+	  GotoTag		  "Ph_Del_A"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From66"
+	  SID			  "27811"
+	  Position		  [3755, 569, 3850, 591]
+	  ZOrder		  12930
+	  ShowName		  off
+	  GotoTag		  "Ph_Del_B"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From67"
+	  SID			  "27812"
+	  Position		  [3755, 599, 3850, 621]
+	  ZOrder		  12931
+	  ShowName		  off
+	  GotoTag		  "Ph_Del_C"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From68"
+	  SID			  "27824"
+	  Position		  [3755, 954, 3850, 976]
+	  ZOrder		  12943
+	  ShowName		  off
+	  GotoTag		  "Ph_Del_A"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From69"
+	  SID			  "27825"
+	  Position		  [3755, 984, 3850, 1006]
+	  ZOrder		  12944
+	  ShowName		  off
+	  GotoTag		  "Ph_Del_B"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
 	  Name			  "From7"
 	  SID			  "26998"
 	  Position		  [1385, 903, 1540, 947]
 	  ZOrder		  12543
 	  ShowName		  off
 	  GotoTag		  "Raw_PHA_Current"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  From
+	  Name			  "From70"
+	  SID			  "27826"
+	  Position		  [3755, 1014, 3850, 1036]
+	  ZOrder		  12945
+	  ShowName		  off
+	  GotoTag		  "Ph_Del_C"
 	  TagVisibility		  "global"
 	}
 	Block {
@@ -2340,11 +3819,11 @@ Model {
 	Block {
 	  BlockType		  From
 	  Name			  "From9"
-	  SID			  "27148"
-	  Position		  [2270, 637, 2370, 673]
-	  ZOrder		  12628
+	  SID			  "27815"
+	  Position		  [3755, 747, 3850, 763]
+	  ZOrder		  12936
 	  ShowName		  off
-	  GotoTag		  "Voltage_B"
+	  GotoTag		  "Current_A"
 	  TagVisibility		  "global"
 	}
 	Block {
@@ -2361,6 +3840,15 @@ Model {
 	}
 	Block {
 	  BlockType		  Goto
+	  Name			  "Goto"
+	  SID			  "27216"
+	  Position		  [2980, 1142, 3080, 1178]
+	  ZOrder		  12690
+	  ShowName		  off
+	  GotoTag		  "P_A"
+	}
+	Block {
+	  BlockType		  Goto
 	  Name			  "Goto1"
 	  SID			  "27172"
 	  Position		  [1430, 1742, 1530, 1778]
@@ -2368,6 +3856,15 @@ Model {
 	  ShowName		  off
 	  GotoTag		  "Trigger"
 	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  Goto
+	  Name			  "Goto10"
+	  SID			  "27219"
+	  Position		  [2980, 1282, 3080, 1318]
+	  ZOrder		  12693
+	  ShowName		  off
+	  GotoTag		  "Q_B"
 	}
 	Block {
 	  BlockType		  Goto
@@ -2431,6 +3928,79 @@ Model {
 	}
 	Block {
 	  BlockType		  Goto
+	  Name			  "Goto17"
+	  SID			  "27220"
+	  Position		  [2980, 1382, 3080, 1418]
+	  ZOrder		  12695
+	  ShowName		  off
+	  GotoTag		  "Q_C"
+	}
+	Block {
+	  BlockType		  Goto
+	  Name			  "Goto18"
+	  SID			  "27221"
+	  Position		  [2980, 1342, 3080, 1378]
+	  ZOrder		  12694
+	  ShowName		  off
+	  GotoTag		  "P_C"
+	}
+	Block {
+	  BlockType		  Goto
+	  Name			  "Goto19"
+	  SID			  "27232"
+	  Position		  [2870, 1602, 2970, 1638]
+	  ZOrder		  12706
+	  ShowName		  off
+	  GotoTag		  "S_A"
+	}
+	Block {
+	  BlockType		  Goto
+	  Name			  "Goto2"
+	  SID			  "27217"
+	  Position		  [2980, 1182, 3080, 1218]
+	  ZOrder		  12691
+	  ShowName		  off
+	  GotoTag		  "Q_A"
+	}
+	Block {
+	  BlockType		  Goto
+	  Name			  "Goto20"
+	  SID			  "27233"
+	  Position		  [2870, 1672, 2970, 1708]
+	  ZOrder		  12707
+	  ShowName		  off
+	  GotoTag		  "S_B"
+	}
+	Block {
+	  BlockType		  Goto
+	  Name			  "Goto21"
+	  SID			  "27234"
+	  Position		  [2870, 1742, 2970, 1778]
+	  ZOrder		  12708
+	  ShowName		  off
+	  GotoTag		  "S_C"
+	}
+	Block {
+	  BlockType		  Goto
+	  Name			  "Goto22"
+	  SID			  "27682"
+	  Position		  [1170, 2112, 1270, 2148]
+	  ZOrder		  12861
+	  ShowName		  off
+	  GotoTag		  "JumpComplete"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  Goto
+	  Name			  "Goto23"
+	  SID			  "27738"
+	  Position		  [3065, 844, 3175, 866]
+	  ZOrder		  12875
+	  GotoTag		  "Total_RMS_Current"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  Goto
 	  Name			  "Goto3"
 	  SID			  "27006"
 	  Position		  [1195, 965, 1300, 995]
@@ -2484,6 +4054,96 @@ Model {
 	  TagVisibility		  "global"
 	}
 	Block {
+	  BlockType		  Goto
+	  Name			  "Goto9"
+	  SID			  "27218"
+	  Position		  [2980, 1242, 3080, 1278]
+	  ZOrder		  12692
+	  ShowName		  off
+	  GotoTag		  "P_B"
+	}
+	Block {
+	  BlockType		  RelationalOperator
+	  Name			  "GreaterThanOrEqual"
+	  SID			  "27675"
+	  Ports			  [2, 1]
+	  Position		  [2755, -158, 2785, -127]
+	  ZOrder		  12855
+	  Operator		  "<="
+	  InputSameDT		  off
+	  OutDataTypeStr	  "boolean"
+	  RndMeth		  "Simplest"
+	}
+	Block {
+	  BlockType		  RelationalOperator
+	  Name			  "GreaterThanOrEqual1"
+	  SID			  "27676"
+	  Ports			  [2, 1]
+	  Position		  [2755, -63, 2785, -32]
+	  ZOrder		  12856
+	  Operator		  "<="
+	  InputSameDT		  off
+	  OutDataTypeStr	  "boolean"
+	  RndMeth		  "Simplest"
+	}
+	Block {
+	  BlockType		  RelationalOperator
+	  Name			  "GreaterThanOrEqual2"
+	  SID			  "27677"
+	  Ports			  [2, 1]
+	  Position		  [2755, 27, 2785, 58]
+	  ZOrder		  12857
+	  Operator		  "<="
+	  InputSameDT		  off
+	  OutDataTypeStr	  "boolean"
+	  RndMeth		  "Simplest"
+	}
+	Block {
+	  BlockType		  RelationalOperator
+	  Name			  "GreaterThanOrEqual3"
+	  SID			  "27796"
+	  Ports			  [2, 1]
+	  Position		  [2755, 172, 2785, 203]
+	  ZOrder		  12916
+	  InputSameDT		  off
+	  OutDataTypeStr	  "boolean"
+	  RndMeth		  "Simplest"
+	}
+	Block {
+	  BlockType		  RelationalOperator
+	  Name			  "GreaterThanOrEqual4"
+	  SID			  "27797"
+	  Ports			  [2, 1]
+	  Position		  [2755, 247, 2785, 278]
+	  ZOrder		  12917
+	  InputSameDT		  off
+	  OutDataTypeStr	  "boolean"
+	  RndMeth		  "Simplest"
+	}
+	Block {
+	  BlockType		  RelationalOperator
+	  Name			  "GreaterThanOrEqual5"
+	  SID			  "27798"
+	  Ports			  [2, 1]
+	  Position		  [2755, 322, 2785, 353]
+	  ZOrder		  12918
+	  InputSameDT		  off
+	  OutDataTypeStr	  "boolean"
+	  RndMeth		  "Simplest"
+	}
+	Block {
+	  BlockType		  RelationalOperator
+	  Name			  "GreaterThanOrEqual6"
+	  SID			  "27804"
+	  Ports			  [2, 1]
+	  Position		  [2955, 572, 2985, 603]
+	  ZOrder		  12924
+	  Operator		  "<="
+	  InputSameDT		  off
+	  OutDataTypeStr	  "boolean"
+	  RndMeth		  "Simplest"
+	}
+	Block {
 	  BlockType		  Constant
 	  Name			  "I"
 	  SID			  "27012"
@@ -2491,6 +4151,68 @@ Model {
 	  ZOrder		  12583
 	  NamePlacement		  "alternate"
 	  ShowName		  off
+	}
+	Block {
+	  BlockType		  Constant
+	  Name			  "Inverter_Nameplate_Current"
+	  SID			  "27438"
+	  Position		  [2715, 625, 2745, 655]
+	  ZOrder		  12791
+	  NamePlacement		  "alternate"
+	  HideAutomaticName	  off
+	  Value			  "86.64"
+	}
+	Block {
+	  BlockType		  Logic
+	  Name			  "Logical\nOperator"
+	  SID			  "27788"
+	  Ports			  [3, 1]
+	  Position		  [2855, -61, 2885, -29]
+	  ZOrder		  12908
+	  Inputs		  "3"
+	  AllPortsSameDT	  off
+	  OutDataTypeStr	  "boolean"
+	}
+	Block {
+	  BlockType		  Logic
+	  Name			  "Logical\nOperator1"
+	  SID			  "27793"
+	  Ports			  [2, 1]
+	  Position		  [2945, 97, 2975, 128]
+	  ZOrder		  12913
+	  AllPortsSameDT	  off
+	  OutDataTypeStr	  "boolean"
+	}
+	Block {
+	  BlockType		  Logic
+	  Name			  "Logical\nOperator2"
+	  SID			  "27794"
+	  Ports			  [3, 1]
+	  Position		  [2860, 249, 2890, 281]
+	  ZOrder		  12914
+	  Inputs		  "3"
+	  AllPortsSameDT	  off
+	  OutDataTypeStr	  "boolean"
+	}
+	Block {
+	  BlockType		  Logic
+	  Name			  "Logical\nOperator3"
+	  SID			  "27799"
+	  Ports			  [2, 1]
+	  Position		  [3080, 92, 3110, 123]
+	  ZOrder		  12919
+	  AllPortsSameDT	  off
+	  OutDataTypeStr	  "boolean"
+	}
+	Block {
+	  BlockType		  Logic
+	  Name			  "Logical\nOperator4"
+	  SID			  "27802"
+	  Ports			  [2, 1]
+	  Position		  [3070, 567, 3100, 598]
+	  ZOrder		  12922
+	  AllPortsSameDT	  off
+	  OutDataTypeStr	  "boolean"
 	}
 	Block {
 	  BlockType		  Reference
@@ -2539,7 +4261,7 @@ Model {
 	  Name			  "ML605EX1 AnalogOut"
 	  SID			  "27015"
 	  Ports			  [1, 1]
-	  Position		  [2160, 1705, 2385, 1745]
+	  Position		  [2160, 1720, 2385, 1760]
 	  ZOrder		  12565
 	  AttributesFormatString  "%<CtrlName>"
 	  LibraryVersion	  "1.148"
@@ -2561,11 +4283,127 @@ Model {
 	  slotside		  "Slot_1_Module_A"
 	}
 	Block {
+	  BlockType		  Math
+	  Name			  "Math\nFunction"
+	  SID			  "27202"
+	  Ports			  [1, 1]
+	  Position		  [2710, 1655, 2740, 1685]
+	  ZOrder		  12676
+	  Operator		  "magnitude^2"
+	}
+	Block {
+	  BlockType		  Math
+	  Name			  "Math\nFunction1"
+	  SID			  "27205"
+	  Ports			  [1, 1]
+	  Position		  [2710, 1690, 2740, 1720]
+	  ZOrder		  12679
+	  Operator		  "magnitude^2"
+	}
+	Block {
+	  BlockType		  Math
+	  Name			  "Math\nFunction2"
+	  SID			  "27207"
+	  Ports			  [1, 1]
+	  Position		  [2710, 1585, 2740, 1615]
+	  ZOrder		  12681
+	  Operator		  "magnitude^2"
+	}
+	Block {
+	  BlockType		  Math
+	  Name			  "Math\nFunction3"
+	  SID			  "27208"
+	  Ports			  [1, 1]
+	  Position		  [2710, 1620, 2740, 1650]
+	  ZOrder		  12683
+	  Operator		  "magnitude^2"
+	}
+	Block {
+	  BlockType		  Math
+	  Name			  "Math\nFunction4"
+	  SID			  "27211"
+	  Ports			  [1, 1]
+	  Position		  [2710, 1725, 2740, 1755]
+	  ZOrder		  12685
+	  Operator		  "magnitude^2"
+	}
+	Block {
+	  BlockType		  Math
+	  Name			  "Math\nFunction5"
+	  SID			  "27212"
+	  Ports			  [1, 1]
+	  Position		  [2710, 1760, 2740, 1790]
+	  ZOrder		  12687
+	  Operator		  "magnitude^2"
+	}
+	Block {
+	  BlockType		  Constant
+	  Name			  "Maximum Degrees"
+	  SID			  "27673"
+	  Position		  [2620, -151, 2665, -119]
+	  ZOrder		  12853
+	  HideAutomaticName	  off
+	  Value			  "6"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "MinMax\nRunning\nResettable"
+	  SID			  "27786"
+	  Ports			  [2, 1]
+	  Position		  [3355, 91, 3415, 169]
+	  ZOrder		  12906
+	  LibraryVersion	  "1.444"
+	  SourceBlock		  "simulink/Math\nOperations/MinMax\nRunning\nResettable"
+	  SourceType		  "MinMax Running Resettable"
+	  SourceProductName	  "Simulink"
+	  SourceProductBaseCode	  "SL"
+	  ContentPreviewEnabled	  on
+	  Function		  "max"
+	  vinit			  "0.0"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "MinMax\nRunning\nResettable1"
+	  SID			  "27803"
+	  Ports			  [2, 1]
+	  Position		  [3435, 555, 3495, 670]
+	  ZOrder		  12923
+	  LibraryVersion	  "1.444"
+	  SourceBlock		  "simulink/Math\nOperations/MinMax\nRunning\nResettable"
+	  SourceType		  "MinMax Running Resettable"
+	  SourceProductName	  "Simulink"
+	  SourceProductBaseCode	  "SL"
+	  ContentPreviewEnabled	  on
+	  Function		  "max"
+	  vinit			  "0.0"
+	}
+	Block {
+	  BlockType		  Constant
+	  Name			  "Minimum Degrees"
+	  SID			  "27795"
+	  Position		  [2630, 329, 2670, 361]
+	  ZOrder		  12915
+	  HideAutomaticName	  off
+	  Value			  "0"
+	}
+	Block {
+	  BlockType		  Product
+	  Name			  "Multiply"
+	  SID			  "27439"
+	  Ports			  [2, 1]
+	  Position		  [2815, 652, 2845, 683]
+	  ZOrder		  12792
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  RndMeth		  "Floor"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
 	  BlockType		  Mux
 	  Name			  "Mux"
 	  SID			  "27016"
 	  Ports			  [3, 1]
-	  Position		  [1350, 1591, 1355, 1629]
+	  Position		  [1350, 1576, 1355, 1614]
 	  ZOrder		  12481
 	  ShowName		  off
 	  Inputs		  "3"
@@ -2587,11 +4425,23 @@ Model {
 	  Name			  "Mux2"
 	  SID			  "27017"
 	  Ports			  [8, 1]
-	  Position		  [2055, 1517, 2060, 1933]
+	  Position		  [2055, 1532, 2060, 1948]
 	  ZOrder		  12566
 	  ShowName		  off
 	  Inputs		  "8"
 	  DisplayOption		  "bar"
+	}
+	Block {
+	  BlockType		  Logic
+	  Name			  "NOT"
+	  SID			  "27789"
+	  Ports			  [1, 1]
+	  Position		  [3020, 99, 3050, 131]
+	  ZOrder		  12909
+	  Operator		  "NOT"
+	  IconShape		  "distinctive"
+	  AllPortsSameDT	  off
+	  OutDataTypeStr	  "boolean"
 	}
 	Block {
 	  BlockType		  Reference
@@ -2620,9 +4470,9 @@ Model {
 	  Name			  "OpTrigger1"
 	  SID			  "27149"
 	  Ports			  [2, 1]
-	  Position		  [2375, 825, 2555, 865]
+	  Position		  [4080, 1120, 4260, 1160]
 	  ZOrder		  12623
-	  LibraryVersion	  "1.522"
+	  LibraryVersion	  "1.537"
 	  SourceBlock		  "rtlab/DataLogging/OpTrigger"
 	  SourceType		  "OpTrigger"
 	  MultiThreadCoSim	  "auto"
@@ -2632,12 +4482,27 @@ Model {
 	}
 	Block {
 	  BlockType		  Reference
+	  Name			  "OpTrigger2"
+	  SID			  "27269"
+	  Ports			  [2, 1]
+	  Position		  [4115, 20, 4295, 60]
+	  ZOrder		  12736
+	  LibraryVersion	  "1.537"
+	  SourceBlock		  "rtlab/DataLogging/OpTrigger"
+	  SourceType		  "OpTrigger"
+	  MultiThreadCoSim	  "auto"
+	  Trig_Type		  "TRIGGER SIGNAL >= TRIGGER LEVEL"
+	  Trig_Offset		  "0"
+	  Acq_Group		  "30"
+	}
+	Block {
+	  BlockType		  Reference
 	  Name			  "OpWriteFile1"
 	  SID			  "27150"
 	  Ports			  [1, 2]
-	  Position		  [2440, 678, 2545, 722]
+	  Position		  [3955, 823, 4060, 867]
 	  ZOrder		  12621
-	  LibraryVersion	  "1.522"
+	  LibraryVersion	  "1.537"
 	  SourceBlock		  "rtlab/DataLogging/OpWriteFile"
 	  SourceType		  "OpWriteFile"
 	  MultiThreadCoSim	  "auto"
@@ -2645,21 +4510,72 @@ Model {
 	  Decimation		  "1"
 	  varname		  "Data"
 	  Filename		  "SVP_Data.mat"
-	  rtpath		  "''"
-	  nrtpath		  "''"
+	  rtpath		  "'./'"
+	  nrtpath		  "'.\\'"
 	  Acq_Group		  "29"
-	  file_size		  "1e+10"
+	  file_size		  "1.28e11"
 	  write_offline		  off
 	  Sim_Mode		  off
 	  Nb_Samples		  "1000"
-	  Buffer_size		  "1000000"
+	  Buffer_size		  "3.2e8"
+	}
+	Block {
+	  BlockType		  Reference
+	  Name			  "OpWriteFile2"
+	  SID			  "27270"
+	  Ports			  [1, 2]
+	  Position		  [3965, 408, 4070, 452]
+	  ZOrder		  12734
+	  LibraryVersion	  "1.537"
+	  SourceBlock		  "rtlab/DataLogging/OpWriteFile"
+	  SourceType		  "OpWriteFile"
+	  MultiThreadCoSim	  "auto"
+	  Static_File		  on
+	  Decimation		  "1"
+	  varname		  "Data"
+	  Filename		  "SVP_Data_2.mat"
+	  rtpath		  "'./'"
+	  nrtpath		  "'.\\'"
+	  Acq_Group		  "30"
+	  file_size		  "1.28e11"
+	  write_offline		  off
+	  Sim_Mode		  off
+	  Nb_Samples		  "1000"
+	  Buffer_size		  "3.2e8"
+	}
+	Block {
+	  BlockType		  Goto
+	  Name			  "Ph_Del_A"
+	  SID			  "27809"
+	  Position		  [2575, -6, 2655, 16]
+	  ZOrder		  12928
+	  GotoTag		  "Ph_Del_A"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  Goto
+	  Name			  "Ph_Del_B"
+	  SID			  "27808"
+	  Position		  [2575, 79, 2655, 101]
+	  ZOrder		  12927
+	  GotoTag		  "Ph_Del_B"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  Goto
+	  Name			  "Ph_Del_C"
+	  SID			  "27807"
+	  Position		  [2575, 179, 2655, 201]
+	  ZOrder		  12926
+	  GotoTag		  "Ph_Del_C"
+	  TagVisibility		  "global"
 	}
 	Block {
 	  BlockType		  SubSystem
 	  Name			  "Phase A"
 	  SID			  "27019"
 	  Ports			  [3, 1]
-	  Position		  [1210, 1388, 1285, 1522]
+	  Position		  [1210, 1373, 1285, 1507]
 	  ZOrder		  12476
 	  RequestExecContextInheritance	off
 	  System {
@@ -2886,7 +4802,7 @@ Model {
 	  BlockType		  Gain
 	  Name			  "Phase A2"
 	  SID			  "27032"
-	  Position		  [1705, 1540, 1775, 1580]
+	  Position		  [1750, 1530, 1820, 1570]
 	  ZOrder		  12577
 	  Gain			  "1/42"
 	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
@@ -2897,7 +4813,7 @@ Model {
 	  BlockType		  Gain
 	  Name			  "Phase A3"
 	  SID			  "27033"
-	  Position		  [1705, 1590, 1775, 1630]
+	  Position		  [1750, 1585, 1820, 1625]
 	  ZOrder		  12578
 	  Gain			  "1/42"
 	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
@@ -2908,7 +4824,7 @@ Model {
 	  BlockType		  Gain
 	  Name			  "Phase A6"
 	  SID			  "27034"
-	  Position		  [1705, 1640, 1775, 1680]
+	  Position		  [1750, 1640, 1820, 1680]
 	  ZOrder		  12579
 	  Gain			  "1/42"
 	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
@@ -2919,7 +4835,7 @@ Model {
 	  BlockType		  Constant
 	  Name			  "Phase Angle\nPhase A0"
 	  SID			  "27035"
-	  Position		  [655, 1417, 685, 1433]
+	  Position		  [655, 1402, 685, 1418]
 	  ZOrder		  12480
 	  Value			  "0"
 	}
@@ -2927,15 +4843,15 @@ Model {
 	  BlockType		  Constant
 	  Name			  "Phase Angle\nPhase A1"
 	  SID			  "27036"
-	  Position		  [655, 1502, 685, 1518]
+	  Position		  [655, 1487, 685, 1503]
 	  ZOrder		  12491
-	  Value			  "60"
+	  Value			  "20"
 	}
 	Block {
 	  BlockType		  Constant
 	  Name			  "Phase Angle\nPhase B0"
 	  SID			  "27161"
-	  Position		  [630, 1582, 660, 1598]
+	  Position		  [630, 1557, 660, 1573]
 	  ZOrder		  12633
 	  Value			  "-120"
 	}
@@ -2943,15 +4859,15 @@ Model {
 	  BlockType		  Constant
 	  Name			  "Phase Angle\nPhase B1"
 	  SID			  "27162"
-	  Position		  [630, 1667, 660, 1683]
+	  Position		  [630, 1642, 660, 1658]
 	  ZOrder		  12638
-	  Value			  "-120"
+	  Value			  "-100"
 	}
 	Block {
 	  BlockType		  Constant
 	  Name			  "Phase Angle\nPhase C0"
 	  SID			  "27167"
-	  Position		  [630, 1752, 660, 1768]
+	  Position		  [630, 1727, 660, 1743]
 	  ZOrder		  12639
 	  Value			  "120"
 	}
@@ -2959,21 +4875,21 @@ Model {
 	  BlockType		  Constant
 	  Name			  "Phase Angle\nPhase C1"
 	  SID			  "27168"
-	  Position		  [630, 1837, 660, 1853]
+	  Position		  [630, 1812, 660, 1828]
 	  ZOrder		  12644
-	  Value			  "120"
+	  Value			  "140"
 	}
 	Block {
 	  BlockType		  SubSystem
 	  Name			  "Phase B"
 	  SID			  "27040"
 	  Ports			  [3, 1]
-	  Position		  [1210, 1539, 1285, 1681]
+	  Position		  [1210, 1524, 1285, 1666]
 	  ZOrder		  12475
 	  RequestExecContextInheritance	off
 	  System {
 	    Name		    "Phase B"
-	    Location		    [-8, -8, 1928, 1168]
+	    Location		    [-7, -7, 1746, 1055]
 	    Open		    off
 	    PortBlocksUseCompactNotation off
 	    SetExecutionDomain	    off
@@ -3197,7 +5113,7 @@ Model {
 	  Name			  "Phase C"
 	  SID			  "27053"
 	  Ports			  [3, 1]
-	  Position		  [1210, 1699, 1285, 1841]
+	  Position		  [1210, 1694, 1285, 1836]
 	  ZOrder		  12474
 	  RequestExecContextInheritance	off
 	  System {
@@ -3425,6 +5341,24 @@ Model {
 	  }
 	}
 	Block {
+	  BlockType		  Goto
+	  Name			  "Post-Fault Time Below 0.8*i_nameplate"
+	  SID			  "27740"
+	  Position		  [3575, 604, 3655, 626]
+	  ZOrder		  12877
+	  GotoTag		  "T_Curr_80"
+	  TagVisibility		  "global"
+	}
+	Block {
+	  BlockType		  Goto
+	  Name			  "Post-Fault Time with >5deg Phase Mislaignment"
+	  SID			  "27741"
+	  Position		  [3460, 119, 3600, 141]
+	  ZOrder		  12878
+	  GotoTag		  "T_Phase_Realign"
+	  TagVisibility		  "global"
+	}
+	Block {
 	  BlockType		  Product
 	  Name			  "Product1"
 	  SID			  "27066"
@@ -3542,11 +5476,20 @@ Model {
 	  SaturateOnIntegerOverflow off
 	}
 	Block {
+	  BlockType		  Constant
+	  Name			  "Reset"
+	  SID			  "27787"
+	  Position		  [3200, 135, 3230, 165]
+	  ZOrder		  12907
+	  HideAutomaticName	  off
+	  Value			  "0"
+	}
+	Block {
 	  BlockType		  Saturate
 	  Name			  "Saturation1"
 	  SID			  "27075"
 	  Ports			  [1, 1]
-	  Position		  [1795, 1595, 1825, 1625]
+	  Position		  [1850, 1590, 1880, 1620]
 	  ZOrder		  12581
 	  ShowName		  off
 	  InputPortMap		  "u0"
@@ -3558,7 +5501,7 @@ Model {
 	  Name			  "Saturation2"
 	  SID			  "27076"
 	  Ports			  [1, 1]
-	  Position		  [1795, 1645, 1825, 1675]
+	  Position		  [1850, 1645, 1880, 1675]
 	  ZOrder		  12582
 	  ShowName		  off
 	  InputPortMap		  "u0"
@@ -3570,7 +5513,7 @@ Model {
 	  Name			  "Saturation3"
 	  SID			  "27077"
 	  Ports			  [1, 1]
-	  Position		  [1795, 1545, 1825, 1575]
+	  Position		  [1850, 1535, 1880, 1565]
 	  ZOrder		  12580
 	  ShowName		  off
 	  InputPortMap		  "u0"
@@ -3579,10 +5522,38 @@ Model {
 	}
 	Block {
 	  BlockType		  Scope
+	  Name			  "Scope1"
+	  SID			  "27435"
+	  Ports			  [1]
+	  Position		  [4030, 1064, 4060, 1096]
+	  ZOrder		  12783
+	  ScopeSpecificationString "Simulink.scopes.TimeScopeBlockCfg('CurrentConfiguration', extmgr.ConfigurationSet(extmgr."
+	  "Configuration('Core','General UI',true),extmgr.Configuration('Core','Source UI',true),extmgr.Configuration('Sources"
+	  "','WiredSimulink',true,'DataLoggingMaxPoints','10000','DataLoggingDecimation','1','SampleTime','Ts','DataLoggingVar"
+	  "iableName','ScopeData1'),extmgr.Configuration('Visuals','Time Domain',true,'SerializedDisplays',{struct('MinYLimRea"
+	  "l','-0.125','MaxYLimReal','1.125','YLabelReal','','MinYLimMag','0.00000','MaxYLimMag','1.125','LegendVisibility','O"
+	  "ff','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0 0],'AxesTickColor',[0.686274509803922 0.6862745"
+	  "09803922 0.686274509803922],'ColorOrder',[1 1 0.0666666666666667;0.0745098039215686 0.623529411764706 1;1 0.4117647"
+	  "05882353 0.16078431372549;0.392156862745098 0.831372549019608 0.0745098039215686;0.717647058823529 0.27450980392156"
+	  "9 1;0.0588235294117647 1 1;1 0.0745098039215686 0.650980392156863],'Title','%<SignalLabel>','LinePropertiesCache',{"
+	  "{}},'UserDefinedChannelNames',{{}},'NumLines',0,'LineNames',{{[]}},'ShowContent',true,'Placement',1)},'DisplayPrope"
+	  "rtyDefaults',struct('MinYLimReal','-0.125','MaxYLimReal','1.125','YLabelReal','','MinYLimMag','0.00000','MaxYLimMag"
+	  "','1.125','LegendVisibility','Off','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0 0],'AxesTickColo"
+	  "r',[0.686274509803922 0.686274509803922 0.686274509803922],'ColorOrder',[0.0745098039215686 0.623529411764706 1;1 0"
+	  ".411764705882353 0.16078431372549;1 1 0.0666666666666667;0.717647058823529 0.274509803921569 1;0.392156862745098 0."
+	  "831372549019608 0.0745098039215686;0.0588235294117647 1 1;1 0.0745098039215686 0.650980392156863])),extmgr.Configur"
+	  "ation('Tools','Plot Navigation',true,'OnceAtStop',false,'PreviousAutoscale','XY'),extmgr.Configuration('Tools','Mea"
+	  "surements',true,'Version','2018b')),'Version','2018b','Position',[15.4905660377358 361.452830188679 1031.5471698113"
+	  "2 564.22641509434])"
+	  NumInputPorts		  "1"
+	  Floating		  off
+	}
+	Block {
+	  BlockType		  Scope
 	  Name			  "Scope2"
 	  SID			  "27135"
 	  Ports			  [1]
-	  Position		  [1805, 2029, 1835, 2061]
+	  Position		  [1805, 2044, 1835, 2076]
 	  ZOrder		  12600
 	  ScopeSpecificationString "Simulink.scopes.TimeScopeBlockCfg('CurrentConfiguration', extmgr.ConfigurationSet(extmgr."
 	  "Configuration('Core','General UI',true),extmgr.Configuration('Core','Source UI',true),extmgr.Configuration('Sources"
@@ -3616,28 +5587,66 @@ Model {
 	  "Configuration('Core','General UI',true),extmgr.Configuration('Core','Source UI',true),extmgr.Configuration('Sources"
 	  "','WiredSimulink',true,'DataLoggingMaxPoints','10000','DataLoggingDecimation','1','SampleTime','Ts','DataLoggingVar"
 	  "iableName','ScopeData2'),extmgr.Configuration('Visuals','Time Domain',true,'SerializedDisplays',{struct('MinYLimRea"
-	  "l','-399.94997','MaxYLimReal','394.9719','YLabelReal','','MinYLimMag',' 0.00000','MaxYLimMag','399.94997','LegendVi"
-	  "sibility','Off','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0 0],'AxesTickColor',[0.6862745098039"
-	  "22 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.0666666666666667;0.0745098039215686 0.623529411764706 1"
-	  ";1 0.411764705882353 0.16078431372549;0.392156862745098 0.831372549019608 0.0745098039215686;0.717647058823529 0.27"
-	  "4509803921569 1;0.0588235294117647 1 1;1 0.0745098039215686 0.650980392156863],'Title','%<SignalLabel>','LineProper"
-	  "tiesCache',{{}},'UserDefinedChannelNames',{{}},'NumLines',4,'LineNames',{{'Phase A','Phase B','Phase C','Gain'}},'S"
-	  "howContent',true,'Placement',1)},'DisplayPropertyDefaults',struct('MinYLimReal','-399.94997','MaxYLimReal','394.971"
-	  "9','YLabelReal','','MinYLimMag',' 0.00000','MaxYLimMag','399.94997','LegendVisibility','Off','XGrid',true,'YGrid',t"
-	  "rue,'PlotMagPhase',false,'AxesColor',[0 0 0],'AxesTickColor',[0.686274509803922 0.686274509803922 0.686274509803922"
-	  "],'ColorOrder',[0.0745098039215686 0.623529411764706 1;1 0.411764705882353 0.16078431372549;1 1 0.0666666666666667;"
-	  "0.717647058823529 0.274509803921569 1;0.392156862745098 0.831372549019608 0.0745098039215686;0.0588235294117647 1 1"
-	  ";1 0.0745098039215686 0.650980392156863])),extmgr.Configuration('Tools','Plot Navigation',true,'OnceAtStop',false,'"
-	  "PreviousAutoscale','XY'),extmgr.Configuration('Tools','Measurements',true,'Version','2018b')),'Version','2018b','Po"
-	  "sition',[1 39.9433962264151 1738.8679245283 972.679245283019])"
+	  "l','-489.67127','MaxYLimReal','489.67127','YLabelReal','','MinYLimMag',' 0.00000','MaxYLimMag','489.67127','LegendV"
+	  "isibility','Off','XGrid',true,'YGrid',true,'PlotMagPhase',false,'AxesColor',[0 0 0],'AxesTickColor',[0.686274509803"
+	  "922 0.686274509803922 0.686274509803922],'ColorOrder',[1 1 0.0666666666666667;0.0745098039215686 0.623529411764706 "
+	  "1;1 0.411764705882353 0.16078431372549;0.392156862745098 0.831372549019608 0.0745098039215686;0.717647058823529 0.2"
+	  "74509803921569 1;0.0588235294117647 1 1;1 0.0745098039215686 0.650980392156863],'Title','%<SignalLabel>','LinePrope"
+	  "rtiesCache',{{}},'UserDefinedChannelNames',{{}},'NumLines',4,'LineNames',{{'Phase A','Phase B','Phase C','Gain'}},'"
+	  "ShowContent',true,'Placement',1)},'DisplayPropertyDefaults',struct('MinYLimReal','-489.67127','MaxYLimReal','489.67"
+	  "127','YLabelReal','','MinYLimMag',' 0.00000','MaxYLimMag','489.67127','LegendVisibility','Off','XGrid',true,'YGrid'"
+	  ",true,'PlotMagPhase',false,'AxesColor',[0 0 0],'AxesTickColor',[0.686274509803922 0.686274509803922 0.6862745098039"
+	  "22],'ColorOrder',[0.0745098039215686 0.623529411764706 1;1 0.411764705882353 0.16078431372549;1 1 0.066666666666666"
+	  "7;0.717647058823529 0.274509803921569 1;0.392156862745098 0.831372549019608 0.0745098039215686;0.0588235294117647 1"
+	  " 1;1 0.0745098039215686 0.650980392156863])),extmgr.Configuration('Tools','Plot Navigation',true,'OnceAtStop',false"
+	  ",'PreviousAutoscale','XY'),extmgr.Configuration('Tools','Measurements',true,'Version','2018b')),'Version','2018b','"
+	  "Position',[1 39.9433962264151 1738.8679245283 972.679245283019])"
 	  NumInputPorts		  "1"
 	  Floating		  off
 	}
 	Block {
 	  BlockType		  Switch
+	  Name			  "Start Capture Pulse End"
+	  SID			  "27432"
+	  Position		  [3715, 1195, 3790, 1235]
+	  ZOrder		  12780
+	  BackgroundColor	  "yellow"
+	  HideAutomaticName	  off
+	  Criteria		  "u2 > Threshold"
+	  Threshold		  "130"
+	  InputSameDT		  off
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Switch
+	  Name			  "Start Capture Pulse Start"
+	  SID			  "27431"
+	  Position		  [3865, 1135, 3925, 1175]
+	  ZOrder		  12778
+	  BackgroundColor	  "yellow"
+	  HideAutomaticName	  off
+	  Criteria		  "u2 > Threshold"
+	  Threshold		  "90"
+	  InputSameDT		  off
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "Subtract"
+	  SID			  "27478"
+	  Ports			  [2, 1]
+	  Position		  [3245, 537, 3275, 568]
+	  ZOrder		  12804
+	  Inputs		  "-+"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Switch
 	  Name			  "Switch1"
 	  SID			  "27080"
-	  Position		  [900, 1390, 960, 1430]
+	  Position		  [900, 1375, 960, 1415]
 	  ZOrder		  12487
 	  BackgroundColor	  "yellow"
 	  ShowName		  off
@@ -3650,12 +5659,12 @@ Model {
 	  BlockType		  Switch
 	  Name			  "Switch2"
 	  SID			  "27081"
-	  Position		  [790, 1460, 865, 1500]
+	  Position		  [790, 1445, 865, 1485]
 	  ZOrder		  12489
 	  BackgroundColor	  "yellow"
 	  ShowName		  off
 	  Criteria		  "u2 > Threshold"
-	  Threshold		  "100.5"
+	  Threshold		  "160.0"
 	  InputSameDT		  off
 	  SaturateOnIntegerOverflow off
 	}
@@ -3663,34 +5672,8 @@ Model {
 	  BlockType		  Switch
 	  Name			  "Switch3"
 	  SID			  "27163"
-	  Position		  [875, 1555, 935, 1595]
+	  Position		  [875, 1530, 935, 1570]
 	  ZOrder		  12634
-	  BackgroundColor	  "yellow"
-	  ShowName		  off
-	  Criteria		  "u2 > Threshold"
-	  Threshold		  "190"
-	  InputSameDT		  off
-	  SaturateOnIntegerOverflow off
-	}
-	Block {
-	  BlockType		  Switch
-	  Name			  "Switch4"
-	  SID			  "27164"
-	  Position		  [765, 1625, 840, 1665]
-	  ZOrder		  12636
-	  BackgroundColor	  "yellow"
-	  ShowName		  off
-	  Criteria		  "u2 > Threshold"
-	  Threshold		  "190.5"
-	  InputSameDT		  off
-	  SaturateOnIntegerOverflow off
-	}
-	Block {
-	  BlockType		  Switch
-	  Name			  "Switch5"
-	  SID			  "27133"
-	  Position		  [980, 2025, 1040, 2065]
-	  ZOrder		  12595
 	  BackgroundColor	  "yellow"
 	  ShowName		  off
 	  Criteria		  "u2 > Threshold"
@@ -3700,14 +5683,40 @@ Model {
 	}
 	Block {
 	  BlockType		  Switch
+	  Name			  "Switch4"
+	  SID			  "27164"
+	  Position		  [765, 1600, 840, 1640]
+	  ZOrder		  12636
+	  BackgroundColor	  "yellow"
+	  ShowName		  off
+	  Criteria		  "u2 > Threshold"
+	  Threshold		  "160"
+	  InputSameDT		  off
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Switch
+	  Name			  "Switch5"
+	  SID			  "27133"
+	  Position		  [980, 2040, 1040, 2080]
+	  ZOrder		  12595
+	  BackgroundColor	  "yellow"
+	  ShowName		  off
+	  Criteria		  "u2 > Threshold"
+	  Threshold		  "1"
+	  InputSameDT		  off
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Switch
 	  Name			  "Switch6"
 	  SID			  "27134"
-	  Position		  [865, 2085, 940, 2125]
+	  Position		  [865, 2100, 940, 2140]
 	  ZOrder		  12597
 	  BackgroundColor	  "yellow"
 	  ShowName		  off
 	  Criteria		  "u2 > Threshold"
-	  Threshold		  "100.5"
+	  Threshold		  "2"
 	  InputSameDT		  off
 	  SaturateOnIntegerOverflow off
 	}
@@ -3715,12 +5724,12 @@ Model {
 	  BlockType		  Switch
 	  Name			  "Switch7"
 	  SID			  "27169"
-	  Position		  [875, 1725, 935, 1765]
+	  Position		  [875, 1700, 935, 1740]
 	  ZOrder		  12640
 	  BackgroundColor	  "yellow"
 	  ShowName		  off
 	  Criteria		  "u2 > Threshold"
-	  Threshold		  "200"
+	  Threshold		  "100"
 	  InputSameDT		  off
 	  SaturateOnIntegerOverflow off
 	}
@@ -3728,21 +5737,48 @@ Model {
 	  BlockType		  Switch
 	  Name			  "Switch8"
 	  SID			  "27170"
-	  Position		  [765, 1795, 840, 1835]
+	  Position		  [765, 1770, 840, 1810]
 	  ZOrder		  12642
 	  BackgroundColor	  "yellow"
 	  ShowName		  off
 	  Criteria		  "u2 > Threshold"
-	  Threshold		  "200.5"
+	  Threshold		  "160"
 	  InputSameDT		  off
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "T_Curr_80"
+	  SID			  "27831"
+	  Position		  [3560, 510, 3580, 530]
+	  ZOrder		  12950
+	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Gain
+	  Name			  "T_Phase_Realign"
+	  SID			  "27830"
+	  Position		  [3500, 40, 3520, 60]
+	  ZOrder		  12949
+	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
 	  SaturateOnIntegerOverflow off
 	}
 	Block {
 	  BlockType		  Terminator
 	  Name			  "Terminator"
 	  SID			  "27084"
-	  Position		  [2410, 1715, 2430, 1735]
+	  Position		  [2410, 1730, 2430, 1750]
 	  ZOrder		  12576
+	}
+	Block {
+	  BlockType		  Terminator
+	  Name			  "Terminator1"
+	  SID			  "27271"
+	  Position		  [4135, 410, 4155, 430]
+	  ZOrder		  12735
 	}
 	Block {
 	  BlockType		  Terminator
@@ -3775,22 +5811,22 @@ Model {
 	Block {
 	  BlockType		  Terminator
 	  Name			  "Terminator14"
-	  SID			  "27089"
-	  Position		  [1190, 495, 1210, 515]
-	  ZOrder		  12519
+	  SID			  "27286"
+	  Position		  [1185, 495, 1205, 515]
+	  ZOrder		  12759
 	}
 	Block {
 	  BlockType		  Terminator
 	  Name			  "Terminator15"
-	  SID			  "27090"
-	  Position		  [1190, 540, 1210, 560]
-	  ZOrder		  12520
+	  SID			  "27287"
+	  Position		  [1185, 540, 1205, 560]
+	  ZOrder		  12760
 	}
 	Block {
 	  BlockType		  Terminator
 	  Name			  "Terminator16"
 	  SID			  "27151"
-	  Position		  [2620, 680, 2640, 700]
+	  Position		  [4115, 825, 4135, 845]
 	  ZOrder		  12622
 	}
 	Block {
@@ -3916,32 +5952,70 @@ Model {
 	  BlockType		  Constant
 	  Name			  "Trigger High"
 	  SID			  "27131"
-	  Position		  [745, 2127, 775, 2143]
+	  Position		  [745, 2142, 775, 2158]
 	  ZOrder		  12599
 	  Value			  "5"
 	}
 	Block {
 	  BlockType		  Constant
+	  Name			  "Trigger High End"
+	  SID			  "27836"
+	  Position		  [3680, 87, 3710, 103]
+	  ZOrder		  12956
+	}
+	Block {
+	  BlockType		  Constant
+	  Name			  "Trigger High Start"
+	  SID			  "27433"
+	  Position		  [3585, 1237, 3615, 1253]
+	  ZOrder		  12782
+	}
+	Block {
+	  BlockType		  Constant
 	  Name			  "Trigger Low"
 	  SID			  "27132"
-	  Position		  [745, 2072, 775, 2088]
+	  Position		  [745, 2087, 775, 2103]
 	  ZOrder		  12594
 	  Value			  "0"
 	}
 	Block {
 	  BlockType		  Constant
-	  Name			  "Trigger Time"
-	  SID			  "27142"
-	  Position		  [2280, 840, 2310, 870]
-	  ZOrder		  12625
+	  Name			  "Trigger Low End"
+	  SID			  "27837"
+	  Position		  [3680, 32, 3710, 48]
+	  ZOrder		  12951
+	  Value			  "0"
+	}
+	Block {
+	  BlockType		  Constant
+	  Name			  "Trigger Low Start"
+	  SID			  "27434"
+	  Position		  [3585, 1182, 3615, 1198]
+	  ZOrder		  12777
+	  Value			  "0"
+	}
+	Block {
+	  BlockType		  Constant
+	  Name			  "Trigger end"
+	  SID			  "27272"
+	  Position		  [4020, 35, 4050, 65]
+	  ZOrder		  12738
 	  HideAutomaticName	  off
-	  Value			  "99.5"
+	  Value			  "0.5"
+	}
+	Block {
+	  BlockType		  Constant
+	  Name			  "Trigger start\n"
+	  SID			  "27436"
+	  Position		  [4015, 1187, 4045, 1203]
+	  ZOrder		  12784
+	  Value			  "0.5"
 	}
 	Block {
 	  BlockType		  Constant
 	  Name			  "Voltage RMS\nPhase A"
 	  SID			  "27105"
-	  Position		  [1140, 1492, 1170, 1508]
+	  Position		  [1140, 1477, 1170, 1493]
 	  ZOrder		  12486
 	  Value			  "277"
 	}
@@ -3949,7 +6023,7 @@ Model {
 	  BlockType		  Constant
 	  Name			  "Voltage RMS\nPhase B"
 	  SID			  "27106"
-	  Position		  [1140, 1647, 1170, 1663]
+	  Position		  [1140, 1632, 1170, 1648]
 	  ZOrder		  12485
 	  Value			  "277"
 	}
@@ -3957,15 +6031,72 @@ Model {
 	  BlockType		  Constant
 	  Name			  "Voltage RMS\nPhase C"
 	  SID			  "27107"
-	  Position		  [1140, 1807, 1170, 1823]
+	  Position		  [1140, 1802, 1170, 1818]
 	  ZOrder		  12484
 	  Value			  "277"
+	}
+	Block {
+	  BlockType		  Constant
+	  Name			  "above 80"
+	  SID			  "27479"
+	  Position		  [3245, 625, 3275, 655]
+	  ZOrder		  12805
+	  HideAutomaticName	  off
+	  Value			  "0"
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "phase_A_delta"
+	  SID			  "27666"
+	  Ports			  [2, 1]
+	  Position		  [2415, -58, 2445, -27]
+	  ZOrder		  12846
+	  Inputs		  "+-"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "phase_A_delta1"
+	  SID			  "27667"
+	  Ports			  [2, 1]
+	  Position		  [2415, 36, 2445, 69]
+	  ZOrder		  12847
+	  Inputs		  "+-"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "phase_A_delta2"
+	  SID			  "27668"
+	  Ports			  [2, 1]
+	  Position		  [2415, 127, 2445, 158]
+	  ZOrder		  12848
+	  Inputs		  "+-"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
+	}
+	Block {
+	  BlockType		  Sum
+	  Name			  "phase_A_delta3"
+	  SID			  "27792"
+	  Ports			  [2, 1]
+	  Position		  [3185, 31, 3215, 64]
+	  ZOrder		  12912
+	  Inputs		  "-+"
+	  InputSameDT		  off
+	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
+	  SaturateOnIntegerOverflow off
 	}
 	Block {
 	  BlockType		  Outport
 	  Name			  "Phase A Voltage Out"
 	  SID			  "27108"
-	  Position		  [2070, 1398, 2100, 1412]
+	  Position		  [2145, 533, 2175, 547]
 	  ZOrder		  12585
 	  IconDisplay		  "Port number"
 	}
@@ -3973,7 +6104,7 @@ Model {
 	  BlockType		  Outport
 	  Name			  "Phase B Voltage Out"
 	  SID			  "27109"
-	  Position		  [2070, 1438, 2100, 1452]
+	  Position		  [2145, 573, 2175, 587]
 	  ZOrder		  12586
 	  Port			  "2"
 	  IconDisplay		  "Port number"
@@ -3982,14 +6113,14 @@ Model {
 	  BlockType		  Outport
 	  Name			  "Phase C Voltage Out"
 	  SID			  "27110"
-	  Position		  [2070, 1478, 2100, 1492]
+	  Position		  [2145, 613, 2175, 627]
 	  ZOrder		  12587
 	  Port			  "3"
 	  IconDisplay		  "Port number"
 	}
 	Block {
 	  BlockType		  Outport
-	  Name			  "Phase A Inverter"
+	  Name			  "Phase A Inverter Current"
 	  SID			  "27111"
 	  Position		  [2255, 1013, 2285, 1027]
 	  ZOrder		  12591
@@ -3998,7 +6129,7 @@ Model {
 	}
 	Block {
 	  BlockType		  Outport
-	  Name			  "Phase B Inverter"
+	  Name			  "Phase B Inverter Current"
 	  SID			  "27112"
 	  Position		  [2255, 1053, 2285, 1067]
 	  ZOrder		  12592
@@ -4007,7 +6138,7 @@ Model {
 	}
 	Block {
 	  BlockType		  Outport
-	  Name			  "Phase C Inverter"
+	  Name			  "Phase C Inverter Current"
 	  SID			  "27113"
 	  Position		  [2255, 1093, 2285, 1107]
 	  ZOrder		  12593
@@ -4075,7 +6206,7 @@ Model {
 	  ZOrder		  10
 	  SrcBlock		  "Phase C"
 	  SrcPort		  1
-	  Points		  [44, 0; 0, -150]
+	  Points		  [44, 0; 0, -160]
 	  DstBlock		  "Mux"
 	  DstPort		  3
 	}
@@ -4215,20 +6346,6 @@ Model {
 	  SrcBlock		  "ML605EX1 AnalogIn1"
 	  SrcPort		  2
 	  DstBlock		  "Terminator12"
-	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  42
-	  SrcBlock		  "Demux1"
-	  SrcPort		  1
-	  DstBlock		  "Terminator14"
-	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  43
-	  SrcBlock		  "Demux1"
-	  SrcPort		  2
-	  DstBlock		  "Terminator15"
 	  DstPort		  1
 	}
 	Line {
@@ -4486,22 +6603,52 @@ Model {
 	  ZOrder		  78
 	  SrcBlock		  "Transfer Fcn4"
 	  SrcPort		  1
-	  DstBlock		  "Goto14"
-	  DstPort		  1
+	  Points		  [13, 0]
+	  Branch {
+	    ZOrder		    1589
+	    Points		    [0, -62; 176, 0; 0, -43]
+	    DstBlock		    "Phase C Voltage Out"
+	    DstPort		    1
+	  }
+	  Branch {
+	    ZOrder		    1588
+	    DstBlock		    "Goto14"
+	    DstPort		    1
+	  }
 	}
 	Line {
 	  ZOrder		  79
 	  SrcBlock		  "Transfer Fcn3"
 	  SrcPort		  1
-	  DstBlock		  "Goto13"
-	  DstPort		  1
+	  Points		  [13, 0]
+	  Branch {
+	    ZOrder		    1587
+	    Points		    [0, -29; 224, 0; 0, 9]
+	    DstBlock		    "Phase B Voltage Out"
+	    DstPort		    1
+	  }
+	  Branch {
+	    ZOrder		    1586
+	    DstBlock		    "Goto13"
+	    DstPort		    1
+	  }
 	}
 	Line {
 	  ZOrder		  80
 	  SrcBlock		  "Transfer Fcn1"
 	  SrcPort		  1
-	  DstBlock		  "Goto12"
-	  DstPort		  1
+	  Points		  [6, 0]
+	  Branch {
+	    ZOrder		    1585
+	    Points		    [0, 60]
+	    DstBlock		    "Phase A Voltage Out"
+	    DstPort		    1
+	  }
+	  Branch {
+	    ZOrder		    1584
+	    DstBlock		    "Goto12"
+	    DstPort		    1
+	  }
 	}
 	Line {
 	  ZOrder		  81
@@ -4600,24 +6747,24 @@ Model {
 	  SrcPort		  1
 	  Points		  [340, 0]
 	  Branch {
-	    ZOrder		    209
-	    DstBlock		    "Gain"
-	    DstPort		    1
-	  }
-	  Branch {
-	    ZOrder		    208
-	    Points		    [351, 0]
+	    ZOrder		    1419
+	    Points		    [0, 1; 351, 0; 0, -1]
+	    Branch {
+	      ZOrder		      1418
+	      Points		      [0, -295]
+	      DstBlock		      "Mux2"
+	      DstPort		      5
+	    }
 	    Branch {
 	      ZOrder		      172
 	      DstBlock		      "Scope2"
 	      DstPort		      1
 	    }
-	    Branch {
-	      ZOrder		      171
-	      Points		      [0, -295]
-	      DstBlock		      "Mux2"
-	      DstPort		      5
-	    }
+	  }
+	  Branch {
+	    ZOrder		    1415
+	    DstBlock		    "Gain"
+	    DstPort		    1
 	  }
 	}
 	Line {
@@ -4628,22 +6775,13 @@ Model {
 	  DstPort		  1
 	}
 	Line {
-	  Name			  "Va"
-	  ZOrder		  97
-	  Labels		  [0, 1; -1, 1]
-	  SrcBlock		  "Demux3"
-	  SrcPort		  1
-	  DstBlock		  "Phase A2"
-	  DstPort		  1
-	}
-	Line {
 	  ZOrder		  98
 	  SrcBlock		  "Mux"
 	  SrcPort		  1
 	  Points		  [68, 0]
 	  Branch {
-	    ZOrder		    215
-	    Points		    [0, 45]
+	    ZOrder		    1414
+	    Points		    [0, 60]
 	    DstBlock		    "Mux1"
 	    DstPort		    1
 	  }
@@ -4692,76 +6830,23 @@ Model {
 	  ZOrder		  106
 	  SrcBlock		  "Saturation3"
 	  SrcPort		  1
-	  Points		  [161, 0; 0, -10]
-	  Branch {
-	    ZOrder		    107
-	    Points		    [0, -145]
-	    DstBlock		    "Phase A Voltage Out"
-	    DstPort		    1
-	  }
-	  Branch {
-	    ZOrder		    108
-	    DstBlock		    "Mux2"
-	    DstPort		    1
-	  }
-	}
-	Line {
-	  ZOrder		  109
-	  SrcBlock		  "Saturation2"
-	  SrcPort		  1
-	  Points		  [197, 0; 0, -10]
-	  Branch {
-	    ZOrder		    110
-	    Points		    [0, -165]
-	    DstBlock		    "Phase C Voltage Out"
-	    DstPort		    1
-	  }
-	  Branch {
-	    ZOrder		    111
-	    DstBlock		    "Mux2"
-	    DstPort		    3
-	  }
+	  Points		  [106, 0; 0, 15]
+	  DstBlock		  "Mux2"
+	  DstPort		  1
 	}
 	Line {
 	  ZOrder		  112
 	  SrcBlock		  "Saturation1"
 	  SrcPort		  1
-	  Points		  [177, 0; 0, -10]
-	  Branch {
-	    ZOrder		    113
-	    Points		    [0, -155]
-	    DstBlock		    "Phase B Voltage Out"
-	    DstPort		    1
-	  }
-	  Branch {
-	    ZOrder		    114
-	    DstBlock		    "Mux2"
-	    DstPort		    2
-	  }
-	}
-	Line {
-	  Name			  "C"
-	  ZOrder		  115
-	  Labels		  [-1, 0]
-	  SrcBlock		  "Demux3"
-	  SrcPort		  3
-	  DstBlock		  "Phase A6"
-	  DstPort		  1
+	  Points		  [122, 0; 0, 10]
+	  DstBlock		  "Mux2"
+	  DstPort		  2
 	}
 	Line {
 	  ZOrder		  116
 	  SrcBlock		  "Phase A2"
 	  SrcPort		  1
 	  DstBlock		  "Saturation3"
-	  DstPort		  1
-	}
-	Line {
-	  Name			  "A"
-	  ZOrder		  117
-	  Labels		  [1, 0; -1, 0; -1, 1]
-	  SrcBlock		  "Demux3"
-	  SrcPort		  2
-	  DstBlock		  "Phase A3"
 	  DstPort		  1
 	}
 	Line {
@@ -4782,7 +6867,7 @@ Model {
 	  ZOrder		  120
 	  SrcBlock		  "From1"
 	  SrcPort		  1
-	  DstBlock		  "Phase B Inverter"
+	  DstBlock		  "Phase B Inverter Current"
 	  DstPort		  1
 	}
 	Line {
@@ -4790,7 +6875,7 @@ Model {
 	  SrcBlock		  "From"
 	  SrcPort		  1
 	  Points		  [43, 0; 0, 75]
-	  DstBlock		  "Phase A Inverter"
+	  DstBlock		  "Phase A Inverter Current"
 	  DstPort		  1
 	}
 	Line {
@@ -4798,7 +6883,7 @@ Model {
 	  SrcBlock		  "From2"
 	  SrcPort		  1
 	  Points		  [27, 0; 0, -85]
-	  DstBlock		  "Phase C Inverter"
+	  DstBlock		  "Phase C Inverter Current"
 	  DstPort		  1
 	}
 	Line {
@@ -4820,9 +6905,19 @@ Model {
 	  ZOrder		  125
 	  SrcBlock		  "Switch6"
 	  SrcPort		  1
-	  Points		  [9, 0; 0, -75]
-	  DstBlock		  "Switch5"
-	  DstPort		  1
+	  Points		  [9, 0]
+	  Branch {
+	    ZOrder		    1896
+	    Points		    [0, 15]
+	    DstBlock		    "Equal"
+	    DstPort		    2
+	  }
+	  Branch {
+	    ZOrder		    1895
+	    Points		    [0, -75]
+	    DstBlock		    "Switch5"
+	    DstPort		    1
+	  }
 	}
 	Line {
 	  ZOrder		  128
@@ -4831,9 +6926,18 @@ Model {
 	  Points		  [68, 0]
 	  Branch {
 	    ZOrder		    127
-	    Points		    [0, -20]
-	    DstBlock		    "Switch5"
-	    DstPort		    3
+	    Points		    [0, -20; 115, 0]
+	    Branch {
+	      ZOrder		      1898
+	      Points		      [0, 45]
+	      DstBlock		      "Equal"
+	      DstPort		      1
+	    }
+	    Branch {
+	      ZOrder		      1897
+	      DstBlock		      "Switch5"
+	      DstPort		      3
+	    }
 	  }
 	  Branch {
 	    ZOrder		    126
@@ -4877,7 +6981,6 @@ Model {
 	  ZOrder		  295
 	  SrcBlock		  "Switch7"
 	  SrcPort		  1
-	  Points		  [145, 0; 0, -20]
 	  DstBlock		  "Phase C"
 	  DstPort		  1
 	}
@@ -4892,32 +6995,8 @@ Model {
 	  ZOrder		  287
 	  SrcBlock		  "Switch3"
 	  SrcPort		  1
-	  Points		  [133, 0; 0, -10]
 	  DstBlock		  "Phase B"
 	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  269
-	  SrcBlock		  "From14"
-	  SrcPort		  1
-	  Points		  [5, 0; 0, -12; 20, 0]
-	  DstBlock		  "Bus\nCreator5"
-	  DstPort		  6
-	}
-	Line {
-	  ZOrder		  270
-	  SrcBlock		  "Trigger Time"
-	  SrcPort		  1
-	  DstBlock		  "OpTrigger1"
-	  DstPort		  2
-	}
-	Line {
-	  ZOrder		  271
-	  SrcBlock		  "From12"
-	  SrcPort		  1
-	  Points		  [7, 0; 0, -12; 18, 0]
-	  DstBlock		  "Bus\nCreator5"
-	  DstPort		  4
 	}
 	Line {
 	  ZOrder		  272
@@ -4927,49 +7006,12 @@ Model {
 	  DstPort		  1
 	}
 	Line {
-	  ZOrder		  273
-	  SrcBlock		  "From9"
+	  ZOrder		  1139
+	  SrcBlock		  "Trigger start\n"
 	  SrcPort		  1
-	  Points		  [10, 0]
-	  DstBlock		  "Bus\nCreator5"
-	  DstPort		  2
-	}
-	Line {
-	  ZOrder		  274
-	  SrcBlock		  "Bus\nCreator5"
-	  SrcPort		  1
-	  DstBlock		  "OpWriteFile1"
-	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  275
-	  SrcBlock		  "Clock8"
-	  SrcPort		  1
+	  Points		  [13, 0; 0, -45]
 	  DstBlock		  "OpTrigger1"
-	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  276
-	  SrcBlock		  "From10"
-	  SrcPort		  1
-	  Points		  [125, 0]
-	  DstBlock		  "Bus\nCreator5"
-	  DstPort		  3
-	}
-	Line {
-	  ZOrder		  277
-	  SrcBlock		  "From4"
-	  SrcPort		  1
-	  DstBlock		  "Bus\nCreator5"
-	  DstPort		  1
-	}
-	Line {
-	  ZOrder		  278
-	  SrcBlock		  "From13"
-	  SrcPort		  1
-	  Points		  [128, 0; 0, -25]
-	  DstBlock		  "Bus\nCreator5"
-	  DstPort		  5
+	  DstPort		  2
 	}
 	Line {
 	  ZOrder		  279
@@ -5066,12 +7108,1342 @@ Model {
 	  DstPort		  1
 	}
 	Line {
-	  ZOrder		  325
+	  ZOrder		  359
+	  SrcBlock		  "From21"
+	  SrcPort		  1
+	  DstBlock		  "AC_VRMS_1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  363
+	  SrcBlock		  "From18"
+	  SrcPort		  1
+	  DstBlock		  "AC_IRMS_2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  361
+	  SrcBlock		  "From16"
+	  SrcPort		  1
+	  DstBlock		  "AC_VRMS_3"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  360
+	  SrcBlock		  "From22"
+	  SrcPort		  1
+	  DstBlock		  "AC_VRMS_2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  364
+	  SrcBlock		  "From17"
+	  SrcPort		  1
+	  DstBlock		  "AC_IRMS_1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  365
+	  SrcBlock		  "From19"
+	  SrcPort		  1
+	  DstBlock		  "AC_IRMS_3"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  412
+	  SrcBlock		  "From20"
+	  SrcPort		  1
+	  DstBlock		  "AC_P_Q_1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  413
+	  SrcBlock		  "From23"
+	  SrcPort		  1
+	  DstBlock		  "AC_P_Q_1"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  416
+	  SrcBlock		  "From25"
+	  SrcPort		  1
+	  DstBlock		  "AC_P_Q_2"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  417
+	  SrcBlock		  "From24"
+	  SrcPort		  1
+	  DstBlock		  "AC_P_Q_2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  420
+	  SrcBlock		  "From27"
+	  SrcPort		  1
+	  DstBlock		  "AC_P_Q_3"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  421
+	  SrcBlock		  "From26"
+	  SrcPort		  1
+	  DstBlock		  "AC_P_Q_3"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  373
+	  SrcBlock		  "Math\nFunction"
+	  SrcPort		  1
+	  Points		  [0, 10]
+	  DstBlock		  "Add"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  374
+	  SrcBlock		  "Math\nFunction1"
+	  SrcPort		  1
+	  Points		  [0, -10]
+	  DstBlock		  "Add"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  426
+	  SrcBlock		  "Add"
+	  SrcPort		  1
+	  DstBlock		  "AC_S_2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  376
+	  SrcBlock		  "Math\nFunction3"
+	  SrcPort		  1
+	  Points		  [10, 0]
+	  DstBlock		  "Add1"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  377
+	  SrcBlock		  "Add1"
+	  SrcPort		  1
+	  DstBlock		  "AC_S_1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  378
+	  SrcBlock		  "Math\nFunction2"
+	  SrcPort		  1
+	  Points		  [10, 0]
+	  DstBlock		  "Add1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  379
+	  SrcBlock		  "Math\nFunction5"
+	  SrcPort		  1
+	  Points		  [0, -10]
+	  DstBlock		  "Add8"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  429
+	  SrcBlock		  "Add8"
+	  SrcPort		  1
+	  DstBlock		  "AC_S_3"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  381
+	  SrcBlock		  "Math\nFunction4"
+	  SrcPort		  1
+	  Points		  [0, 10]
+	  DstBlock		  "Add8"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  415
+	  SrcBlock		  "AC_P_Q_1"
+	  SrcPort		  1
+	  DstBlock		  "AC_P_1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  414
+	  SrcBlock		  "AC_P_Q_1"
+	  SrcPort		  2
+	  DstBlock		  "AC_Q_1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  419
+	  SrcBlock		  "AC_P_Q_2"
+	  SrcPort		  1
+	  DstBlock		  "AC_P_2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  464
+	  SrcBlock		  "AC_P_Q_2"
+	  SrcPort		  2
+	  DstBlock		  "AC_Q_2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  422
+	  SrcBlock		  "AC_P_Q_3"
+	  SrcPort		  1
+	  DstBlock		  "AC_P_3"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  423
+	  SrcBlock		  "AC_P_Q_3"
+	  SrcPort		  2
+	  DstBlock		  "AC_Q_3"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  388
+	  SrcBlock		  "From29"
+	  SrcPort		  1
+	  DstBlock		  "AC_FREQ_1raw"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  424
+	  SrcBlock		  "From30"
+	  SrcPort		  1
+	  DstBlock		  "AC_FREQ_2raw"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  425
+	  SrcBlock		  "From28"
+	  SrcPort		  1
+	  DstBlock		  "AC_FREQ_3raw"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  391
+	  SrcBlock		  "From31"
+	  SrcPort		  1
+	  DstBlock		  "Math\nFunction2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  392
+	  SrcBlock		  "From32"
+	  SrcPort		  1
+	  DstBlock		  "Math\nFunction3"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  393
+	  SrcBlock		  "From33"
+	  SrcPort		  1
+	  DstBlock		  "Math\nFunction"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  394
+	  SrcBlock		  "From34"
+	  SrcPort		  1
+	  DstBlock		  "Math\nFunction1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  395
+	  SrcBlock		  "From35"
+	  SrcPort		  1
+	  DstBlock		  "Math\nFunction4"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  396
+	  SrcBlock		  "From36"
+	  SrcPort		  1
+	  DstBlock		  "Math\nFunction5"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  397
+	  SrcBlock		  "AC_S_1"
+	  SrcPort		  1
+	  DstBlock		  "Goto19"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  427
+	  SrcBlock		  "AC_S_2"
+	  SrcPort		  1
+	  DstBlock		  "Goto20"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  428
+	  SrcBlock		  "AC_S_3"
+	  SrcPort		  1
+	  DstBlock		  "Goto21"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  405
+	  SrcBlock		  "From37"
+	  SrcPort		  1
+	  Points		  [13, 0; 0, -10]
+	  DstBlock		  "AC_PF_1"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  431
+	  SrcBlock		  "From38"
+	  SrcPort		  1
+	  Points		  [5, 0; 0, -10]
+	  DstBlock		  "AC_PF_2"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  433
+	  SrcBlock		  "From39"
+	  SrcPort		  1
+	  Points		  [3, 0; 0, -15]
+	  DstBlock		  "AC_PF_3"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  408
+	  SrcBlock		  "From40"
+	  SrcPort		  1
+	  Points		  [13, 0; 0, 10]
+	  DstBlock		  "AC_PF_1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  430
+	  SrcBlock		  "From41"
+	  SrcPort		  1
+	  Points		  [14, 0; 0, 15]
+	  DstBlock		  "AC_PF_2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  432
+	  SrcBlock		  "From42"
+	  SrcPort		  1
+	  Points		  [7, 0; 0, 10]
+	  DstBlock		  "AC_PF_3"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  457
+	  SrcBlock		  "AC_P_1"
+	  SrcPort		  1
+	  DstBlock		  "Goto"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  458
+	  SrcBlock		  "AC_P_2"
+	  SrcPort		  1
+	  DstBlock		  "Goto9"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  459
+	  SrcBlock		  "AC_P_3"
+	  SrcPort		  1
+	  DstBlock		  "Goto18"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  460
+	  SrcBlock		  "AC_Q_1"
+	  SrcPort		  1
+	  DstBlock		  "Goto2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  463
+	  SrcBlock		  "AC_Q_2"
+	  SrcPort		  1
+	  DstBlock		  "Goto10"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  462
+	  SrcBlock		  "AC_Q_3"
+	  SrcPort		  1
+	  DstBlock		  "Goto17"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  465
+	  SrcBlock		  "AC_FREQ_1raw"
+	  SrcPort		  1
+	  DstBlock		  "AC_FREQ_1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  466
+	  SrcBlock		  "AC_FREQ_2raw"
+	  SrcPort		  1
+	  DstBlock		  "AC_FREQ_2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  467
+	  SrcBlock		  "AC_FREQ_3raw"
+	  SrcPort		  1
+	  DstBlock		  "AC_FREQ_3"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  494
+	  SrcBlock		  "Bus\nCreator1"
+	  SrcPort		  1
+	  DstBlock		  "OpWriteFile2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  495
+	  SrcBlock		  "From47"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator1"
+	  DstPort		  7
+	}
+	Line {
+	  ZOrder		  2556
+	  SrcBlock		  "End Capture Pulse Start"
+	  SrcPort		  1
+	  Points		  [64, 0; 0, 25]
+	  DstBlock		  "OpTrigger2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  497
+	  SrcBlock		  "From45"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator1"
+	  DstPort		  5
+	}
+	Line {
+	  ZOrder		  498
+	  SrcBlock		  "From49"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator1"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  499
+	  SrcBlock		  "Trigger end"
+	  SrcPort		  1
+	  DstBlock		  "OpTrigger2"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  500
+	  SrcBlock		  "From48"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  501
+	  SrcBlock		  "From44"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator1"
+	  DstPort		  4
+	}
+	Line {
+	  ZOrder		  502
+	  SrcBlock		  "OpWriteFile2"
+	  SrcPort		  1
+	  DstBlock		  "Terminator1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  503
+	  SrcBlock		  "From46"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator1"
+	  DstPort		  6
+	}
+	Line {
+	  ZOrder		  504
+	  SrcBlock		  "From43"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator1"
+	  DstPort		  3
+	}
+	Line {
+	  ZOrder		  507
+	  SrcBlock		  "Saturation2"
+	  SrcPort		  1
+	  Points		  [34, 0; 0, 5]
+	  DstBlock		  "Mux2"
+	  DstPort		  3
+	}
+	Line {
+	  ZOrder		  817
+	  SrcBlock		  "Demux1"
+	  SrcPort		  2
+	  DstBlock		  "Terminator15"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  818
+	  SrcBlock		  "Demux1"
+	  SrcPort		  1
+	  DstBlock		  "Terminator14"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1007
+	  SrcBlock		  "Trigger High Start"
+	  SrcPort		  1
+	  Points		  [60, 0; 0, -15]
+	  DstBlock		  "Start Capture Pulse End"
+	  DstPort		  3
+	}
+	Line {
+	  ZOrder		  1010
+	  SrcBlock		  "Trigger Low Start"
+	  SrcPort		  1
+	  Points		  [78, 0]
+	  Branch {
+	    ZOrder		    1009
+	    Points		    [0, -20]
+	    DstBlock		    "Start Capture Pulse Start"
+	    DstPort		    3
+	  }
+	  Branch {
+	    ZOrder		    1008
+	    Points		    [0, 10]
+	    DstBlock		    "Start Capture Pulse End"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  1011
+	  SrcBlock		  "Clock10"
+	  SrcPort		  1
+	  DstBlock		  "Start Capture Pulse Start"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  1012
+	  SrcBlock		  "Start Capture Pulse End"
+	  SrcPort		  1
+	  Points		  [24, 0; 0, -75]
+	  DstBlock		  "Start Capture Pulse Start"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1017
+	  SrcBlock		  "Start Capture Pulse Start"
+	  SrcPort		  1
+	  Points		  [58, 0; 0, -25]
+	  Branch {
+	    ZOrder		    1140
+	    DstBlock		    "OpTrigger1"
+	    DstPort		    1
+	  }
+	  Branch {
+	    ZOrder		    1022
+	    Points		    [0, -50]
+	    DstBlock		    "Scope1"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  1018
+	  SrcBlock		  "Clock11"
+	  SrcPort		  1
+	  DstBlock		  "Start Capture Pulse End"
+	  DstPort		  2
+	}
+	Line {
+	  Name			  "B"
+	  ZOrder		  1766
+	  Labels		  [0, 0; 3, 1]
+	  SrcBlock		  "Demux3"
+	  SrcPort		  2
+	  Points		  [98, 0; 0, 10]
+	  DstBlock		  "Phase A3"
+	  DstPort		  1
+	}
+	Line {
+	  Name			  "B"
+	  ZOrder		  1767
+	  Labels		  [0, 0; 3, 1]
+	  SrcBlock		  "Demux3"
+	  SrcPort		  3
+	  Points		  [98, 0; 0, 10]
+	  DstBlock		  "Phase A6"
+	  DstPort		  1
+	}
+	Line {
+	  Name			  "B"
+	  ZOrder		  1765
+	  Labels		  [0, 0; 3, 1]
+	  SrcBlock		  "Demux3"
+	  SrcPort		  1
+	  Points		  [98, 0; 0, 10]
+	  DstBlock		  "Phase A2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1769
+	  SrcBlock		  "Inverter_Nameplate_Current"
+	  SrcPort		  1
+	  Points		  [45, 0; 0, 20]
+	  DstBlock		  "Multiply"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1770
+	  SrcBlock		  "80% Threshold"
+	  SrcPort		  1
+	  Points		  [44, 0; 0, -25]
+	  DstBlock		  "Multiply"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  1773
+	  SrcBlock		  "AC_IRMS_1"
+	  SrcPort		  1
+	  Points		  [21, 0; 0, -155]
+	  DstBlock		  "Add9"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1774
+	  SrcBlock		  "AC_IRMS_2"
+	  SrcPort		  1
+	  Points		  [40, 0; 0, -190]
+	  DstBlock		  "Add9"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  1775
+	  SrcBlock		  "AC_IRMS_3"
+	  SrcPort		  1
+	  Points		  [57, 0; 0, -225]
+	  DstBlock		  "Add9"
+	  DstPort		  3
+	}
+	Line {
+	  ZOrder		  1776
+	  SrcBlock		  "Add9"
+	  SrcPort		  1
+	  DstBlock		  "Goto23"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1855
+	  SrcBlock		  "From50"
+	  SrcPort		  1
+	  DstBlock		  "Fourier"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1856
+	  SrcBlock		  "From54"
+	  SrcPort		  1
+	  DstBlock		  "Fourier3"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1857
+	  SrcBlock		  "From51"
+	  SrcPort		  1
+	  DstBlock		  "Fourier1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1858
+	  SrcBlock		  "From55"
+	  SrcPort		  1
+	  DstBlock		  "Fourier2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1859
+	  SrcBlock		  "From52"
+	  SrcPort		  1
+	  DstBlock		  "Fourier4"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1860
+	  SrcBlock		  "From53"
+	  SrcPort		  1
+	  DstBlock		  "Fourier5"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1861
+	  SrcBlock		  "Fourier"
+	  SrcPort		  2
+	  Points		  [31, 0; 0, 10]
+	  DstBlock		  "phase_A_delta"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1862
+	  SrcBlock		  "Fourier3"
+	  SrcPort		  2
+	  Points		  [30, 0; 0, -15]
+	  DstBlock		  "phase_A_delta"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  1863
+	  SrcBlock		  "Fourier1"
+	  SrcPort		  2
+	  Points		  [28, 0; 0, 10]
+	  DstBlock		  "phase_A_delta1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1864
+	  SrcBlock		  "Fourier2"
+	  SrcPort		  2
+	  Points		  [13, 0; 0, -15]
+	  DstBlock		  "phase_A_delta1"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  1865
+	  SrcBlock		  "Fourier4"
+	  SrcPort		  2
+	  DstBlock		  "phase_A_delta2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1866
+	  SrcBlock		  "Fourier5"
+	  SrcPort		  2
+	  Points		  [18, 0; 0, -30]
+	  DstBlock		  "phase_A_delta2"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  1867
+	  SrcBlock		  "phase_A_delta"
+	  SrcPort		  1
+	  DstBlock		  "Abs"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1868
+	  SrcBlock		  "phase_A_delta1"
+	  SrcPort		  1
+	  DstBlock		  "Abs1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1869
+	  SrcBlock		  "phase_A_delta2"
+	  SrcPort		  1
+	  DstBlock		  "Abs2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  1883
+	  SrcBlock		  "Maximum Degrees"
+	  SrcPort		  1
+	  Points		  [53, 0]
+	  Branch {
+	    ZOrder		    2285
+	    DstBlock		    "GreaterThanOrEqual"
+	    DstPort		    2
+	  }
+	  Branch {
+	    ZOrder		    2284
+	    Points		    [0, 95]
+	    Branch {
+	      ZOrder		      2134
+	      Points		      [0, 90]
+	      DstBlock		      "GreaterThanOrEqual2"
+	      DstPort		      2
+	    }
+	    Branch {
+	      ZOrder		      1888
+	      DstBlock		      "GreaterThanOrEqual1"
+	      DstPort		      2
+	    }
+	  }
+	}
+	Line {
+	  ZOrder		  2224
+	  SrcBlock		  "GreaterThanOrEqual1"
+	  SrcPort		  1
+	  DstBlock		  "Logical\nOperator"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  2223
+	  SrcBlock		  "GreaterThanOrEqual"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, 85]
+	  DstBlock		  "Logical\nOperator"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2222
+	  SrcBlock		  "GreaterThanOrEqual2"
+	  SrcPort		  1
+	  Points		  [20, 0; 0, -80]
+	  DstBlock		  "Logical\nOperator"
+	  DstPort		  3
+	}
+	Line {
+	  ZOrder		  1894
+	  SrcBlock		  "Equal"
+	  SrcPort		  1
+	  DstBlock		  "Goto22"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2233
+	  SrcBlock		  "From56"
+	  SrcPort		  1
+	  Points		  [9, 0; 0, 95]
+	  DstBlock		  "Logical\nOperator3"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2237
+	  SrcBlock		  "Count when Neg1"
+	  SrcPort		  1
+	  DstBlock		  "MinMax\nRunning\nResettable"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2267
+	  SrcBlock		  "From57"
+	  SrcPort		  1
+	  Points		  [35, 0]
+	  DstBlock		  "Logical\nOperator4"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2277
+	  SrcBlock		  "MinMax\nRunning\nResettable1"
+	  SrcPort		  1
+	  Points		  [10, 0]
+	  Branch {
+	    ZOrder		    2479
+	    Points		    [0, -95]
+	    DstBlock		    "T_Curr_80"
+	    DstPort		    1
+	  }
+	  Branch {
+	    ZOrder		    2478
+	    DstBlock		    "Post-Fault Time Below 0.8*i_nameplate"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  1930
+	  SrcBlock		  "From58"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator1"
+	  DstPort		  8
+	}
+	Line {
+	  ZOrder		  1931
+	  SrcBlock		  "From59"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator1"
+	  DstPort		  9
+	}
+	Line {
+	  ZOrder		  1932
+	  SrcBlock		  "From60"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator1"
+	  DstPort		  10
+	}
+	Line {
+	  ZOrder		  2192
+	  SrcBlock		  "Reset"
+	  SrcPort		  1
+	  Points		  [7, 0]
+	  Branch {
+	    ZOrder		    2240
+	    DstBlock		    "MinMax\nRunning\nResettable"
+	    DstPort		    2
+	  }
+	  Branch {
+	    ZOrder		    2239
+	    Points		    [0, -25]
+	    DstBlock		    "Count when Neg1"
+	    DstPort		    3
+	  }
+	}
+	Line {
+	  ZOrder		  2226
+	  SrcBlock		  "GreaterThanOrEqual3"
+	  SrcPort		  1
+	  Points		  [23, 0; 0, 65]
+	  DstBlock		  "Logical\nOperator2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2227
+	  SrcBlock		  "GreaterThanOrEqual4"
+	  SrcPort		  1
+	  DstBlock		  "Logical\nOperator2"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  2228
+	  SrcBlock		  "GreaterThanOrEqual5"
+	  SrcPort		  1
+	  Points		  [9, 0; 0, -65]
+	  DstBlock		  "Logical\nOperator2"
+	  DstPort		  3
+	}
+	Line {
+	  ZOrder		  2231
+	  SrcBlock		  "Logical\nOperator"
+	  SrcPort		  1
+	  Points		  [29, 0; 0, 150]
+	  DstBlock		  "Logical\nOperator1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2232
+	  SrcBlock		  "Logical\nOperator2"
+	  SrcPort		  1
+	  Points		  [26, 0; 0, -145]
+	  DstBlock		  "Logical\nOperator1"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  2234
+	  SrcBlock		  "NOT"
+	  SrcPort		  1
+	  DstBlock		  "Logical\nOperator3"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  2235
+	  SrcBlock		  "Logical\nOperator1"
+	  SrcPort		  1
+	  DstBlock		  "NOT"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2241
+	  SrcBlock		  "Logical\nOperator3"
+	  SrcPort		  1
+	  DstBlock		  "Count when Neg1"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  2242
+	  SrcBlock		  "phase_A_delta3"
+	  SrcPort		  1
+	  Points		  [29, 0; 0, 45]
+	  DstBlock		  "Count when Neg1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2243
+	  SrcBlock		  "FaultStopCount1"
+	  SrcPort		  1
+	  Points		  [34, 0; 0, 100]
+	  DstBlock		  "phase_A_delta3"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2244
+	  SrcBlock		  "Clock8"
+	  SrcPort		  1
+	  DstBlock		  "phase_A_delta3"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  2245
+	  SrcBlock		  "Minimum Degrees"
+	  SrcPort		  1
+	  Points		  [60, 0]
+	  Branch {
+	    ZOrder		    2247
+	    Points		    [0, -75]
+	    Branch {
+	      ZOrder		      2250
+	      Points		      [0, -75]
+	      DstBlock		      "GreaterThanOrEqual3"
+	      DstPort		      2
+	    }
+	    Branch {
+	      ZOrder		      2249
+	      DstBlock		      "GreaterThanOrEqual4"
+	      DstPort		      2
+	    }
+	  }
+	  Branch {
+	    ZOrder		    2246
+	    DstBlock		    "GreaterThanOrEqual5"
+	    DstPort		    2
+	  }
+	}
+	Line {
+	  ZOrder		  2264
+	  SrcBlock		  "From64"
+	  SrcPort		  1
+	  DstBlock		  "GreaterThanOrEqual6"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2265
+	  SrcBlock		  "Multiply"
+	  SrcPort		  1
+	  Points		  [50, 0; 0, -75]
+	  DstBlock		  "GreaterThanOrEqual6"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  2266
+	  SrcBlock		  "GreaterThanOrEqual6"
+	  SrcPort		  1
+	  DstBlock		  "Logical\nOperator4"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  2268
+	  SrcBlock		  "Logical\nOperator4"
+	  SrcPort		  1
+	  DstBlock		  "Count when Neg"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  2269
+	  SrcBlock		  "above 80"
+	  SrcPort		  1
+	  Points		  [24, 0]
+	  Branch {
+	    ZOrder		    2276
+	    Points		    [0, -40]
+	    DstBlock		    "Count when Neg"
+	    DstPort		    3
+	  }
+	  Branch {
+	    ZOrder		    2273
+	    DstBlock		    "MinMax\nRunning\nResettable1"
+	    DstPort		    2
+	  }
+	}
+	Line {
+	  ZOrder		  2271
+	  SrcBlock		  "Count when Neg"
+	  SrcPort		  1
+	  DstBlock		  "MinMax\nRunning\nResettable1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2278
+	  SrcBlock		  "Subtract"
+	  SrcPort		  1
+	  Points		  [5, 0; 0, 15]
+	  DstBlock		  "Count when Neg"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2281
+	  SrcBlock		  "FaultStopCount2"
+	  SrcPort		  1
+	  Points		  [43, 0; 0, 65]
+	  DstBlock		  "Subtract"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2282
+	  SrcBlock		  "Clock12"
+	  SrcPort		  1
+	  DstBlock		  "Subtract"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  2374
+	  SrcBlock		  "From65"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator1"
+	  DstPort		  11
+	}
+	Line {
+	  ZOrder		  2375
+	  SrcBlock		  "From66"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator1"
+	  DstPort		  12
+	}
+	Line {
+	  ZOrder		  2376
+	  SrcBlock		  "From67"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator1"
+	  DstPort		  13
+	}
+	Line {
+	  ZOrder		  2377
+	  SrcBlock		  "From4"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator2"
+	  DstPort		  3
+	}
+	Line {
+	  ZOrder		  2378
+	  SrcBlock		  "From63"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator2"
+	  DstPort		  10
+	}
+	Line {
+	  ZOrder		  2379
+	  SrcBlock		  "From62"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator2"
+	  DstPort		  9
+	}
+	Line {
+	  ZOrder		  2380
+	  SrcBlock		  "From12"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator2"
+	  DstPort		  6
+	}
+	Line {
+	  ZOrder		  2381
+	  SrcBlock		  "From10"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator2"
+	  DstPort		  5
+	}
+	Line {
+	  ZOrder		  2382
+	  SrcBlock		  "From9"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator2"
+	  DstPort		  4
+	}
+	Line {
+	  ZOrder		  2383
+	  SrcBlock		  "From13"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator2"
+	  DstPort		  7
+	}
+	Line {
+	  ZOrder		  2384
+	  SrcBlock		  "From61"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator2"
+	  DstPort		  8
+	}
+	Line {
+	  ZOrder		  2385
+	  SrcBlock		  "From70"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator2"
+	  DstPort		  13
+	}
+	Line {
+	  ZOrder		  2386
+	  SrcBlock		  "From14"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator2"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2393
+	  SrcBlock		  "Bus\nCreator2"
+	  SrcPort		  1
+	  DstBlock		  "OpWriteFile1"
+	  DstPort		  1
+	}
+	Line {
+	  ZOrder		  2388
+	  SrcBlock		  "From68"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator2"
+	  DstPort		  11
+	}
+	Line {
+	  ZOrder		  2389
 	  SrcBlock		  "From15"
 	  SrcPort		  1
-	  Points		  [124, 0; 0, -35]
-	  DstBlock		  "Bus\nCreator5"
-	  DstPort		  7
+	  DstBlock		  "Bus\nCreator2"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  2390
+	  SrcBlock		  "From69"
+	  SrcPort		  1
+	  DstBlock		  "Bus\nCreator2"
+	  DstPort		  12
+	}
+	Line {
+	  ZOrder		  2472
+	  SrcBlock		  "Abs"
+	  SrcPort		  1
+	  Points		  [36, 0]
+	  Branch {
+	    ZOrder		    2394
+	    Points		    [145, 0]
+	    Branch {
+	      ZOrder		      2302
+	      Points		      [0, -110]
+	      DstBlock		      "GreaterThanOrEqual"
+	      DstPort		      1
+	    }
+	    Branch {
+	      ZOrder		      2253
+	      Points		      [0, 220]
+	      DstBlock		      "GreaterThanOrEqual3"
+	      DstPort		      1
+	    }
+	  }
+	  Branch {
+	    ZOrder		    2370
+	    Points		    [0, 45]
+	    DstBlock		    "Ph_Del_A"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  2473
+	  SrcBlock		  "Abs1"
+	  SrcPort		  1
+	  Points		  [34, 0]
+	  Branch {
+	    ZOrder		    2395
+	    Points		    [155, 0]
+	    Branch {
+	      ZOrder		      2300
+	      Points		      [0, -110]
+	      DstBlock		      "GreaterThanOrEqual1"
+	      DstPort		      1
+	    }
+	    Branch {
+	      ZOrder		      2255
+	      Points		      [0, 200]
+	      DstBlock		      "GreaterThanOrEqual4"
+	      DstPort		      1
+	    }
+	  }
+	  Branch {
+	    ZOrder		    2372
+	    Points		    [0, 35]
+	    DstBlock		    "Ph_Del_B"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  2474
+	  SrcBlock		  "Abs2"
+	  SrcPort		  1
+	  Points		  [30, 0]
+	  Branch {
+	    ZOrder		    2396
+	    Points		    [179, 0]
+	    Branch {
+	      ZOrder		      2301
+	      Points		      [0, -110]
+	      DstBlock		      "GreaterThanOrEqual2"
+	      DstPort		      1
+	    }
+	    Branch {
+	      ZOrder		      2257
+	      Points		      [0, 185]
+	      DstBlock		      "GreaterThanOrEqual5"
+	      DstPort		      1
+	    }
+	  }
+	  Branch {
+	    ZOrder		    2368
+	    Points		    [0, 45]
+	    DstBlock		    "Ph_Del_C"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  2236
+	  SrcBlock		  "MinMax\nRunning\nResettable"
+	  SrcPort		  1
+	  Points		  [17, 0]
+	  Branch {
+	    ZOrder		    2477
+	    Points		    [0, -80]
+	    DstBlock		    "T_Phase_Realign"
+	    DstPort		    1
+	  }
+	  Branch {
+	    ZOrder		    2476
+	    DstBlock		    "Post-Fault Time with >5deg Phase Mislaignment"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  2549
+	  SrcBlock		  "Clock9"
+	  SrcPort		  1
+	  DstBlock		  "End Capture Pulse Start"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  2552
+	  SrcBlock		  "Trigger Low End"
+	  SrcPort		  1
+	  Points		  [78, 0]
+	  Branch {
+	    ZOrder		    2551
+	    Points		    [0, -20]
+	    DstBlock		    "End Capture Pulse Start"
+	    DstPort		    3
+	  }
+	  Branch {
+	    ZOrder		    2550
+	    Points		    [0, 10]
+	    DstBlock		    "End Capture Pulse End"
+	    DstPort		    1
+	  }
+	}
+	Line {
+	  ZOrder		  2553
+	  SrcBlock		  "Clock13"
+	  SrcPort		  1
+	  DstBlock		  "End Capture Pulse End"
+	  DstPort		  2
+	}
+	Line {
+	  ZOrder		  2554
+	  SrcBlock		  "Trigger High End"
+	  SrcPort		  1
+	  Points		  [61, 0; 0, -15]
+	  DstBlock		  "End Capture Pulse End"
+	  DstPort		  3
+	}
+	Line {
+	  ZOrder		  2555
+	  SrcBlock		  "End Capture Pulse End"
+	  SrcPort		  1
+	  Points		  [9, 0; 0, -75]
+	  DstBlock		  "End Capture Pulse Start"
+	  DstPort		  1
+	}
+	Annotation {
+	  SID			  "27679"
+	  Name			  "PhasesMisaligned"
+	  Position		  [2826, -22, 2909, -8]
+	  InternalMargins	  [0, 0, 0, 0]
+	  HorizontalAlignment	  "left"
+	  VerticalAlignment	  "top"
+	  ZOrder		  -1
 	}
 	Annotation {
 	  SID			  "27128"
@@ -5334,6 +8706,12 @@ Stateflow {
     machine		    1
     name		    "sfun"
     description		    "Default Simulink S-Function Target."
-    linkNode		    [1 0 0]
+    linkNode		    [1 0 3]
+  }
+  target {
+    id			    3
+    machine		    1
+    name		    "rtw"
+    linkNode		    [1 2 0]
   }
 }

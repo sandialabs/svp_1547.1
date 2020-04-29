@@ -4,8 +4,8 @@
     "Opal::Simulation::LoadParamSet":
     {
       "loadParam":"false",
-      "modelPath":"C:/Users/DETLDAQ/OPAL-RT/RT-LABv2019.1_Workspace/IEEE_1547.1_Phase_Jump/models/Phase_Jump_A_B_A/Phase_Jump_A_B_A.mdl",
-      "name":"Phase_Jump_A_B_A.mdl_copy_copy_copy",
+      "modelPath":"D:/Jay SVP Code/OpalAPI/Lib/svpelab/OpalRT/IEEE_1547.1_Phase_Jump/models/Phase_Jump_A_B_A/Phase_Jump_A_B_A.mdl",
+      "name":"Phase_Jump_A_B_A.mdl_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy_copy",
       "owner":"71A54A48-99D3-42B6-90D6-BBD8336F8B56",
       "parent":"/"
     },
@@ -18,7 +18,7 @@
           "item":
           {
             "key":"file",
-            "value":"C:/Users/DETLDAQ/OPAL-RT/RT-LABv2019.1_Workspace/IEEE_1547.1_Phase_Jump/models/Phase_Jump_A_B_A/Phase_Jump_A_B_A.mdl"
+            "value":"D:/Jay SVP Code/OpalAPI/Lib/svpelab/OpalRT/IEEE_1547.1_Phase_Jump/models/Phase_Jump_A_B_A/Phase_Jump_A_B_A.mdl"
           }
         },
         {
