@@ -1,5 +1,5 @@
 """
-Copyright (c) 2017, Sandia National Labs, SunSpec Alliance and CanmetENERGY
+Copyright (c) 2018, Sandia National Labs, SunSpec Alliance and CanmetENERGY(Natural Resources Canada)
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification,
@@ -12,8 +12,8 @@ Redistributions in binary form must reproduce the above copyright notice, this
 list of conditions and the following disclaimer in the documentation and/or
 other materials provided with the distribution.
 
-Neither the names of the Sandia National Labs and SunSpec Alliance nor the names of its
-contributors may be used to endorse or promote products derived from
+Neither the names of the Sandia National Labs, SunSpec Alliance and CanmetENERGY(Natural Resources Canada)
+nor the names of its contributors may be used to endorse or promote products derived from
 this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Questions can be directed to support@sunspec.org
 """
-
 import sys
 import os
 import traceback
