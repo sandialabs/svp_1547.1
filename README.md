@@ -38,6 +38,11 @@ Current compliance test scripts available:
 - [x] Frequency-watt or Frequency-droop - above nominal frequency (FW)
 - [x] Frequency-watt or Frequency-droop - below nominal frequency (FW)
 
+#### Ride-Through support
+- [X] Phase-Change Ride-Through
+- [ ] High/Low Frequency Ride-Through (Ongoing)
+- [ ] Voltage Ride-Through
+
 #### Prioritization of DER responses
 - [x] Test for voltage and frequency regulation priority (PRI)
 
