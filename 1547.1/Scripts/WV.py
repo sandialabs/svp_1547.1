@@ -184,12 +184,12 @@ def watt_var_mode(wv_curves, wv_response_time):
         try:
             eut.vrt_stay_connected_high(params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000,
                                                 'V1': v_high, 'Tms2': 0.16, 'V2': v_high})
-        except Exception, e:
+        except Exception as e:
             ts.log_error('Could not set VRT Stay Connected High curve. %s' % e)
         try:
             eut.vrt_stay_connected_low(params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000,
                                                'V1': v_low, 'Tms2': 0.16, 'V2': v_low})
-        except Exception, e:
+        except Exception as e:
             ts.log_error('Could not set VRT Stay Connected Low curve. %s' % e)
 
         '''
@@ -293,7 +293,7 @@ def watt_var_mode(wv_curves, wv_response_time):
             # Start the data acquisition systems
             daq.data_capture(True)
 
-            for step_label, p_step in p_steps_dict.iteritems():
+            for step_label, p_step in p_steps_dict.items():
                 ts.log('Power step: setting available power to %s W (%s)' % (p_step, step_label))
                 p_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
 
@@ -330,7 +330,7 @@ def watt_var_mode(wv_curves, wv_response_time):
             ts.result_file(dataset_filename, params=result_params)
             result = script.RESULT_COMPLETE
 
-    except script.ScriptFail, e:
+    except script.ScriptFail as e:
         reason = str(e)
         if reason:
             ts.log_error(reason)
@@ -393,7 +393,7 @@ def test_run():
 
         result = watt_var_mode(wv_curves=wv_curves, wv_response_time=wv_response_time)
 
-    except script.ScriptFail, e:
+    except script.ScriptFail as e:
         reason = str(e)
         if reason:
             ts.log_error(reason)
@@ -427,7 +427,7 @@ def run(test_script):
         if result == script.RESULT_FAIL:
             rc = 1
 
-    except Exception, e:
+    except Exception as e:
         ts.log_error('Test script exception: %s' % traceback.format_exc())
         rc = 1
 

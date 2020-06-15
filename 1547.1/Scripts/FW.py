@@ -253,7 +253,7 @@ def test_run():
                     f_steps_dic[mode][lib_1547.get_step_label()] = (f_nom + fw_param['dbf']) - a_f
                     f_steps_dic[mode][lib_1547.get_step_label()] = f_nom
 
-                    for step, frequency in f_steps_dic[mode].iteritems():
+                    for step, frequency in f_steps_dic[mode].items():
                         f_steps_dic[mode].update({step: np.around(frequency, 3)})
                         if frequency > f_max:
                             ts.log("{0} frequency step (value : {1}) changed to fH (f_max)".format(step, frequency))
@@ -270,7 +270,7 @@ def test_run():
                     f_steps_dic[mode][lib_1547.get_step_label()] = (f_nom - fw_param['dbf']) + a_f
                     f_steps_dic[mode][lib_1547.get_step_label()] = f_nom
 
-                    for step, frequency in f_steps_dic[mode].iteritems():
+                    for step, frequency in f_steps_dic[mode].items():
                         f_steps_dic[mode].update({step: np.around(frequency, 3)})
                         if frequency < f_min:
                             ts.log("{0} frequency step (value : {1}) changed to fL (f_min)".format(step, frequency))
@@ -325,7 +325,7 @@ def test_run():
                     ts.sleep(4 * fw_param['tr'])
                     daq.data_capture(True)
 
-                    for step_label, f_step in f_steps_dic[mode].iteritems():
+                    for step_label, f_step in f_steps_dic[mode].items():
                         p_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
                         ts.log('Frequency step: setting Grid simulator frequency to %s (%s)' % (f_step, step_label))
                         step_dict = {'F': f_step}
@@ -356,7 +356,7 @@ def test_run():
 
         return result
 
-    except script.ScriptFail, e:
+    except script.ScriptFail as e:
         reason = str(e)
         if reason:
             ts.log_error(reason)
@@ -419,7 +419,7 @@ def run(test_script):
         if result == script.RESULT_FAIL:
             rc = 1
 
-    except Exception, e:
+    except Exception as e:
         ts.log_error('Test script exception: %s' % traceback.format_exc())
         rc = 1
 

@@ -149,12 +149,12 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             try:
                 eut.vrt_stay_connected_high(params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000,
                                                     'V1': v_high, 'Tms2': 0.16, 'V2': v_high})
-            except Exception, e:
+            except Exception as e:
                 ts.log_error('Could not set VRT Stay Connected High curve. %s' % e)
             try:
                 eut.vrt_stay_connected_low(params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000,
                                                    'V1': v_low, 'Tms2': 0.16, 'V2': v_low})
-            except Exception, e:
+            except Exception as e:
                 ts.log_error('Could not set VRT Stay Connected Low curve. %s' % e)
         else:
             ts.log_debug('Set L/HVRT and trip parameters set to the widest range of adjustability possible.')
@@ -315,7 +315,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     v_steps_dict[lib_1547.get_step_label()] = v_ref*v_nom
 
 
-                    for step, target in v_steps_dict.iteritems():
+                    for step, target in v_steps_dict.items():
                         v_steps_dict.update({step: round(target, 2)})
                         if target > v_high:
                             v_steps_dict.update({step: v_high})
@@ -345,7 +345,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     # Start the data acquisition systems
                     daq.data_capture(True)
 
-                    for step_label, v_step in v_steps_dict.iteritems():
+                    for step_label, v_step in v_steps_dict.items():
                         v_step_dict_updated = {V: v_step}
                         ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_step, step_label))
                         q_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
@@ -378,7 +378,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
 
 
 
-    except script.ScriptFail, e:
+    except script.ScriptFail as e:
         reason = str(e)
         if reason:
             ts.log_error(reason)
@@ -685,7 +685,7 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                 ts.result_file(dataset_filename, params=result_params)
                 result = script.RESULT_COMPLETE
 
-    except script.ScriptFail, e:
+    except script.ScriptFail as e:
         reason = str(e)
         if reason:
             ts.log_error(reason)
@@ -804,7 +804,7 @@ def test_run():
             result = volt_vars_mode(vv_curves=vv_curves, vv_response_time=vv_response_time,
                                     pwr_lvls=pwr_lvls, v_ref_value=v_ref_value)
 
-    except script.ScriptFail, e:
+    except script.ScriptFail as e:
         reason = str(e)
         if reason:
             ts.log_error(reason)
@@ -838,7 +838,7 @@ def run(test_script):
         if result == script.RESULT_FAIL:
             rc = 1
 
-    except Exception, e:
+    except Exception as e:
         ts.log_error('Test script exception: %s' % traceback.format_exc())
         rc = 1
 

@@ -143,12 +143,12 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
             try:
                 eut.vrt_stay_connected_high(
                     params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000, 'V1': v_max, 'Tms2': 0.16, 'V2': v_max})
-            except Exception, e:
+            except Exception as e:
                 ts.log_error('Could not set VRT Stay Connected High curve. %s' % e)
             try:
                 eut.vrt_stay_connected_low(
                     params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000, 'V1': v_min, 'Tms2': 0.16, 'V2': v_min})
-            except Exception, e:
+            except Exception as e:
                 ts.log_error('Could not set VRT Stay Connected Low curve. %s' % e)
         else:
             ts.log_debug('Set L/HVRT and trip parameters set to the widest range of adjustability possible.')
@@ -276,7 +276,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
                     del v_steps_dict['Step O']
 
                 # Ensure voltage step doesn't exceed the EUT boundaries and round V to 2 decimal places
-                for step, voltage in v_steps_dict.iteritems():
+                for step, voltage in v_steps_dict.items():
                     v_steps_dict.update({step: np.around(voltage, 2)})
                     if voltage > v_max:
                         ts.log("{0} voltage step (value : {1}) changed to VH (v_max)".format(step, voltage))
@@ -293,7 +293,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
                 ts.log('------------{}------------'.format(dataset_filename))
                 daq.data_capture(True)
 
-                for step_label, v_step in v_steps_dict.iteritems():
+                for step_label, v_step in v_steps_dict.items():
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_step, step_label))
                     p_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
                     step_dict = {'V': v_step}
@@ -325,7 +325,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
 
         return result
 
-    except script.ScriptFail, e:
+    except script.ScriptFail as e:
         reason = str(e)
         if reason:
             ts.log_error(reason)
@@ -456,12 +456,12 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
             try:
                 eut.vrt_stay_connected_high(
                     params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000, 'V1': v_max, 'Tms2': 0.16, 'V2': v_max})
-            except Exception, e:
+            except Exception as e:
                 ts.log_error('Could not set VRT Stay Connected High curve. %s' % e)
             try:
                 eut.vrt_stay_connected_low(
                     params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000, 'V1': v_min, 'Tms2': 0.16, 'V2': v_min})
-            except Exception, e:
+            except Exception as e:
                 ts.log_error('Could not set VRT Stay Connected Low curve. %s' % e)
         else:
             ts.log_debug('Set L/HVRT and trip parameters set to the widest range of adjustability possible.')
@@ -651,7 +651,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                 ts.result_file(dataset_filename, params=result_params)
                 result = script.RESULT_COMPLETE
 
-    except script.ScriptFail, e:
+    except script.ScriptFail as e:
         reason = str(e)
         if reason:
             ts.log_error(reason)
@@ -740,7 +740,7 @@ def test_run():
 
         return result
 
-    except script.ScriptFail, e:
+    except script.ScriptFail as e:
         reason = str(e)
         if reason:
             ts.log_error(reason)
@@ -774,7 +774,7 @@ def run(test_script):
         if result == script.RESULT_FAIL:
             rc = 1
 
-    except Exception, e:
+    except Exception as e:
         ts.log_error('Test script exception: %s' % traceback.format_exc())
         rc = 1
 

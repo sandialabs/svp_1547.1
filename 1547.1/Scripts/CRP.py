@@ -218,7 +218,7 @@ def test_run():
         u) For an EUT with an input voltage range, repeat steps d) through t) for Vin_min and Vin_max
         """
         # For PV systems, this requires that Vmpp = Vin_nom and Pmpp = Prated.
-        for v_in_label, v_in in v_in_targets.iteritems():
+        for v_in_label, v_in in v_in_targets.items():
             ts.log('Starting test %s at v_in = %s' % (v_in_label, v_in))
             a_v = lib_1547.MRA_V * 1.5
             if pv is not None:
@@ -234,7 +234,7 @@ def test_run():
                 
             e) Enable constant power factor mode and set the EUT power factor to PFmin,inj.
             """
-            for q_test_name, q_target in q_targets.iteritems():
+            for q_test_name, q_target in q_targets.items():
                 dataset_filename = '%s_v=%0.1f' % (q_test_name, v_in)
                 ts.log('------------{}------------'.format(dataset_filename))
 
@@ -288,7 +288,7 @@ def test_run():
                     crp_dict[lib_1547.get_step_label()] = {'V': [v_nom * 0.91, v_nom * 1.07, v_nom * 1.07]}  # P
                     crp_dict[lib_1547.get_step_label()] = {'V': v_nom}  # Q
 
-                for step_label, step_change in crp_dict.iteritems():
+                for step_label, step_change in crp_dict.items():
 
                     daq.data_sample()
                     initial_values = lib_1547.get_initial_value(daq=daq, step=step_label)
@@ -368,7 +368,7 @@ def test_run():
                 ts.result_file(dataset_filename, params=result_params)
                 result = script.RESULT_COMPLETE
 
-    except script.ScriptFail, e:
+    except script.ScriptFail as e:
         reason = str(e)
         if reason:
             ts.log_error(reason)
@@ -430,7 +430,7 @@ def run(test_script):
         if result == script.RESULT_FAIL:
             rc = 1
 
-    except Exception, e:
+    except Exception as e:
         ts.log_error('Test script exception: %s' % traceback.format_exc())
         rc = 1
 

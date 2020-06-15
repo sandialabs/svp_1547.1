@@ -36,7 +36,7 @@ Questions can be directed to Jay Johnson (jjohns2@sandia.gov)
 import sys
 import os
 import traceback
-from svpelab import der
+from svpelab import der1547
 from svpelab import das
 from svpelab import pvsim
 from svpelab import gridsim
@@ -62,24 +62,24 @@ def test_run():
         settings_test = ts.param_value('iop.settings_test')
         monitoring_test = ts.param_value('iop.monitoring_test')
 
-        v_nom = float(ts.param_value('eut.v_nom'))
-        MSA_V = 0.01 * v_nom
-        va_max = float(ts.param_value('eut.s_rated'))
-        va_crg_max = va_max
-        MSA_Q = 0.05 * float(ts.param_value('eut.s_rated'))
-        MSA_P = 0.05 * float(ts.param_value('eut.s_rated'))
-        MSA_F = 0.01
-        f_nom = float(ts.param_value('eut.f_nom'))
-        phases = ts.param_value('eut.phases')
-        p_rated = float(ts.param_value('eut.p_rated'))
-        w_max = p_rated
-        p_min = p_rated
-        w_crg_max = p_rated
-        var_rated = float(ts.param_value('eut.var_rated'))
-        var_max = float(ts.param_value('eut.var_rated'))
+        # v_nom = float(ts.param_value('eut.v_nom'))
+        # MSA_V = 0.01 * v_nom
+        # va_max = float(ts.param_value('eut.s_rated'))
+        # va_crg_max = va_max
+        # MSA_Q = 0.05 * float(ts.param_value('eut.s_rated'))
+        # MSA_P = 0.05 * float(ts.param_value('eut.s_rated'))
+        # MSA_F = 0.01
+        # f_nom = float(ts.param_value('eut.f_nom'))
+        # phases = ts.param_value('eut.phases')
+        # p_rated = float(ts.param_value('eut.p_rated'))
+        # w_max = p_rated
+        # p_min = p_rated
+        # w_crg_max = p_rated
+        # var_rated = float(ts.param_value('eut.var_rated'))
+        # var_max = float(ts.param_value('eut.var_rated'))
 
         # initialize DER configuration
-        eut = der.der_init(ts)
+        eut = der1547.der1547_init(ts)
         eut.config()
 
         das_points = {'sc': ('event')}
@@ -101,7 +101,7 @@ def test_run():
         if grid is not None:
             grid.voltage(v_nom)
 
-        lib_1547 = p1547.module_1547(ts=ts, aif='Interoperability Tests')
+        lib_1547 = p1547.module_1547(ts=ts, aif='IOP')
         ts.log_debug("1547.1 Library configured for %s" % lib_1547.get_test_name())
 
         '''
@@ -146,10 +146,11 @@ def test_run():
 
         ts.log('---')
         der_info = eut.info()
-        nameplate = eut.nameplate()
+        nameplate = eut.get_nameplate()
 
         ts.log('DER Nameplate Information:')
         if nameplate is not None:
+            ts.log('nameplate: %s' % nameplate)
             ts.log('  Active power rating at unity power factor (nameplate active power rating) [WRtg]: %s' %
                    nameplate.get('WRtg'))
             ts.log('  Active power rating at specified over-excited power factor: %s' % 'Unknown')
@@ -180,6 +181,36 @@ def test_run():
             ts.log('  Version: %s' % (der_info.get('Version')))
         else:
             ts.log_warning('DER info not supported')
+
+        """
+        ______________________________________________________________________________________________
+        1. Active power rating at unity power factor            np_active_power_rtg
+           (nameplate active power rating)
+        2. Active power rating at specified over-excited        np_active_power_rtg_over_excited
+           power factor
+        3. Specified over-excited power factor                  np_over_excited_pf
+        4. Active power rating at specified under-excited       np_active_power_rtg_under_excited
+           power factor
+        5. Specified under-excited power factor                 np_under_excited_pf
+        6. Apparent power maximum rating                        np_apparent_power_max_rtg
+        7. Normal operating performance category                np_normal_op_category
+        8. Abnormal operating performance category              np_abnormal_op_category
+        9. Reactive power injected maximum rating               np_reactive_power_inj_max_rtg
+        10. Reactive power absorbed maximum rating              np_reactive_power_abs_max_rtg
+        11. Active power charge maximum rating                  np_active_power_chg_max_rtg
+        12. Apparent power charge maximum rating                np_apparent_power_chg_max_rtg
+        13. AC voltage nominal rating                           np_ac_volt_nom_rtg
+        14. AC voltage maximum rating                           np_ac_volt_max_rtg
+        15. AC voltage minimum rating                           np_ac_volt_min_rtg
+        16. Supported control mode functions                    np_supported_ctrl_mode_func (dict)
+        17. Reactive susceptance that remains connected to      np_reactive_susceptance
+            the Area EPS in the cease to energize and trip
+            state
+        18. Manufacturer                                        np_manufacturer
+        19. Model                                               np_model
+        20. Serial number                                       np_serial_number
+        21. Version                                             np_version
+        """
 
         if settings_test:
 
@@ -229,7 +260,7 @@ def test_run():
                     inv_power = eut.measurements().get('W')
                     if timeout == 0:
                         result = script.RESULT_FAIL
-                        raise der.DERError('Inverter did not start.')
+                        raise der1547.DERError('Inverter did not start.')
                 ts.log('Waiting for EUT to ramp up')
                 ts.sleep(8)
                 # ts.log_debug('DAS data_read(): %s' % daq.data_read())
@@ -490,7 +521,7 @@ def test_run():
 
         return script.RESULT_COMPLETE
 
-    except script.ScriptFail, e:
+    except script.ScriptFail as e:
         reason = str(e)
         if reason:
             ts.log_error(reason)
@@ -508,6 +539,8 @@ def test_run():
             chil.close()
         if eut is not None:
             eut.close()
+            if eut.close() != 'No Agent':
+                eut.stop_agent()
         if result_summary is not None:
             result_summary.close()
 
@@ -532,7 +565,7 @@ def run(test_script):
         if result == script.RESULT_FAIL:
             rc = 1
 
-    except Exception, e:
+    except Exception as e:
         ts.log_error('Test script exception: %s' % traceback.format_exc())
         rc = 1
 
@@ -544,7 +577,28 @@ info.param_group('iop', label='Test Parameters')
 info.param('iop.settings_test', label='Run the Settings Test', default=True, values=[True, False])
 info.param('iop.monitoring_test', label='Run the Monitoring Test', default=True, values=[True, False])
 
-der.params(info)
+# EUT general parameters
+info.param_group('eut', label='EUT Parameters', glob=True)
+info.param('eut.phases', label='Phases', default='Three phase', values=['Single phase', 'Split phase', 'Three phase'])
+info.param('eut.s_rated', label='Apparent power rating (VA)', default=10000.0)
+info.param('eut.p_rated', label='Output power rating (W)', default=8000.0)
+info.param('eut.p_min', label='Minimum Power Rating (W)', default=1000.)
+info.param('eut.var_rated', label='Output var rating (vars)', default=2000.0)
+info.param('eut.v_nom', label='Nominal AC voltage (V)', default=120.0, desc='Nominal voltage for the AC simulator.')
+info.param('eut.v_low', label='Minimum AC voltage (V)', default=116.0)
+info.param('eut.v_high', label='Maximum AC voltage (V)', default=132.0)
+info.param('eut.v_in_nom', label='V_in_nom: Nominal input voltage (Vdc)', default=400)
+info.param('eut.f_nom', label='Nominal AC frequency (Hz)', default=60.0)
+info.param('eut.f_max', label='Maximum frequency in the continuous operating region (Hz)', default=66.)
+info.param('eut.f_min', label='Minimum frequency in the continuous operating region (Hz)', default=56.)
+info.param('eut.imbalance_resp', label='EUT response to phase imbalance is calculated by:',
+           default='EUT response to the average of the three-phase effective (RMS)',
+           values=['EUT response to the individual phase voltages',
+                   'EUT response to the average of the three-phase effective (RMS)',
+                   'EUT response to the positive sequence of voltages'])
+
+
+der1547.params(info)
 hil.params(info)
 das.params(info)
 pvsim.params(info)
