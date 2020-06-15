@@ -51,7 +51,8 @@ VV = 'VV'
 WV = 'WV'
 CRP = 'CRP'
 PRI = 'PRI'
-
+LF = 'Low-Frequency'
+HF = 'High-Frequency'
 
 def test_run():
     result = script.RESULT_FAIL
@@ -88,19 +89,20 @@ def test_run():
         v_nom = ts.param_value('eut.v_nom')
         v_min = ts.param_value('eut.v_low')
         v_max = ts.param_value('eut.v_high')
+        f_nom = ts.param_value('eut.f_nom')
         p_min = ts.param_value('eut.p_min')
         p_min_prime = ts.param_value('eut.p_min_prime')
         phases = ts.param_value('eut.phases')
-        rt_response_time = ts.param_value('rt.rt_response_time')
 
-        # Reactive power
-        vv_status = ts.param_value('rt.vv_status')
+
+        # RT test parameters
+        lf_mode = ts.param_value('rt.lf_mode')
+        hf_mode = ts.param_value('rt.hf_mode')
+        freq_response_time = ts.param_value('rt_freq.response_time')
+        iteration = ts.param_value('rt_freq.iteration')
 
         # Pass/fail accuracies
         pf_msa = ts.param_value('eut.pf_msa')
-
-        # Imbalance configuration
-        imbalance_fix = ts.param_value('cpf.imbalance_fix')
 
         # EUI Absorb capabilities
         absorb = {}
@@ -110,22 +112,25 @@ def test_run():
 
         # Functions to be enabled for test
         mode = []
-        if vv_status == 'Enabled':
-            mode.append(VV)
+        steps_dict = {}
+        if lf_mode == 'Enabled':
+            mode.append(LF)
+            steps_dict[LF] = ts.param_value('rt.lf_value')
+        if hf_mode == 'Enabled':
+            mode.append(HF)
+            steps_dict[HF] = ts.param_value('rt.hf_value')
 
         """
         A separate module has been create for the 1547.1 Standard
         """
-        lib_1547 = p1547.module_1547(ts=ts, aif='PRI', absorb=absorb)
+
+        lib_1547 = p1547.module_1547(ts=ts, aif='FW', absorb=absorb)
         ts.log_debug("1547.1 Library configured for %s" % lib_1547.get_test_name())
 
         # result params
         result_params = lib_1547.get_rslt_param_plot()
         ts.log(result_params)
 
-        """
-        a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
-        """
         # initialize HIL environment, if necessary
         chil = hil.hil_init(ts)
         if chil is not None:
@@ -159,22 +164,13 @@ def test_run():
             ts.log('DAS device: %s' % daq.info())
 
         """
-        b) Set all voltage trip parameters to the widest range of adjustability. Disable all reactive/active power
-        control functions.
+        a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
         """
         # it is assumed the EUT is on
         eut = der.der_init(ts)
         if eut is not None:
             eut.config()
-
             eut.deactivate_all_fct()
-            ts.log_debug('If not done already, set L/HVRT and trip parameters to the widest range of adjustability.')
-
-        """
-        c) Set all AC test source parameters to the nominal operating voltage and frequency.
-        """
-        if grid is not None:
-            grid.voltage(v_nom)
 
         # open result summary file
         result_summary_filename = 'result_summary.csv'
@@ -183,22 +179,11 @@ def test_run():
         result_summary.write(lib_1547.get_rslt_sum_col_name())
 
         """
-        d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
-        voltage to Vin_nom. The EUT may limit active power throughout the test to meet reactive power requirements.
+        c) Set the frequency droop function and droop values to make the active power change with respect to
+        frequency as small as possible.
         """
-
-        if pv is not None:
-            pv.iv_curve_config(pmp=p_rated, vmp=v_nom_in)
-            pv.irradiance_set(1000.)
-
-        """
-        e) Set EUT frequency-watt and volt-watt parameters to the default values for the EUTs category, and
-        enable frequency-watt and volt-watt parameters. For volt-watt, set P2 = 0.2Prated.
-        """
-
-        default_curve = 1
-
         if eut is not None:
+            default_curve = 1
             fw_settings = lib_1547.get_params(aif=FW)
             fw_curve_params = {
                 'Ena': True,
@@ -207,102 +192,58 @@ def test_run():
                 'kof': fw_settings[default_curve]['kof'],
                 'RspTms': fw_settings[default_curve]['tr']
             }
+            eut.freq_watt(fw_curve_params)
             ts.log_debug('Sending FW points: %s' % fw_curve_params)
 
-            """
-            h) Set the EUTs active power limit signal to 50% of Prated.
-            """
-            ts.sleep(4 * rt_response_time)
 
+        """
+        d) Set or verify that all frequency trip settings are set to not influence the outcome of the test.
+        """
+        ts.log_debug('If not done already, set L/HVRT and trip parameters to the widest range of adjustability.')
+
+        """
+        e) Operate the ac test source at nominal frequency ± 0.1 Hz.
+        """
+        if grid is not None:
+            grid.voltage(v_nom)
+            ts.log(f'Setting Grid simulator voltage to {v_nom}')
+            grid.freq(f_nom)
+            ts.log(f'Setting Grid simulator frequency to {f_nom}')
+
+
+        #TODO Isolated Source mode
         for current_mode in mode:
-            ts.log_debug('Starting mode = %s and %s' % (current_mode, current_mode == VV))
+            ts.log_debug(f'Initializing {current_mode}')
 
-            if current_mode == VV:
+            for i in range(iteration+1):
+                ts.log_debug('Starting mode = %s and %s' % (current_mode, current_mode == VV))
+                daq.data_capture(True)
+                dataset_filename = f'RT_Freq_{current_mode}_{i}'
+                ts.log('------------{}------------'.format(dataset_filename))
+                step_label = lib_1547.set_step_label(starting_label='F')
+                step = lib_1547.get_step_label()
+
                 """
-                f) Set EUT volt-var parameters to the default values for the EUTs category and enable volt-var
-                mode
+                f) Operate EUT at any convenient power level between 90% and 100% of EUT rating and at any
+                convenient power factor. Record the output current of the EUT at the nominal frequency condition.
                 """
-                if eut is not None:
-                    vv_settings = lib_1547.get_params(aif=VV)
-                    # ts.log_debug('Sending VV points: %s' % vv_settings)
-                    vv_curve_params = {'v': [vv_settings[default_curve]['V1'] * (100 / v_nom),
-                                             vv_settings[default_curve]['V2'] * (100 / v_nom),
-                                             vv_settings[default_curve]['V3'] * (100 / v_nom),
-                                             vv_settings[default_curve]['V4'] * (100 / v_nom)],
-                                       'q': [vv_settings[default_curve]['Q1'] * (100 / var_rated),
-                                             vv_settings[default_curve]['Q2'] * (100 / var_rated),
-                                             vv_settings[default_curve]['Q3'] * (100 / var_rated),
-                                             vv_settings[default_curve]['Q4'] * (100 / var_rated)],
-                                       'DeptRef': 'Q_MAX_PCT',
-                                       'RmpPtTms': 10.0}
-                    ts.log_debug('Sending VV points: %s' % vv_curve_params)
-                    eut.volt_var(params={'Ena': True, 'curve': vv_curve_params})
+                if pv is not None:
+                    pv.iv_curve_config(pmp=p_rated, vmp=v_nom_in)
+                    pv.irradiance_set(1000.)
+                    pv.power_set(p_rated)
 
-            """
-            g) Allow the EUT to reach steady state. Measure AC test source voltage and frequency and the EUTs
-            active and reactive power production.
-            """
-
-            daq.data_capture(True)
-            dataset_filename = 'RT_{}'.format(current_mode)
-            ts.log('------------{}------------'.format(dataset_filename))
-
-            # Todo : Start measuring Voltage and
-
-            """
-            i) Allow the EUT to reach steady state.
-            """
-            ts.sleep(2 * rt_response_time)
-            """
-            j) Measure AC test source voltage and frequency, and the EUTs active and reactive power
-            production.
-            """
-
-            """
-            k) Set the AC test source voltage and frequency to the values in step 1 of Table 38 or Table 39,
-            depending on the EUTs normal operating performance category.
-
-            l) Allow the EUT to reach steady state.
-
-            m) Measure AC test source voltage and frequency, and the EUTs active and reactive power
-            production.
-
-            n) Repeat steps k) through m) for the rest of the steps in Table 38 or Table 39, depending on the
-            EUTs normal operating performance category
-            """
-
-            steps_dict = [{'V': 1.00},
-                          {'V': 1.09},
-                          {'V': 1.09},
-                          {'V': 1.09},
-                          {'V': 1.09},
-                          {'V': 1.00},
-                          {'V': 1.00},
-                          {'V': 1.00}]
-
-            target_dict = lib_1547.get_params(aif=PRI)
-            ts.log('Target_dict: %s' % (target_dict))
-            target_dict_updated = {}
-            i = 0
-
-            for step in steps_dict:
-                step_label = 'Step_%i_%s' % (i + 1, current_mode)
-                step['V'] *= v_nom
-
-                #target_dict_updated['Q'] = target_dict[i][current_mode]
-                #target_dict_updated['P'] = target_dict[i]['P']
-                ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (step['V'], step_label))
-                ts.log('Frequency step: setting Grid simulator frequency to %s (%s)' % (step['F'], step_label))
-                ts.log('Ptarget: %s (%s)' % (target_dict_updated['P'], step_label))
-                ts.log('Qtarget: %s (%s)' % (target_dict_updated['Q'], step_label))
+                """
+                ***For High Frequency RT test mode***
+                g) Adjust the source frequency from PN to PU where fU is greater than or equal to 61.8 Hz. The source
+                shall be held at this frequency for period th, which shall be not less than 299 s.
+                """
+                if grid is not None:
+                    grid.freq(steps_dict[current_mode])
+                    ts.log(f'Frequency step: setting Grid simulator frequency to {steps_dict[current_mode]}')
 
                 initial_values = lib_1547.get_initial_value(daq=daq, step=step_label)
-                if grid is not None:
-                    grid.freq(step['F'])
-                    grid.voltage(step['V'])
-                ts.log_debug('step: %s' % step)
-                ts.log_debug('type: %s' % type(step))
-                ts.log_debug('current mode %s' % current_mode)
+                ts.sleep(freq_response_time)
+
                 lib_1547.process_data(
                     daq=daq,
                     tr=rt_response_time,
@@ -316,22 +257,34 @@ def test_run():
                     filename=dataset_filename,
                     aif=current_mode
                 )
-                ts.sleep(2 * rt_response_time)
+                """
+                h) Decrease the frequency of the ac test source to the nominal frequency ± 0.1 Hz.
+                """
+                if grid is not None:
+                    grid.freq(f_nom)
+                    ts.log(f'Frequency step: setting Grid simulator frequency to {f_nom}')
+
+                """
+                i) Repeat steps f) and g) twice for a total of three tests.
+                """
+                """
+                j) During all frequency transitions in steps f) through h), the ROCOF shall be greater than or equal to
+                the ROCOF limit in Table 21 of IEEE Std 1547-2018 and shall be within the demonstrated ROCOF
+                capability of the EUT.
+                """
+                #TODO FIND A WAY TO SET ROCOF
+
                 i += 1
 
-            if current_mode == VV:
-                eut.volt_var(params={'Ena': False})
-
-
-            ts.log('Sampling complete')
-            dataset_filename = dataset_filename + ".csv"
-            daq.data_capture(False)
-            ds = daq.data_capture_dataset()
-            ts.log('Saving file: %s' % dataset_filename)
-            ds.to_csv(ts.result_file_path(dataset_filename))
-            result_params['plot.title'] = dataset_filename.split('.csv')[0]
-            ts.result_file(dataset_filename, params=result_params)
-            result = script.RESULT_COMPLETE
+                ts.log('Sampling complete')
+                dataset_filename = dataset_filename + ".csv"
+                daq.data_capture(False)
+                ds = daq.data_capture_dataset()
+                ts.log('Saving file: %s' % dataset_filename)
+                ds.to_csv(ts.result_file_path(dataset_filename))
+                result_params['plot.title'] = dataset_filename.split('.csv')[0]
+                ts.result_file(dataset_filename, params=result_params)
+                result = script.RESULT_COMPLETE
 
     except script.ScriptFail as e:
         reason = str(e)
@@ -408,9 +361,17 @@ def run(test_script):
 info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.3.0')
 
 # PRI test parameters
-info.param_group('rt', label='Test Parameters')
-info.param('rt.vv_status', label='Volt-Var settings status', default='Enabled', values=['Disabled', 'Enabled'])
-info.param('rt.rt_response_time', label='Test Response Time (secs)', default=10.0)
+info.param_group('rt_freq', label='Test Parameters')
+info.param('rt_freq.isolated_der', label='Is DER capable of frequency operation while isolated from external sources:',
+           default='No', values=['No', 'Yes'])
+info.param('rt_freq.lf_ena', label='Low Frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
+info.param('rt_freq.;f_value', label='Low Frequency step (Hz):', default=57.0, active='rt_freq.lf_ena',
+           active_value='Enabled')
+info.param('rt_freq.hf_ena', label='High Frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
+info.param('rt_freq.hf_value', label='High Frequency step (Hz):', default=61.8, active='rt_freq.hf_ena',
+           active_value='Enabled')
+info.param('rt_freq.response_time', label='Test Response Time (secs)', default=299.0)
+info.param('rt_freq.iteration', label='Number of iterations:', default=3)
 
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)
