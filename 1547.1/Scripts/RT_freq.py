@@ -244,6 +244,7 @@ def test_run():
                 initial_values = lib_1547.get_initial_value(daq=daq, step=step_label)
                 ts.sleep(freq_response_time)
 
+                '''
                 lib_1547.process_data(
                     daq=daq,
                     tr=rt_response_time,
@@ -257,6 +258,7 @@ def test_run():
                     filename=dataset_filename,
                     aif=current_mode
                 )
+                '''
                 """
                 h) Decrease the frequency of the ac test source to the nominal frequency ± 0.1 Hz.
                 """
@@ -362,16 +364,16 @@ info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.3.
 
 # PRI test parameters
 info.param_group('rt_freq', label='Test Parameters')
-info.param('rt_freq.isolated_der', label='Is DER capable of frequency operation while isolated from external sources:',
+info.param('rt_freq.isolated_der', label='Is DER capable of frequency operation while isolated from external sources?',
            default='No', values=['No', 'Yes'])
 info.param('rt_freq.lf_ena', label='Low Frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
-info.param('rt_freq.;f_value', label='Low Frequency step (Hz):', default=57.0, active='rt_freq.lf_ena',
+info.param('rt_freq.lf_value', label='Low Frequency step (Hz):', default=57.0, active='rt_freq.lf_ena',
            active_value='Enabled')
 info.param('rt_freq.hf_ena', label='High Frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('rt_freq.hf_value', label='High Frequency step (Hz):', default=61.8, active='rt_freq.hf_ena',
            active_value='Enabled')
 info.param('rt_freq.response_time', label='Test Response Time (secs)', default=299.0)
-info.param('rt_freq.iteration', label='Number of iterations:', default=3)
+info.param('rt_freq.n_iter', label='Number of iterations:', default=3)
 
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)
