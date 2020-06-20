@@ -99,7 +99,7 @@ def test_run():
         lf_mode = ts.param_value('rt.lf_mode')
         hf_mode = ts.param_value('rt.hf_mode')
         freq_response_time = ts.param_value('rt_freq.response_time')
-        iteration = ts.param_value('rt_freq.iteration')
+        n_iter = ts.param_value('rt_freq.iteration')
 
         # Pass/fail accuracies
         pf_msa = ts.param_value('eut.pf_msa')
@@ -215,7 +215,7 @@ def test_run():
         for current_mode in mode:
             ts.log_debug(f'Initializing {current_mode}')
 
-            for i in range(iteration+1):
+            for i in range(n_iter+1):
                 ts.log_debug('Starting mode = %s and %s' % (current_mode, current_mode == VV))
                 daq.data_capture(True)
                 dataset_filename = f'RT_Freq_{current_mode}_{i}'
