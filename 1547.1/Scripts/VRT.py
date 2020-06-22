@@ -280,21 +280,24 @@ def test_run():
         result_summary.write(lib_1547.get_rslt_sum_col_name())
 
         """
-        c) Set the frequency droop function and droop values to make the active power change with respect to
-        frequency as small as possible.
+        The voltage-reactive power control mode of the EUT shall be set to the default settings specified in Table 8
+        of IEEE Std 1547-2018 for the applicable performance category, and enabled.
         """
+        # Setting up v_pairs value corresponding to desired curve
+        vv_curve = 1
+        v_pairs = lib_1547.get_params(curve=vv_curve)
+        ts.log_debug('v_pairs:%s' % v_pairs)
+
+        # it is assumed the EUT is on
+        eut = der.der_init(ts)
         if eut is not None:
-            default_curve = 1
-            fw_settings = lib_1547.get_params(aif=FW)
-            fw_curve_params = {
-                'Ena': True,
-                'curve': default_curve,
-                'dbf': fw_settings[default_curve]['dbf'],
-                'kof': fw_settings[default_curve]['kof'],
-                'RspTms': fw_settings[default_curve]['tr']
-            }
-            eut.freq_watt(fw_curve_params)
-            ts.log_debug('Sending FW points: %s' % fw_curve_params)
+            vv_curve_params = {'v': [v_pairs['V1'] * (100 / v_nom), v_pairs['V2'] * (100 / v_nom),
+                                     v_pairs['V3'] * (100 / v_nom), v_pairs['V4'] * (100 / v_nom)],
+                               'q': [v_pairs['Q1'] * (100 / var_rated), v_pairs['Q2'] * (100 / var_rated),
+                                     v_pairs['Q3'] * (100 / var_rated), v_pairs['Q4'] * (100 / var_rated)],
+                               'DeptRef': 'Q_MAX_PCT'}
+            ts.log_debug('Sending VV points: %s' % vv_curve_params)
+            eut.volt_var(params={'Ena': True, 'curve': vv_curve_params})
 
         """
         Set or verify that all frequency trip settings are set to not influence the outcome of the test.
