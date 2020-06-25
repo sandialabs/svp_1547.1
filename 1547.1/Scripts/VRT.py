@@ -222,8 +222,8 @@ def test_run():
         """
         A separate module has been create for the 1547.1 Standard
         """
-        #TODO setup as VRT or FW
-        lib_1547 = p1547.module_1547(ts=ts, aif='FW', absorb=absorb)
+        #TODO setup as VRT or VV
+        lib_1547 = p1547.module_1547(ts=ts, aif='VV', absorb=absorb)
         ts.log_debug("1547.1 Library configured for %s" % lib_1547.get_test_name())
 
         # result params
