@@ -43,6 +43,7 @@ from svpelab import p1547
 import script
 from svpelab import result as rslt
 import collections
+import random
 
 FW = 'FW'
 CPF = 'CPF'
@@ -70,6 +71,13 @@ def test_run():
     dataset_filename = None
 
     try:
+        open_proj = ts.param_value('hil_config.open')
+        compilation = ts.param_value('hil_config.compile')
+        stop_sim = ts.param_value('hil_config.stop_sim')
+        load = ts.param_value('hil_config.load')
+        execute = ts.param_value('hil_config.execute')
+        model_name = ts.param_value('hil_config.model_name')
+
         cat = ts.param_value('eut.cat')
         cat2 = ts.param_value('eut.cat2')
         sink_power = ts.param_value('eut.sink_power')
@@ -98,14 +106,14 @@ def test_run():
 
 
         # RT test parameters
-        lf_mode = ts.param_value('vrt.lv_mode')
-        hf_mode = ts.param_value('vrt.hv_mode')
+        lf_mode = ts.param_value('vrt.lv_ena')
+        hf_mode = ts.param_value('vrt.hv_ena')
         low_pwr_ena = ts.param_value('vrt.low_pwr_ena')
         high_pwr_ena = ts.param_value('vrt.high_pwr_ena')
-        low_pwr_lvl = ts.param_value('vrt.low_pwr_lvl')
-        high_pwr_lvl = ts.param_value('vrt.low_pwr_lvl')
-        vrt_response_time = ts.param_value('vrt.response_time')
-        n_iter = ts.param_value('vrt.iteration')
+        low_pwr_value = ts.param_value('vrt.low_pwr_value')
+        high_pwr_value = ts.param_value('vrt.high_pwr_value')
+        #vrt_response_time = ts.param_value('vrt.response_time')
+        #n_iter = ts.param_value('vrt.iteration')
         consecutive_ena = ts.param_value('vrt.consecutive_ena')
         categorie_ii_ena = ts.param_value('vrt.cat_2_ena')
         categorie_iii_ena = ts.param_value('vrt.cat_3_ena')
@@ -126,23 +134,36 @@ def test_run():
         steps_dict = {}
         timestep_dict = {}
         sequence_dict = {}
+        parameters = []
 
 
         if lf_mode == 'Enabled':
-            mode.append(LV)
             #TODO change sequence parameter for parameter to be chosen by users or average of both max & min values?
-
+            ts.log(f'Initializing {LV} parameters')
             #Timestep is cumulative
             if categorie_ii_ena == 'Enabled':
                 mode.append(f'{LV}_{CAT_2}')
                 steps_dict.update({f'{LV}_{CAT_2}': {
-                    'A': {'residual voltage': [0.88, 1.00], 'timestep': 20.0},
-                    'B': {'residual voltage': [0, 0.30], 'timestep': 0.16},
-                    'C': {'residual voltage': [0, 0.45], 'timestep': 0.16},
-                    'D': {'residual voltage': [0.45, 0.65], 'timestep': 2.68},
-                    'D_PRIME': {'residual voltage': [0.67, 0.88], 'timestep': 2.68},
-                    'E': {'residual voltage': [0.65, 0.88], 'timestep': 2.0},
-                    'F': {'residual voltage': [0.88, 1.00], 'timestep': 120.0}
+                    'A': {'value_pu': [0.88, 1.00], 'location': f'{model_name}/'},
+                    'A_timestep': {'timestep': 20.0, 'location': f'{model_name}/'},
+
+                    'B': {'value_pu': [0, 0.30], 'location': f'{model_name}/'},
+                    'B_timestep': {'timestep': 20.16, 'location': f'{model_name}/'},
+
+                    'C': {'value_pu': [0, 0.45], 'location': f'{model_name}/'},
+                    'C_timestep': {'timestep': 20.32, 'location': f'{model_name}/'},
+
+                    'D': {'value_pu': [0.45, 0.65], 'location': f'{model_name}/'},
+                    'D_timestep': {'timestep': 23.0, 'location': f'{model_name}/'},
+
+                    'D_PRIME': {'value_pu': [0.67, 0.88], 'location': f'{model_name}/'},
+                    'D_PRIME_timestep': {'timestep': 23.0, 'location': f'{model_name}/'},
+
+                    'E': {'value_pu': [0.65, 0.88], 'location': f'{model_name}/'},
+                    'E_timestep': {'timestep': 25.0, 'location': f'{model_name}/'},
+
+                    'F': {'value_pu': [0.88, 1.00], 'location': f'{model_name}/'},
+                    'F_timestep': {'timestep': 145.0, 'location': f'{model_name}/'}
                 }})
 
                 if consecutive_ena == 'Enabled':
@@ -155,12 +176,23 @@ def test_run():
             if categorie_iii_ena == 'Enabled':
                 mode.append(f'{LV}_{CAT_3}')
                 steps_dict.update({f'{LV}_{CAT_3}': {
-                    'A': {'residual voltage': [0.88, 1.00], 'timestep': 20.0},
-                    'B': {'residual voltage': [0, 0.05], 'timestep': 1.0},
-                    'C': {'residual voltage': [0, 0.50], 'timestep': 9.0},
-                    'C_PRIME': {'residual voltage': [0.52, 0.70], 'timestep': 9.0},
-                    'D': {'residual voltage': [0.50, 0.70], 'timestep': 10.0},
-                    'E': {'residual voltage': [0.88, 1.00], 'timestep': 120.0}
+                    'A': {'value_pu': [0.88, 1.00], 'location': f'{model_name}/'},
+                    'A_timestep': {'timestep': 20.0, 'location': f'{model_name}/'},
+
+                    'B': {'value_pu': [0, 0.05], 'location': f'{model_name}/'},
+                    'B_timestep': {'timestep': 21.0, 'location': f'{model_name}/'},
+
+                    'C': {'value_pu': [0, 0.50], 'location': f'{model_name}/'},
+                    'C_timestep': {'timestep': 30.0, 'location': f'{model_name}/'},
+
+                    'C_PRIME': {'value_pu': [0.52, 0.70], 'location': f'{model_name}/'},
+                    'C_PRIME_timestep': {'timestep': 30.0, 'location': f'{model_name}/'},
+
+                    'D': {'value_pu': [0.50, 0.70], 'location': f'{model_name}/'},
+                    'D_timestep': {'timestep': 40.0, 'location': f'{model_name}/'},
+
+                    'E': {'value_pu': [0.88, 1.00], 'location': f'{model_name}/'},
+                    'E_timestep': {'timestep': 160.0, 'location': f'{model_name}/'}
                 }})
 
                 if consecutive_ena == 'Enabled':
@@ -172,17 +204,28 @@ def test_run():
                     sequence_dict.update({f'{LV}_{CAT_3}': ['A', 'B', 'C', 'D', 'E']})
 
         if hf_mode == 'Enabled':
+            ts.log(f'Initializing {HV} parameters')
 
             #TODO change sequence parameter for parameter to be chosen by users?
             #Timestep is cumulative
             if categorie_ii_ena == 'Enabled':
                 mode.append(f'{HV}_{CAT_2}')
                 steps_dict.update({f'{HV}_{CAT_2}': {
-                    'A': {'residual voltage': [1.00, 1.10], 'timestep': 10.0},
-                    'B': {'residual voltage': [1.18, 1.20], 'timestep': 0.2},
-                    'C': {'residual voltage': [1.155, 1.175], 'timestep': 0.3},
-                    'D': {'residual voltage': [1.13, 1.15], 'timestep': 0.5},
-                    'E': {'residual voltage': [1.00, 1.10], 'timestep': 119.6}
+                    'A': {'value_pu': [1.00, 1.10], 'location': f'{model_name}/'},
+                    'A_timestep': {'timestep': 10.0, 'location': f'{model_name}/'},
+
+                    'B': {'value_pu': [1.18, 1.20], 'location': f'{model_name}/'},
+                    'B_timestep': {'timestep': 10.20, 'location': f'{model_name}/'},
+
+                    'C': {'value_pu': [1.155, 1.175], 'location': f'{model_name}/'},
+                    'C_timestep': {'timestep': 10.50, 'location': f'{model_name}/'},
+
+                    'D': {'value_pu': [1.13, 1.15], 'location': f'{model_name}/'},
+                    'D_timestep': {'timestep': 11.0, 'location': f'{model_name}/'},
+
+                    'E': {'value_pu': [1.00, 1.10], 'location': f'{model_name}/'},
+                    'E_timestep': {'timestep': 131.0, 'location': f'{model_name}/'}
+
                 }})
 
                 if categorie_iii_ena == 'Enabled':
@@ -194,10 +237,18 @@ def test_run():
             if categorie_iii_ena == 'Enabled':
                 mode.append(f'{HV}_{CAT_3}')
                 steps_dict.update({f'{HV}_{CAT_3}': {
-                    'A': {'residual voltage': [1.00, 1.10], 'timestep': 5.0},
-                    'B': {'residual voltage': [1.18, 1.20], 'timestep': 12.0},
-                    'B_PRIME': {'residual voltage': [1.12, 1.20], 'timestep': 12.0},
-                    'C': {'residual voltage': [1.00, 1.10], 'timestep': 120.0}
+                    'A': {'value_pu': [1.00, 1.10], 'location': f'{model_name}/'},
+                    'A_timestep': {'timestep': 5.0, 'location': f'{model_name}/'},
+
+                    'B': {'value_pu': [1.18, 1.20], 'location': f'{model_name}/'},
+                    'B_timestep': {'timestep': 17.0, 'location': f'{model_name}/'},
+
+                    'B_PRIME': {'value_pu': [1.12, 1.20], 'location': f'{model_name}/'},
+                    'B_PRIME_timestep': {'timestep': 17.0, 'location': f'{model_name}/'},
+
+                    'C': {'value_pu': [1.00, 1.10], 'location': f'{model_name}/'},
+                    'C_timestep': {'timestep': 137.0, 'location': f'{model_name}/'}
+
                 }})
 
                 if categorie_iii_ena == 'Enabled':
@@ -209,9 +260,13 @@ def test_run():
                     sequence_dict.update({f'{HV}_{CAT_3}': ['A', 'B', 'C']})
 
         if low_pwr_ena == 'Enabled':
-            pwr_lvl.append(low_pwr_lvl)
+            pwr_lvl.append(low_pwr_value)
+        else:
+            ts.log_debug('No low power chosen')
         if high_pwr_ena == 'Enabled':
-            pwr_lvl.append(high_pwr_lvl)
+            pwr_lvl.append(high_pwr_value)
+        else:
+            ts.log_debug('No high power chosen')
 
         """
         A separate module has been create for the 1547.1 Standard
@@ -225,9 +280,9 @@ def test_run():
         ts.log(result_params)
 
         # initialize HIL environment, if necessary
-        chil = hil.hil_init(ts)
-        if chil is not None:
-            chil.config()
+        phil = hil.hil_init(ts)
+        if phil is not None:
+            phil.config()
 
         # grid simulator is initialized with test parameters and enabled
         grid = gridsim.gridsim_init(ts)  # Turn on AC so the EUT can be initialized
@@ -306,12 +361,22 @@ def test_run():
             ts.log(f'Setting Grid simulator voltage to {v_nom}')
             grid.freq(f_nom)
             ts.log(f'Setting Grid simulator frequency to {f_nom}')
+            ts.log(f'Mode: {mode}')
 
+        #Initial loop for all mode that will be executed
         for current_mode in mode:
+            ts.log_debug(f'Clearing old parameters if any')
+            parameters.clear()
+
             ts.log_debug(f'Initializing {current_mode}')
             current_step_dict = steps_dict[current_mode]
+            ts.log_debug(f'current dict:{current_step_dict}')
+            #Loop for all power level
             for pwr in pwr_lvl:
-                dataset_filename = f'VRT_{current_mode}_{pwr*100}PCT'
+                ts.log_debug(f'{pwr}')
+                ts.log_debug(f'{current_mode}')
+
+                dataset_filename = f'VRT_{current_mode}_{round(pwr*100)}PCT'
                 ts.log(f'------------{dataset_filename}------------')
                 daq.data_capture(True)
 
@@ -331,32 +396,64 @@ def test_run():
                 ***For RT test mode***
                 Initiating Voltage sequence for VRT
                 """
-                for current_step in sequence_dict(current_mode):
+                ts.log_debug(f'sequence dict:{sequence_dict[current_mode]}]')
 
-                    if grid is not None:
+                for current_step in sequence_dict[current_mode]:
+
+
                         if range_steps is 'Max':
-                            voltage_step = current_step_dict[current_step]['residual voltage'][-1]
+                            voltage_step = current_step_dict[current_step]['value_pu'][-1]
                         elif range_steps is 'Min':
-                            voltage_step = current_step_dict[current_step]['residual voltage'][0]
+                            voltage_step = current_step_dict[current_step]['value_pu'][0]
                         elif range_steps is 'Average':
-                            total_value = current_step_dict[current_step]['residual voltage'][0]+\
-                                          current_step_dict[current_step]['residual voltage'][-1]
+                            total_value = current_step_dict[current_step]['value_pu'][0]+\
+                                          current_step_dict[current_step]['value_pu'][-1]
                             voltage_step = total_value / 2.0
                         else:
-                            pass
-                        grid.voltage(voltage_step)
-                        ts.log(f'Voltage step{current_step}: setting Grid simulator frequency to {voltage_step}')
-                        #TODO need to do ramp for cat3
-                        #TODO need to send cumulative value for HIL
-                        ts.sleep(current_step_dict[current_step]['timestep'])
+                            voltage_step = random.uniform(current_step_dict[current_step]['value_pu'][0],
+                                                          current_step_dict[current_step]['value_pu'][-1])
+                            voltage_step = round(voltage_step, 3)
 
+                        #TODO CHANGE NAME LOCATION VALUE FOR CORRECT LOCATION/NAME
+
+                        value_location = current_step_dict[current_step]['location']
+                        timestep_location = current_step_dict[f'{current_step}_timestep']['location']
+                        current_timestep = current_step_dict[f'{current_step}_timestep']['timestep']
+                        #Appending Correct parameter
+                        ts.log_debug(f'Sending to model step{current_step} values: {voltage_step}')
+                        parameters.append((value_location, voltage_step))
+                        #Appending Correct Timestep
+                        ts.log_debug(f'Sending to model timestep: {current_timestep}')
+                        parameters.append((timestep_location, current_timestep))
+
+                        ts.log_debug(f'parameters:{parameters}')
+                        #TODO need to do ramp for cat3
+
+                        if phil is not None:
+                            for p, v in parameters:
+                                ts.log_debug('Setting %s = %s' % (p, v))
+                                phil.set_params(p, v)
+
+                            ts.log('Stop time set to %s' % phil.set_stop_time(stop_time))
+
+                            if compilation == 'Yes':
+                                ts.log("    Model ID: {}".format(phil.compile_model().get("modelId")))
+                            if stop_sim == 'Yes':
+                                ts.log("    {}".format(phil.stop_simulation()))
+                            if load == 'Yes':
+                                ts.log("    {}".format(phil.load_model_on_hil()))
+                            if execute == 'Yes':
+                                ts.log("    {}".format(phil.start_simulation()))
+
+                            sim_time = phil.get_time()
+                            while (stop_time - sim_time) > 1.0:  # final sleep will get to stop_time.
+                                sim_time = phil.get_time()
+                                ts.log('Sim Time: %s.  Waiting another %s sec before saving data.' % (
+                                sim_time, stop_time - sim_time))
+                                ts.sleep(1)
                 """
                 h) Decrease the frequency of the ac test source to the nominal frequency ± 0.1 Hz.
                 """
-                if grid is not None:
-                    grid.voltage(v_nom)
-                    ts.log(f'Sequence completed: setting Grid voltage back at v_nom:{v_nom}')
-
                 ts.log('Sampling complete')
                 dataset_filename = dataset_filename + ".csv"
                 daq.data_capture(False)
@@ -453,13 +550,13 @@ info.param('vrt.low_pwr_value', label='Low Power Output level (Between 25-50%):'
 info.param('vrt.high_pwr_ena', label='High Power Output Test :', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('vrt.high_pwr_value', label='High Power Output level (Over 90%):', default=0.91, active='vrt.high_pwr_ena',
            active_value='Enabled')
-info.param('vrt.response_time', label='Test Response Time (secs)', default=299.0)
+#info.param('vrt.response_time', label='Test Response Time (secs)', default=299.0)
 info.param('vrt.cat_2_ena', label='Categorie II:', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('vrt.cat_3_ena', label='Categorie III:', default='Disabled', values=['Disabled', 'Enabled'])
 info.param('vrt.consecutive_ena', label='Consecutive Ride-Through test?', default='Enabled', values=['Disabled',
                                                                                                      'Enabled'])
-info.param('vrt.range_steps', label='Range of steps values', default='Max', values=['Max', 'Min', 'Average', 'Custom'])
-
+info.param('vrt.range_steps', label='Range of steps values', default='Max', values=['Max', 'Min', 'Average', 'Random'])
+#info.param('vrt.model_name', label='Model location: (Absolute link)', default='C:/...')
 #info.param('vrt.n_iter', label='Number of iterations:', default=3)
 
 # EUT general parameters
