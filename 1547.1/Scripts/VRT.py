@@ -135,6 +135,10 @@ def test_run():
         timestep_dict = {}
         sequence_dict = {}
         parameters = []
+        rocof_location = f''
+        #TODO change value accordingly
+        rocof_cat2 = 3
+
 
 
         if lf_mode == 'Enabled':
@@ -366,7 +370,13 @@ def test_run():
         #Initial loop for all mode that will be executed
         for current_mode in mode:
             ts.log_debug(f'Clearing old parameters if any')
-            parameters.clear()
+            #parameters.clear()
+
+            #TODO Enable ROCOF for CAT2 and disable for rest
+            if cat2 in current_mode:
+                phil.set_params((rocof_location, rocof_cat2))
+            else:
+                phil.set_params((rocof_location, rocof_none))
 
             ts.log_debug(f'Initializing {current_mode}')
             current_step_dict = steps_dict[current_mode]
@@ -421,18 +431,24 @@ def test_run():
                         current_timestep = current_step_dict[f'{current_step}_timestep']['timestep']
                         #Appending Correct parameter
                         ts.log_debug(f'Sending to model step{current_step} values: {voltage_step}')
-                        parameters.append((value_location, voltage_step))
+
+                        #parameters.append((value_location, voltage_step))
                         #Appending Correct Timestep
                         ts.log_debug(f'Sending to model timestep: {current_timestep}')
-                        parameters.append((timestep_location, current_timestep))
+                        #parameters.append((timestep_location, current_timestep))
 
                         ts.log_debug(f'parameters:{parameters}')
                         #TODO need to do ramp for cat3
 
                         if phil is not None:
-                            for p, v in parameters:
-                                ts.log_debug('Setting %s = %s' % (p, v))
-                                phil.set_params(p, v)
+                            #Set values for steps
+                            phil.set_params((value_location, voltage_step))
+                            #Set timestep
+                            phil.set_params((timestep_location, current_timestep))
+
+                            #for p, v in parameters:
+                            #    ts.log_debug('Setting %s = %s' % (p, v))
+                            #phil.set_params(p, v)
 
                             ts.log('Stop time set to %s' % phil.set_stop_time(stop_time))
 
