@@ -90,17 +90,20 @@ def test_run():
         v_min = ts.param_value('eut.v_low')
         v_max = ts.param_value('eut.v_high')
         f_nom = ts.param_value('eut.f_nom')
+        f_min = ts.param_value('eut.f_min')
+        f_max = ts.param_value('eut.f_max')
+
         p_min = ts.param_value('eut.p_min')
         p_min_prime = ts.param_value('eut.p_min_prime')
         phases = ts.param_value('eut.phases')
 
 
         # RT test parameters
-        lf_mode = ts.param_value('rt.lf_mode')
-        hf_mode = ts.param_value('rt.hf_mode')
-        freq_response_time = ts.param_value('rt_freq.response_time')
-        n_iter = ts.param_value('rt_freq.iteration')
-
+        lf_ena = ts.param_value('frt.lf_ena')
+        hf_ena = ts.param_value('frt.hf_ena')
+        freq_response_time = ts.param_value('frt.response_time')
+        n_iter = ts.param_value('frt.n_iter')
+        pwr_lvl = ts.param_value('frt.pwr_value')
         # Pass/fail accuracies
         pf_msa = ts.param_value('eut.pf_msa')
 
@@ -113,13 +116,38 @@ def test_run():
         # Functions to be enabled for test
         mode = []
         steps_dict = {}
-        if lf_mode == 'Enabled':
+        if lf_ena == 'Enabled':
             mode.append(LF)
-            steps_dict[LF] = ts.param_value('rt.lf_value')
-        if hf_mode == 'Enabled':
-            mode.append(HF)
-            steps_dict[HF] = ts.param_value('rt.hf_value')
+            lf_value = ts.param_value('frt.lf_value')
+            if not(isinstance(lf_value, float) or isinstance(lf_value, int)):
+                #TODO if not numeric value inputed
+                pass
+            elif not (f_min <= lf_value <= 57.0):
+                #TODO raise error if not between f_min and 57.0
+                raise ValueError
 
+            steps_dict[LF] = {'location': f'C:/', 'value': lf_value}
+
+        if hf_ena == 'Enabled':
+            mode.append(HF)
+            hf_value = ts.param_value('frt.hf_value')
+            if not(isinstance(hf_value, float) or isinstance(hf_value, int)):
+                #TODO if not numeric value inputed
+                pass
+            elif not 61.7 <= hf_value <= f_max:
+                #TODO raise error if not between 63.0 and f_max
+                raise ValueError
+
+            steps_dict[HF] = {'location': f'C:/', 'value': hf_value}
+
+        if not (isinstance(freq_response_time, float) or isinstance(freq_response_time, int)):
+            # TODO if not numeric value inputed
+            pass
+        elif 299 > freq_response_time:
+            # TODO timedelay must be over 299 sec
+            raise ValueError
+
+        time_step = {'location': f'C:....', 'value': freq_response_time }
         """
         A separate module has been create for the 1547.1 Standard
         """
@@ -132,9 +160,9 @@ def test_run():
         ts.log(result_params)
 
         # initialize HIL environment, if necessary
-        chil = hil.hil_init(ts)
-        if chil is not None:
-            chil.config()
+        phil = hil.hil_init(ts)
+        if phil is not None:
+            phil.config()
 
         # grid simulator is initialized with test parameters and enabled
         grid = gridsim.gridsim_init(ts)  # Turn on AC so the EUT can be initialized
@@ -153,6 +181,7 @@ def test_run():
         # initialize data acquisition
         daq = das.das_init(ts, sc_points=das_points['sc'])
 
+        """
         if daq is not None:
             daq.sc['V_MEAS'] = 100
             daq.sc['P_MEAS'] = 100
@@ -162,6 +191,7 @@ def test_run():
             daq.sc['PF_TARGET'] = 1
             daq.sc['event'] = 'None'
             ts.log('DAS device: %s' % daq.info())
+        """
 
         """
         a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
@@ -200,28 +230,32 @@ def test_run():
         d) Set or verify that all frequency trip settings are set to not influence the outcome of the test.
         """
         ts.log_debug('If not done already, set L/HVRT and trip parameters to the widest range of adjustability.')
-
-        """
-        e) Operate the ac test source at nominal frequency ± 0.1 Hz.
-        """
-        if grid is not None:
-            grid.voltage(v_nom)
-            ts.log(f'Setting Grid simulator voltage to {v_nom}')
-            grid.freq(f_nom)
-            ts.log(f'Setting Grid simulator frequency to {f_nom}')
+        ts.log_debug(f'{mode}')
 
 
-        #TODO Isolated Source mode
+        #TODO Isolated Source mode??
         for current_mode in mode:
             ts.log_debug(f'Initializing {current_mode}')
 
-            for i in range(n_iter+1):
+            # TODO FIND A WAY TO SET ROCOF
+
+            """
+            e) Operate the ac test source at nominal frequency ± 0.1 Hz.
+            """
+
+            if grid is not None:
+                grid.voltage(v_nom)
+                ts.log(f'Setting Grid simulator voltage to {v_nom}')
+                grid.freq(f_nom)
+                ts.log(f'Setting Grid simulator frequency to {f_nom}')
+
+            for i in range(1, n_iter+1):
                 ts.log_debug('Starting mode = %s and %s' % (current_mode, current_mode == VV))
                 daq.data_capture(True)
-                dataset_filename = f'RT_Freq_{current_mode}_{i}'
+                dataset_filename = f'FRT_{current_mode}_{i}'
                 ts.log('------------{}------------'.format(dataset_filename))
-                step_label = lib_1547.set_step_label(starting_label='F')
-                step = lib_1547.get_step_label()
+                #step_label = lib_1547.set_step_label(starting_label='F')
+                #step = lib_1547.get_step_label()
 
                 """
                 f) Operate EUT at any convenient power level between 90% and 100% of EUT rating and at any
@@ -230,35 +264,49 @@ def test_run():
                 if pv is not None:
                     pv.iv_curve_config(pmp=p_rated, vmp=v_nom_in)
                     pv.irradiance_set(1000.)
-                    pv.power_set(p_rated)
+                    pv.power_set(round(pwr_lvl*p_rated))
 
                 """
                 ***For High Frequency RT test mode***
                 g) Adjust the source frequency from PN to PU where fU is greater than or equal to 61.8 Hz. The source
                 shall be held at this frequency for period th, which shall be not less than 299 s.
                 """
-                if grid is not None:
-                    grid.freq(steps_dict[current_mode])
-                    ts.log(f'Frequency step: setting Grid simulator frequency to {steps_dict[current_mode]}')
+                # Set values for steps
+                freq_step_location = steps_dict[current_mode]['location']
+                freq_step_value = steps_dict[current_mode]['value']
+                ts.log(f'Frequency step: setting Grid simulator frequency to {freq_step_value}Hz')
+                ts.log(f'At frequency step location: {freq_step_location}')
 
-                initial_values = lib_1547.get_initial_value(daq=daq, step=step_label)
-                ts.sleep(freq_response_time)
+                # Set timestep
+                time_step_location = time_step['location']
+                time_step_value = time_step['value']
+                ts.log(f'Time setting: setting Grid simulator time setting to {time_step_value}sec')
+                ts.log(f'At time step location: {time_step_location}')
 
-                '''
-                lib_1547.process_data(
-                    daq=daq,
-                    tr=rt_response_time,
-                    step=step_label,
-                    initial_value=initial_values,
-                    x_target=step,
-                    y_target=target_dict_updated,
-                    # x_target=[v_step, f_step],
-                    # y_target=[p_target, q_target],
-                    result_summary=result_summary,
-                    filename=dataset_filename,
-                    aif=current_mode
-                )
-                '''
+                if phil is not None:
+                    #Send commands to HIL
+                    phil.set_params((freq_step_location, freq_step_value))
+                    phil.set_params((time_step_location, time_step_value))
+
+                    #TODO HIL SECTION TO BE COMPLETED
+                    ts.log('Stop time set to %s' % phil.set_stop_time(stop_time))
+
+                    if compilation == 'Yes':
+                        ts.log("    Model ID: {}".format(phil.compile_model().get("modelId")))
+                    if stop_sim == 'Yes':
+                        ts.log("    {}".format(phil.stop_simulation()))
+                    if load == 'Yes':
+                        ts.log("    {}".format(phil.load_model_on_hil()))
+                    if execute == 'Yes':
+                        ts.log("    {}".format(phil.start_simulation()))
+
+                    sim_time = phil.get_time()
+                    while (stop_time - sim_time) > 1.0:  # final sleep will get to stop_time.
+                        sim_time = phil.get_time()
+                        ts.log('Sim Time: %s.  Waiting another %s sec before saving data.' % (
+                            sim_time, stop_time - sim_time))
+                        ts.sleep(1)
+
                 """
                 h) Decrease the frequency of the ac test source to the nominal frequency ± 0.1 Hz.
                 """
@@ -274,9 +322,7 @@ def test_run():
                 the ROCOF limit in Table 21 of IEEE Std 1547-2018 and shall be within the demonstrated ROCOF
                 capability of the EUT.
                 """
-                #TODO FIND A WAY TO SET ROCOF
 
-                i += 1
 
                 ts.log('Sampling complete')
                 dataset_filename = dataset_filename + ".csv"
@@ -317,7 +363,7 @@ def test_run():
         if daq is not None:
             daq.close()
         if eut is not None:
-            # eut.fixed_pf(params={'Ena': False, 'PF': 1.0})
+            eut.freq_watt(params={'Ena': False})
             eut.close()
         if rs is not None:
             rs.close()
@@ -363,17 +409,18 @@ def run(test_script):
 info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.3.0')
 
 # PRI test parameters
-info.param_group('rt_freq', label='Test Parameters')
-info.param('rt_freq.isolated_der', label='Is DER capable of frequency operation while isolated from external sources?',
+info.param_group('frt', label='Test Parameters')
+info.param('frt.isolated_der', label='Is DER capable of frequency operation while isolated from external sources?',
            default='No', values=['No', 'Yes'])
-info.param('rt_freq.lf_ena', label='Low Frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
-info.param('rt_freq.lf_value', label='Low Frequency step (Hz):', default=57.0, active='rt_freq.lf_ena',
+info.param('frt.pwr_value', label='Power Output level (between 0.9-1.0):', default=0.90)
+info.param('frt.lf_ena', label='Low Frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
+info.param('frt.lf_value', label='Low Frequency step (Hz):', default=57.0, active='frt.lf_ena',
            active_value='Enabled')
-info.param('rt_freq.hf_ena', label='High Frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
-info.param('rt_freq.hf_value', label='High Frequency step (Hz):', default=61.8, active='rt_freq.hf_ena',
+info.param('frt.hf_ena', label='High Frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
+info.param('frt.hf_value', label='High Frequency step (Hz):', default=61.8, active='frt.hf_ena',
            active_value='Enabled')
-info.param('rt_freq.response_time', label='Test Response Time (secs)', default=299.0)
-info.param('rt_freq.n_iter', label='Number of iterations:', default=3)
+info.param('frt.response_time', label='Test Response Time (secs)', default=299.0)
+info.param('frt.n_iter', label='Number of iterations:', default=3)
 
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)
@@ -387,6 +434,9 @@ info.param('eut.v_low', label='Minimum AC voltage (V)', default=116.0)
 info.param('eut.v_high', label='Maximum AC voltage (V)', default=132.0)
 info.param('eut.v_in_nom', label='V_in_nom: Nominal input voltage (Vdc)', default=400)
 info.param('eut.f_nom', label='Nominal AC frequency (Hz)', default=60.0)
+info.param('eut.f_min', label='Nominal AC frequency (Hz)', default=56.0)
+info.param('eut.f_max', label='Nominal AC frequency (Hz)', default=64.0)
+
 
 # Add the SIRFN logo
 info.logo('sirfn.png')
