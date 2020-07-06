@@ -54,8 +54,8 @@ CRP = 'CRP'
 PRI = 'PRI'
 LV = 'Low-Voltage'
 HV = 'High-Voltage'
-CAT_2 = 'Categorie II'
-CAT_3 = 'Categorie III'
+CAT_2 = 'Category II'
+CAT_3 = 'Category III'
 
 def test_run():
     result = script.RESULT_FAIL
@@ -71,15 +71,9 @@ def test_run():
     dataset_filename = None
 
     try:
-        open_proj = ts.param_value('hil_config.open')
-        compilation = ts.param_value('hil_config.compile')
-        stop_sim = ts.param_value('hil_config.stop_sim')
-        load = ts.param_value('hil_config.load')
-        execute = ts.param_value('hil_config.execute')
-        model_name = ts.param_value('hil_config.model_name')
 
-        cat = ts.param_value('eut.cat')
-        cat2 = ts.param_value('eut.cat2')
+      
+
         sink_power = ts.param_value('eut.sink_power')
         p_rated = ts.param_value('eut.p_rated')
         p_rated_prime = ts.param_value('eut.p_rated_prime')
@@ -103,6 +97,7 @@ def test_run():
         p_min = ts.param_value('eut.p_min')
         p_min_prime = ts.param_value('eut.p_min_prime')
         phases = ts.param_value('eut.phases')
+        eut_startup_time = ts.param_value('eut.startup_time')
 
 
         # RT test parameters
@@ -112,12 +107,14 @@ def test_run():
         high_pwr_ena = ts.param_value('vrt.high_pwr_ena')
         low_pwr_value = ts.param_value('vrt.low_pwr_value')
         high_pwr_value = ts.param_value('vrt.high_pwr_value')
+
         #vrt_response_time = ts.param_value('vrt.response_time')
         #n_iter = ts.param_value('vrt.iteration')
         consecutive_ena = ts.param_value('vrt.consecutive_ena')
-        categorie_ii_ena = ts.param_value('vrt.cat_2_ena')
-        categorie_iii_ena = ts.param_value('vrt.cat_3_ena')
+
+        categories = ts.param_value('vrt.cat')
         range_steps = ts.param_value('vrt.range_steps')
+
 
         # Pass/fail accuracies
         pf_msa = ts.param_value('eut.pf_msa')
@@ -127,7 +124,6 @@ def test_run():
         absorb['ena'] = ts.param_value('eut_cpf.sink_power')
         absorb['p_rated_prime'] = ts.param_value('eut_cpf.p_rated_prime')
         absorb['p_min_prime'] = ts.param_value('eut_cpf.p_min_prime')
-
         # Functions to be enabled for test
         mode = []
         pwr_lvl = []
@@ -135,134 +131,23 @@ def test_run():
         timestep_dict = {}
         sequence_dict = {}
         parameters = []
-        rocof_location = f''
-        #TODO change value accordingly
-        rocof_cat2 = 3
 
+        # initialize HIL environment, if necessary
+        ts.log_debug(15*"*"+"HIL initialization"+15*"*")
 
+        phil = hil.hil_init(ts)
+        if phil is not None:
+            #return self.ts.param_value(self.group_name + '.' + GROUP_NAME + '.' + name)
+            open_proj = phil._param_value('hil_config_open')
+            compilation = phil._param_value('hil_config_compile')
+            stop_sim = phil._param_value('hil_config_stop_sim')
+            load = phil._param_value('hil_config_load')
+            execute = phil._param_value('hil_config_execute')
+            model_name = phil._param_value('hil_config_model_name')
+            phil.config()
 
-        if lf_mode == 'Enabled':
-            #TODO change sequence parameter for parameter to be chosen by users or average of both max & min values?
-            ts.log(f'Initializing {LV} parameters')
-            #Timestep is cumulative
-            if categorie_ii_ena == 'Enabled':
-                mode.append(f'{LV}_{CAT_2}')
-                steps_dict.update({f'{LV}_{CAT_2}': {
-                    'A': {'value_pu': [0.88, 1.00], 'location': f'{model_name}/'},
-                    'A_timestep': {'timestep': 20.0, 'location': f'{model_name}/'},
-
-                    'B': {'value_pu': [0, 0.30], 'location': f'{model_name}/'},
-                    'B_timestep': {'timestep': 20.16, 'location': f'{model_name}/'},
-
-                    'C': {'value_pu': [0, 0.45], 'location': f'{model_name}/'},
-                    'C_timestep': {'timestep': 20.32, 'location': f'{model_name}/'},
-
-                    'D': {'value_pu': [0.45, 0.65], 'location': f'{model_name}/'},
-                    'D_timestep': {'timestep': 23.0, 'location': f'{model_name}/'},
-
-                    'D_PRIME': {'value_pu': [0.67, 0.88], 'location': f'{model_name}/'},
-                    'D_PRIME_timestep': {'timestep': 23.0, 'location': f'{model_name}/'},
-
-                    'E': {'value_pu': [0.65, 0.88], 'location': f'{model_name}/'},
-                    'E_timestep': {'timestep': 25.0, 'location': f'{model_name}/'},
-
-                    'F': {'value_pu': [0.88, 1.00], 'location': f'{model_name}/'},
-                    'F_timestep': {'timestep': 145.0, 'location': f'{model_name}/'}
-                }})
-
-                if consecutive_ena == 'Enabled':
-                    sequence_dict.update({f'{LV}_{CAT_2}': ['A', 'B', 'C', 'D', 'E',
-                                                            'A', 'B', 'C', 'D', 'E', 'F',
-                                                            'A', 'B', 'C', 'D_PRIME', 'F']})
-                else:
-                    sequence_dict.update({f'{LV}_{CAT_2}': ['A', 'B', 'C', 'D', 'E']})
-
-            if categorie_iii_ena == 'Enabled':
-                mode.append(f'{LV}_{CAT_3}')
-                steps_dict.update({f'{LV}_{CAT_3}': {
-                    'A': {'value_pu': [0.88, 1.00], 'location': f'{model_name}/'},
-                    'A_timestep': {'timestep': 20.0, 'location': f'{model_name}/'},
-
-                    'B': {'value_pu': [0, 0.05], 'location': f'{model_name}/'},
-                    'B_timestep': {'timestep': 21.0, 'location': f'{model_name}/'},
-
-                    'C': {'value_pu': [0, 0.50], 'location': f'{model_name}/'},
-                    'C_timestep': {'timestep': 30.0, 'location': f'{model_name}/'},
-
-                    'C_PRIME': {'value_pu': [0.52, 0.70], 'location': f'{model_name}/'},
-                    'C_PRIME_timestep': {'timestep': 30.0, 'location': f'{model_name}/'},
-
-                    'D': {'value_pu': [0.50, 0.70], 'location': f'{model_name}/'},
-                    'D_timestep': {'timestep': 40.0, 'location': f'{model_name}/'},
-
-                    'E': {'value_pu': [0.88, 1.00], 'location': f'{model_name}/'},
-                    'E_timestep': {'timestep': 160.0, 'location': f'{model_name}/'}
-                }})
-
-                if consecutive_ena == 'Enabled':
-                    sequence_dict.update({f'{LV}_{CAT_3}': ['A', 'B', 'C', 'D',
-                                                            'A', 'B', 'C', 'D',
-                                                            'A', 'B', 'C', 'D', 'E',
-                                                            'A', 'B', 'C_PRIME', 'D', 'E']})
-                else:
-                    sequence_dict.update({f'{LV}_{CAT_3}': ['A', 'B', 'C', 'D', 'E']})
-
-        if hf_mode == 'Enabled':
-            ts.log(f'Initializing {HV} parameters')
-
-            #TODO change sequence parameter for parameter to be chosen by users?
-            #Timestep is cumulative
-            if categorie_ii_ena == 'Enabled':
-                mode.append(f'{HV}_{CAT_2}')
-                steps_dict.update({f'{HV}_{CAT_2}': {
-                    'A': {'value_pu': [1.00, 1.10], 'location': f'{model_name}/'},
-                    'A_timestep': {'timestep': 10.0, 'location': f'{model_name}/'},
-
-                    'B': {'value_pu': [1.18, 1.20], 'location': f'{model_name}/'},
-                    'B_timestep': {'timestep': 10.20, 'location': f'{model_name}/'},
-
-                    'C': {'value_pu': [1.155, 1.175], 'location': f'{model_name}/'},
-                    'C_timestep': {'timestep': 10.50, 'location': f'{model_name}/'},
-
-                    'D': {'value_pu': [1.13, 1.15], 'location': f'{model_name}/'},
-                    'D_timestep': {'timestep': 11.0, 'location': f'{model_name}/'},
-
-                    'E': {'value_pu': [1.00, 1.10], 'location': f'{model_name}/'},
-                    'E_timestep': {'timestep': 131.0, 'location': f'{model_name}/'}
-
-                }})
-
-                if categorie_iii_ena == 'Enabled':
-                    sequence_dict.update({f'{HV}_{CAT_2}': ['A', 'B', 'C', 'D',
-                                                            'A', 'B', 'C', 'D', 'E']})
-                else:
-                    sequence_dict.update({f'{HV}_{CAT_2}': ['A', 'B', 'C', 'D', 'E']})
-
-            if categorie_iii_ena == 'Enabled':
-                mode.append(f'{HV}_{CAT_3}')
-                steps_dict.update({f'{HV}_{CAT_3}': {
-                    'A': {'value_pu': [1.00, 1.10], 'location': f'{model_name}/'},
-                    'A_timestep': {'timestep': 5.0, 'location': f'{model_name}/'},
-
-                    'B': {'value_pu': [1.18, 1.20], 'location': f'{model_name}/'},
-                    'B_timestep': {'timestep': 17.0, 'location': f'{model_name}/'},
-
-                    'B_PRIME': {'value_pu': [1.12, 1.20], 'location': f'{model_name}/'},
-                    'B_PRIME_timestep': {'timestep': 17.0, 'location': f'{model_name}/'},
-
-                    'C': {'value_pu': [1.00, 1.10], 'location': f'{model_name}/'},
-                    'C_timestep': {'timestep': 137.0, 'location': f'{model_name}/'}
-
-                }})
-
-                if categorie_iii_ena == 'Enabled':
-                    sequence_dict.update({f'{HV}_{CAT_3}': ['A', 'B',
-                                                            'A', 'B',
-                                                            'A', 'B', 'C',
-                                                            'A', 'B_PRIME', 'C']})
-                else:
-                    sequence_dict.update({f'{HV}_{CAT_3}': ['A', 'B', 'C']})
-
+       
+        # TODO : Handle when both disabled add error or 
         if low_pwr_ena == 'Enabled':
             pwr_lvl.append(low_pwr_value)
         else:
@@ -277,23 +162,28 @@ def test_run():
         """
         #TODO setup as VRT or VV
         lib_1547 = p1547.module_1547(ts=ts, aif='VV', absorb=absorb)
+        vrt_lib_1547 = p1547.vrt_1547(ts=ts,support_interfaces = {"hil" : phil})
+
         ts.log_debug("1547.1 Library configured for %s" % lib_1547.get_test_name())
 
-        # result params
-        result_params = lib_1547.get_rslt_param_plot()
-        ts.log(result_params)
 
-        # initialize HIL environment, if necessary
-        phil = hil.hil_init(ts)
-        if phil is not None:
-            phil.config()
+
+        # result params
+        #result_params = lib_1547.get_rslt_param_plot()
+        #ts.log(result_params)
+
+       
 
         # grid simulator is initialized with test parameters and enabled
-        grid = gridsim.gridsim_init(ts)  # Turn on AC so the EUT can be initialized
+        ts.log_debug(15*"*"+"Gridsim initialization"+15*"*")
+
+        grid = gridsim.gridsim_init(ts,support_interfaces = {"hil" : phil} )  # Turn on AC so the EUT can be initialized
         if grid is not None:
             grid.voltage(v_nom)
 
         # pv simulator is initialized with test parameters and enabled
+        ts.log_debug(15*"*"+"PVsim initialization"+15*"*")
+
         pv = pvsim.pvsim_init(ts)
         if pv is not None:
             pv.power_set(p_rated)
@@ -303,8 +193,9 @@ def test_run():
         das_points = lib_1547.get_sc_points()
 
         # initialize data acquisition
-        daq = das.das_init(ts, sc_points=das_points['sc'])
+        ts.log_debug(15*"*"+"DAS initialization"+15*"*")
 
+        daq = das.das_init(ts, sc_points=das_points['sc'],support_interfaces = {"hil" : phil,"pvsim":pv})
         if daq is not None:
             daq.sc['V_MEAS'] = 100
             """
@@ -330,7 +221,7 @@ def test_run():
         result_summary_filename = 'result_summary.csv'
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
-        result_summary.write(lib_1547.get_rslt_sum_col_name())
+        result_summary.write('Test, Waveform, RMS Data\n')
 
         """
         The voltage-reactive power control mode of the EUT shall be set to the default settings specified in Table 8
@@ -341,7 +232,11 @@ def test_run():
         v_pairs = lib_1547.get_params(curve=vv_curve)
         ts.log_debug('v_pairs:%s' % v_pairs)
 
+        """
+        Set or verify that all frequency trip settings are set to not influence the outcome of the test.
+        """
         # Sending VV parameters
+        # TODO DISABLE TRIP
         eut = der.der_init(ts)
         if eut is not None:
             vv_curve_params = {'v': [v_pairs['V1'] * (100 / v_nom), v_pairs['V2'] * (100 / v_nom),
@@ -349,17 +244,13 @@ def test_run():
                                'q': [v_pairs['Q1'] * (100 / var_rated), v_pairs['Q2'] * (100 / var_rated),
                                      v_pairs['Q3'] * (100 / var_rated), v_pairs['Q4'] * (100 / var_rated)],
                                'DeptRef': 'Q_MAX_PCT'}
-            ts.log_debug('Sending VV points: %s' % vv_curve_params)
+            ts.log_debug('Setting VV points: %s' % vv_curve_params)
             eut.volt_var(params={'Ena': True, 'curve': vv_curve_params})
-
-        """
-        Set or verify that all frequency trip settings are set to not influence the outcome of the test.
-        """
-        ts.log_debug('If not done already, set L/HVRT and trip parameters to the widest range of adjustability.')
-        #TODO DISABLE TRIP
+            ts.log_debug('Setting L/HVRT and trip parameters to the widest range of adjustability.')
         """
         Operate the ac test source at nominal frequency ± 0.1 Hz.
         """
+        mode = vrt_lib_1547.get_modes()
         if grid is not None:
             grid.voltage(v_nom)
             ts.log(f'Setting Grid simulator voltage to {v_nom}')
@@ -369,29 +260,23 @@ def test_run():
 
         #Initial loop for all mode that will be executed
         for current_mode in mode:
+            #Configuring waveform timing blocks with offset in seconds
+            daq.waveform_config(vrt_lib_1547.get_waveform_config(current_mode,offset=5))
+
             ts.log_debug(f'Clearing old parameters if any')
             #parameters.clear()
 
-            #TODO Enable ROCOF for CAT2 and disable for rest
-            if cat2 in current_mode:
-                phil.set_params((rocof_location, rocof_cat2))
-            else:
-                phil.set_params((rocof_location, rocof_none))
+            # Only for Category II, a rate limiter needs to be added
+            if CAT_2 in current_mode:
+                # For t4 < t ≤ t5: V = 0.65 p.u. + [(1 p.u.) × (t – t4)]/(8.7 s) 
+                grid.rocom(rocom=0.115,init_value=v_nom)
 
             ts.log_debug(f'Initializing {current_mode}')
-            current_step_dict = steps_dict[current_mode]
-            ts.log_debug(f'current dict:{current_step_dict}')
             #Loop for all power level
             for pwr in pwr_lvl:
-                ts.log_debug(f'{pwr}')
-                ts.log_debug(f'{current_mode}')
-
                 dataset_filename = f'VRT_{current_mode}_{round(pwr*100)}PCT'
                 ts.log(f'------------{dataset_filename}------------')
                 daq.data_capture(True)
-
-                #step_label = lib_1547.set_step_label(starting_label='F')
-                #step = lib_1547.get_step_label()
 
                 """
                 Setting up available power to appropriate power level 
@@ -406,77 +291,58 @@ def test_run():
                 ***For RT test mode***
                 Initiating Voltage sequence for VRT
                 """
-                ts.log_debug(f'sequence dict:{sequence_dict[current_mode]}]')
+                vrt_parameters, vrt_start_time, vrt_stop_time = vrt_lib_1547.get_model_parameters(current_mode)
 
-                for current_step in sequence_dict[current_mode]:
+                if phil is not None:
+                    #Set model parameters
+                    phil.set_parameters(vrt_parameters)
+                    ts.sleep(0.5)
+                    ts.log('Stop time set to %s' % phil.set_stop_time(vrt_stop_time))
+                    phil.start_simulation()
 
 
-                        if range_steps is 'Max':
-                            voltage_step = current_step_dict[current_step]['value_pu'][-1]
-                        elif range_steps is 'Min':
-                            voltage_step = current_step_dict[current_step]['value_pu'][0]
-                        elif range_steps is 'Average':
-                            total_value = current_step_dict[current_step]['value_pu'][0]+\
-                                          current_step_dict[current_step]['value_pu'][-1]
-                            voltage_step = total_value / 2.0
-                        else:
-                            voltage_step = random.uniform(current_step_dict[current_step]['value_pu'][0],
-                                                          current_step_dict[current_step]['value_pu'][-1])
-                            voltage_step = round(voltage_step, 3)
-
-                        #TODO CHANGE NAME LOCATION VALUE FOR CORRECT LOCATION/NAME
-
-                        value_location = current_step_dict[current_step]['location']
-                        timestep_location = current_step_dict[f'{current_step}_timestep']['location']
-                        current_timestep = current_step_dict[f'{current_step}_timestep']['timestep']
-                        #Appending Correct parameter
-                        ts.log_debug(f'Sending to model step{current_step} values: {voltage_step}')
-
-                        #parameters.append((value_location, voltage_step))
-                        #Appending Correct Timestep
-                        ts.log_debug(f'Sending to model timestep: {current_timestep}')
-                        #parameters.append((timestep_location, current_timestep))
-
-                        ts.log_debug(f'parameters:{parameters}')
-                        #TODO need to do ramp for cat3
-
-                        if phil is not None:
-                            #Set values for steps
-                            phil.set_params((value_location, voltage_step))
-                            #Set timestep
-                            phil.set_params((timestep_location, current_timestep))
-
-                            #for p, v in parameters:
-                            #    ts.log_debug('Setting %s = %s' % (p, v))
-                            #phil.set_params(p, v)
-
-                            ts.log('Stop time set to %s' % phil.set_stop_time(stop_time))
-
-                            if compilation == 'Yes':
-                                ts.log("    Model ID: {}".format(phil.compile_model().get("modelId")))
-                            if stop_sim == 'Yes':
-                                ts.log("    {}".format(phil.stop_simulation()))
-                            if load == 'Yes':
-                                ts.log("    {}".format(phil.load_model_on_hil()))
-                            if execute == 'Yes':
-                                ts.log("    {}".format(phil.start_simulation()))
-
-                            sim_time = phil.get_time()
-                            while (stop_time - sim_time) > 1.0:  # final sleep will get to stop_time.
-                                sim_time = phil.get_time()
-                                ts.log('Sim Time: %s.  Waiting another %s sec before saving data.' % (
-                                sim_time, stop_time - sim_time))
-                                ts.sleep(1)
+                    sim_time = phil.get_time()
+                    while (vrt_stop_time - sim_time) > 1.0:  # final sleep will get to stop_time.
+                        sim_time = phil.get_time()
+                        ts.log('Sim Time: %s.  Waiting another %s sec before saving data.' % (
+                        sim_time, vrt_stop_time - sim_time))
+                        ts.sleep(1)
                 """
                 h) Decrease the frequency of the ac test source to the nominal frequency ± 0.1 Hz.
                 """
-                ts.log('Sampling complete')
-                dataset_filename = dataset_filename + ".csv"
+                ts.log('Sampling RMS complete')
+                rms_dataset_filename = dataset_filename + "_RMS.csv"
                 daq.data_capture(False)
+                
+                # complete data capture
+                ts.log('Waiting 10 seconds for Opal to save the waveform data.')
+                ts.sleep(10)
+
+                ts.log('------------{}------------'.format(dataset_filename))
+
+                # Convert and save the .mat file that contains the phase jump start
+                ts.log('Processing waveform dataset(s)')
+                ds = daq.waveform_capture_dataset()  # returns list of databases of waveforms (overloaded)
+
+                wave_start_filename = '%s_startwave.csv' % dataset_filename
+                ts.log('Saving file: %s' % wave_start_filename)
+                ds[0].to_csv(ts.result_file_path(wave_start_filename))
+                ts.result_file(wave_start_filename)
+                
                 ds = daq.data_capture_dataset()
                 ts.log('Saving file: %s' % dataset_filename)
                 ds.to_csv(ts.result_file_path(dataset_filename))
-                result_params['plot.title'] = dataset_filename.split('.csv')[0]
+                result_params = {
+                'plot.title': rms_dataset_filename.split('.csv')[0],
+                'plot.x.title': 'Time (sec)',
+                'plot.x.points': 'TIME',
+                'plot.y.points': 'AC_V_1',  # 'AC_V_2', 'AC_V_3',
+                'plot.y.title': 'Voltage (V)',
+                'plot.y2.points': 'AC_I_1',  # 'AC_I_2', 'AC_I_3',
+                'plot.y2.title': 'Current (A)',
+                # 'plot.%s_TARGET.min_error' % y: '%s_TARGET_MIN' % y,
+                # 'plot.%s_TARGET.max_error' % y: '%s_TARGET_MAX' % y,
+                }
                 ts.result_file(dataset_filename, params=result_params)
                 result = script.RESULT_COMPLETE
 
@@ -556,9 +422,8 @@ info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.3.
 
 # PRI test parameters
 info.param_group('vrt', label='Test Parameters')
-
-info.param('vrt.lv_ena', label='Low Frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
-info.param('vrt.hv_ena', label='High Frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
+info.param('vrt.lv_ena', label='Low Voltage mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
+info.param('vrt.hv_ena', label='High Voltage mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
 
 info.param('vrt.low_pwr_ena', label='Low Power Output Test:', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('vrt.low_pwr_value', label='Low Power Output level (Between 25-50%):', default=0.5, active='vrt.low_pwr_ena',
@@ -567,13 +432,11 @@ info.param('vrt.high_pwr_ena', label='High Power Output Test :', default='Enable
 info.param('vrt.high_pwr_value', label='High Power Output level (Over 90%):', default=0.91, active='vrt.high_pwr_ena',
            active_value='Enabled')
 #info.param('vrt.response_time', label='Test Response Time (secs)', default=299.0)
-info.param('vrt.cat_2_ena', label='Categorie II:', default='Enabled', values=['Disabled', 'Enabled'])
-info.param('vrt.cat_3_ena', label='Categorie III:', default='Disabled', values=['Disabled', 'Enabled'])
-info.param('vrt.consecutive_ena', label='Consecutive Ride-Through test?', default='Enabled', values=['Disabled',
-                                                                                                     'Enabled'])
-info.param('vrt.range_steps', label='Range of steps values', default='Max', values=['Max', 'Min', 'Average', 'Random'])
-#info.param('vrt.model_name', label='Model location: (Absolute link)', default='C:/...')
-#info.param('vrt.n_iter', label='Number of iterations:', default=3)
+info.param('vrt.cat', label='Category II and/or III:', default=CAT_2, values=[CAT_2, CAT_3, "Both"])
+#info.param('vrt.consecutive_ena', label='Consecutive Ride-Through test?', default='Enabled', values=['Disabled', 'Enabled'])
+# TODO : This should be change for following the "figure" or "Random"
+info.param('vrt.range_steps', label='Ride-Through Profile ("Figure" is following the RT images from standard)', default='Figure', values=['Figure', 'Random'])
+
 
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)
@@ -587,6 +450,7 @@ info.param('eut.v_low', label='Minimum AC voltage (V)', default=116.0)
 info.param('eut.v_high', label='Maximum AC voltage (V)', default=132.0)
 info.param('eut.v_in_nom', label='V_in_nom: Nominal input voltage (Vdc)', default=400)
 info.param('eut.f_nom', label='Nominal AC frequency (Hz)', default=60.0)
+info.param('eut.startup_time', label='EUT Startup time', default=10)
 
 # Add the SIRFN logo
 info.logo('sirfn.png')
@@ -616,5 +480,4 @@ if __name__ == "__main__":
     test_script.log('log it')
 
     run(test_script)
-
 
