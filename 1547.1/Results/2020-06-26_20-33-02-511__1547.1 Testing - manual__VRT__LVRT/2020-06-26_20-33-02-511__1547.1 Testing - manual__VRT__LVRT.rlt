@@ -1,0 +1,38 @@
+<result name="2020-06-26_20-33-02-511__1547.1 Testing - manual__VRT__LVRT" type="result">
+  <params />
+  <results>
+    <result name="1547.1 Testing - manual" type="suite">
+      <params />
+      <results>
+        <result name="VRT" type="suite">
+          <params />
+          <results>
+            <result filename="1547.1 Testing - manual\VRT\LVRT\LVRT.log" name="LVRT" status="Fail" type="test">
+              <params />
+              <results>
+                <result filename="1547.1 Testing - manual\VRT\LVRT\result_summary.csv" name="result_summary.csv" type="file">
+                  <params />
+                  <results />
+                </result>
+                <result filename="1547.1 Testing - manual\VRT\LVRT\VRT_Low-Voltage_Categorie II_50.0PCT.csv" name="VRT_Low-Voltage_Categorie II_50.0PCT.csv" type="file">
+                  <params>
+                    <param name="plot.y.points" type="string">AC_Q_1,AC_Q_2,AC_Q_3</param>
+                    <param name="plot.y2.points" type="string">AC_VRMS_1,AC_VRMS_2,AC_VRMS_3</param>
+                    <param name="plot.y.title" type="string">Reactive Power</param>
+                    <param name="plot.x.points" type="string">TIME</param>
+                    <param name="plot.x.title" type="string">Time (sec)</param>
+                    <param name="plot.title" type="string">VRT_Low-Voltage_Categorie II_50.0PCT</param>
+                    <param name="plot.V_TARGET.max_error" type="string">V_TARGET_MAX</param>
+                    <param name="plot.V_TARGET.min_error" type="string">V_TARGET_MIN</param>
+                    <param name="plot.y2.title" type="string">Voltage</param>
+                  </params>
+                  <results />
+                </result>
+              </results>
+            </result>
+          </results>
+        </result>
+      </results>
+    </result>
+  </results>
+</result>
