@@ -1,6 +1,5 @@
 <scriptConfig name="VRT_CATII" script="VRT">
   <params>
-    <param name="vrt.low_pwr_value" type="float">0.5</param>
     <param name="vrt.high_pwr_value" type="float">0.91</param>
     <param name="pvsim.terrasas.channel" type="string">1,2</param>
     <param name="eut.startup_time" type="int">10</param>
@@ -42,15 +41,15 @@
     <param name="das.mode" type="string">Opal</param>
     <param name="hil.mode" type="string">Opal-RT</param>
     <param name="das.opal.map" type="string">Opal_Fast_1547</param>
-    <param name="das.opal.wfm_chan_list" type="string">PhaseJump</param>
     <param name="hil.opal.target_name" type="string">RTServer</param>
     <param name="pvsim.mode" type="string">TerraSAS</param>
     <param name="eut.phases" type="string">Three phase</param>
+    <param name="das.opal.wfm_chan_list" type="string">VRT</param>
+    <param name="das.opal.data_name" type="string">VRT_Data.mat</param>
     <param name="hil.opal.hil_config_open" type="string">Yes</param>
     <param name="hil.opal.hil_config_stop_sim" type="string">Yes</param>
     <param name="hil.opal.hil_config_load" type="string">Yes</param>
     <param name="gridsim.opal.freq_params" type="string">frequency_ph_a, frequency_ph_b, frequency_ph_c</param>
     <param name="gridsim.opal.volt_params" type="string">voltage_ph_a, voltage_ph_b, voltage_ph_c</param>
-    <param name="das.opal.data_name" type="string">vrt.mat</param>
   </params>
 </scriptConfig>

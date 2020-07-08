@@ -166,7 +166,15 @@ def test_run():
 
         ts.log_debug("1547.1 Library configured for %s" % lib_1547.get_test_name())
 
-
+        ''' RTLab OpWriteFile Math using worst case scenario of 160 seconds, 10 signals and Ts = 50e-6
+        Duration of acquisition in number of points: Npoints = (Tend - Tstart) / (Ts * dec) = 4/(0.000050*1) = 80000
+        Acquisition frame duration: Tframe = Nbss * Ts * dec = 1000*0.000050*1 = 0.05 sec
+        Number of buffers to be acquired: Nbuffers = Npoints / Nbss = (Tend - Tstart) / Tframe = 3200
+        Minimum file size: MinSize= Nbuffers x SizeBuf = [(Tend - Tstart) / Ts ] * (Nsig+1) * 8 * Nbss 
+            = (160/50e-6)*(10+1)*8*1000 = 2.8160e+11
+        SizeBuf = 1/Nbuffers * {[(Tend - Tstart) / Ts ]*(Nsig+1)*8*Nbss} = [(160/0.000050)*(10+1)*8*1e3]/3200 = 88000000
+        Size of one buffer in bytes (SizeBuf) = (Nsig+1) * 8 * Nbss (Minimum) = 8*8*20 = 1280
+        '''
 
         # result params
         #result_params = lib_1547.get_rslt_param_plot()
@@ -261,7 +269,7 @@ def test_run():
         #Initial loop for all mode that will be executed
         for current_mode in mode:
             #Configuring waveform timing blocks with offset in seconds
-            daq.waveform_config(vrt_lib_1547.get_waveform_config(current_mode,offset=5))
+            #daq.waveform_config(vrt_lib_1547.get_waveform_config(current_mode,offset=5))
 
             ts.log_debug(f'Clearing old parameters if any')
             #parameters.clear()
@@ -296,6 +304,7 @@ def test_run():
                 if phil is not None:
                     #Set model parameters
                     phil.set_parameters(vrt_parameters)
+                    vrt_stop_time = vrt_stop_time+5 +5
                     ts.sleep(0.5)
                     ts.log('Stop time set to %s' % phil.set_stop_time(vrt_stop_time))
                     phil.start_simulation()
@@ -326,12 +335,14 @@ def test_run():
 
                 wave_start_filename = '%s_startwave.csv' % dataset_filename
                 ts.log('Saving file: %s' % wave_start_filename)
+                ts.log_debug(f"{ds}")
+
                 ds[0].to_csv(ts.result_file_path(wave_start_filename))
                 ts.result_file(wave_start_filename)
                 
                 ds = daq.data_capture_dataset()
-                ts.log('Saving file: %s' % dataset_filename)
-                ds.to_csv(ts.result_file_path(dataset_filename))
+                ts.log('Saving file: %s' % rms_dataset_filename)
+                ds.to_csv(ts.result_file_path(rms_dataset_filename))
                 result_params = {
                 'plot.title': rms_dataset_filename.split('.csv')[0],
                 'plot.x.title': 'Time (sec)',
@@ -343,7 +354,7 @@ def test_run():
                 # 'plot.%s_TARGET.min_error' % y: '%s_TARGET_MIN' % y,
                 # 'plot.%s_TARGET.max_error' % y: '%s_TARGET_MAX' % y,
                 }
-                ts.result_file(dataset_filename, params=result_params)
+                ts.result_file(rms_dataset_filename, params=result_params)
                 result = script.RESULT_COMPLETE
 
     except script.ScriptFail as e:
