@@ -52,10 +52,10 @@ VV = 'VV'
 WV = 'WV'
 CRP = 'CRP'
 PRI = 'PRI'
-LV = 'Low-Voltage'
-HV = 'High-Voltage'
-CAT_2 = 'Category II'
-CAT_3 = 'Category III'
+LV = 'LV'
+HV = 'HV'
+CAT_2 = 'CAT_2'
+CAT_3 = 'CAT_3'
 
 def test_run():
     result = script.RESULT_FAIL
@@ -161,10 +161,8 @@ def test_run():
         A separate module has been create for the 1547.1 Standard
         """
         #TODO setup as VRT or VV
-        lib_1547 = p1547.module_1547(ts=ts, aif='VV', absorb=absorb)
-        vrt_lib_1547 = p1547.vrt_1547(ts=ts,support_interfaces = {"hil" : phil})
-
-        ts.log_debug("1547.1 Library configured for %s" % lib_1547.get_test_name())
+        VoltVar = p1547.VoltVar(ts=ts, imbalance=True)
+        VoltRideTrough = p1547.VoltageRideThrough(ts=ts,support_interfaces = {"hil" : phil})
 
         ''' RTLab OpWriteFile Math using worst case scenario of 160 seconds, 10 signals and Ts = 50e-6
         Duration of acquisition in number of points: Npoints = (Tend - Tstart) / (Ts * dec) = 4/(0.000050*1) = 80000
@@ -197,13 +195,10 @@ def test_run():
             pv.power_set(p_rated)
             pv.power_on()  # Turn on DC so the EUT can be initialized
 
-        # DAS soft channels
-        das_points = lib_1547.get_sc_points()
-
         # initialize data acquisition
         ts.log_debug(15*"*"+"DAS initialization"+15*"*")
 
-        daq = das.das_init(ts, sc_points=das_points['sc'],support_interfaces = {"hil" : phil,"pvsim":pv})
+        daq = das.das_init(ts,support_interfaces = {"hil" : phil,"pvsim":pv})
         if daq is not None:
             daq.sc['V_MEAS'] = 100
             """
@@ -229,7 +224,7 @@ def test_run():
         result_summary_filename = 'result_summary.csv'
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
-        result_summary.write('Test, Waveform, RMS Data\n')
+        result_summary.write('Test Name, Waveform File, RMS File\n')
 
         """
         The voltage-reactive power control mode of the EUT shall be set to the default settings specified in Table 8
@@ -237,7 +232,7 @@ def test_run():
         """
         # Default curve is characteristic curve 1
         vv_curve = 1
-        v_pairs = lib_1547.get_params(curve=vv_curve)
+        v_pairs = VoltVar.get_params(curve=vv_curve)
         ts.log_debug('v_pairs:%s' % v_pairs)
 
         """
@@ -258,26 +253,24 @@ def test_run():
         """
         Operate the ac test source at nominal frequency ± 0.1 Hz.
         """
-        mode = vrt_lib_1547.get_modes()
+        modes = VoltRideTrough.get_modes()
         if grid is not None:
             grid.voltage(v_nom)
             ts.log(f'Setting Grid simulator voltage to {v_nom}')
             grid.freq(f_nom)
             ts.log(f'Setting Grid simulator frequency to {f_nom}')
-            ts.log(f'Mode: {mode}')
+            ts.log(f"VRT modes tested : '{modes}'")
+
 
         #Initial loop for all mode that will be executed
-        for current_mode in mode:
+        for current_mode in modes:
             #Configuring waveform timing blocks with offset in seconds
             #daq.waveform_config(vrt_lib_1547.get_waveform_config(current_mode,offset=5))
 
             ts.log_debug(f'Clearing old parameters if any')
             #parameters.clear()
 
-            # Only for Category II, a rate limiter needs to be added
-            if CAT_2 in current_mode:
-                # For t4 < t ≤ t5: V = 0.65 p.u. + [(1 p.u.) × (t – t4)]/(8.7 s) 
-                grid.rocom(rocom=0.115,init_value=v_nom)
+            
 
             ts.log_debug(f'Initializing {current_mode}')
             #Loop for all power level
@@ -299,12 +292,15 @@ def test_run():
                 ***For RT test mode***
                 Initiating Voltage sequence for VRT
                 """
-                vrt_parameters, vrt_start_time, vrt_stop_time = vrt_lib_1547.get_model_parameters(current_mode)
+                vrt_parameters, vrt_start_time, vrt_stop_time = VoltRideTrough.get_model_parameters(current_mode)
+                ts.log(f"The start time will be at {vrt_start_time}")
+                ts.log(f"The stop time will be at {vrt_stop_time}")
+                ts.log(f"Total VRT time is {vrt_stop_time-vrt_start_time}")
 
                 if phil is not None:
                     #Set model parameters
                     phil.set_parameters(vrt_parameters)
-                    vrt_stop_time = vrt_stop_time+5 +5
+                    vrt_stop_time = vrt_stop_time+5
                     ts.sleep(0.5)
                     ts.log('Stop time set to %s' % phil.set_stop_time(vrt_stop_time))
                     phil.start_simulation()
@@ -321,40 +317,42 @@ def test_run():
                 """
                 ts.log('Sampling RMS complete')
                 rms_dataset_filename = dataset_filename + "_RMS.csv"
+                wave_start_filename = dataset_filename + "_WAV.csv"
+
                 daq.data_capture(False)
                 
                 # complete data capture
-                ts.log('Waiting 10 seconds for Opal to save the waveform data.')
-                ts.sleep(10)
+                ts.log('Waiting for Opal to save the waveform data.')
 
                 ts.log('------------{}------------'.format(dataset_filename))
 
                 # Convert and save the .mat file that contains the phase jump start
                 ts.log('Processing waveform dataset(s)')
                 ds = daq.waveform_capture_dataset()  # returns list of databases of waveforms (overloaded)
-
-                wave_start_filename = '%s_startwave.csv' % dataset_filename
-                ts.log('Saving file: %s' % wave_start_filename)
-                ts.log_debug(f"{ds}")
-
+                ts.log(f'Number of waveform to save {len(ds)}')
                 ds[0].to_csv(ts.result_file_path(wave_start_filename))
-                ts.result_file(wave_start_filename)
+                ts.result_file(wave_start_filename)        
+
+
                 
+                ts.log('Sampling RMS complete')
                 ds = daq.data_capture_dataset()
                 ts.log('Saving file: %s' % rms_dataset_filename)
                 ds.to_csv(ts.result_file_path(rms_dataset_filename))
+                ds.remove_none_row(ts.result_file_path(rms_dataset_filename),"TIME")
                 result_params = {
                 'plot.title': rms_dataset_filename.split('.csv')[0],
                 'plot.x.title': 'Time (sec)',
                 'plot.x.points': 'TIME',
-                'plot.y.points': 'AC_V_1',  # 'AC_V_2', 'AC_V_3',
+                'plot.y.points': 'AC_VRMS_1, AC_VRMS_2, AC_VRMS_3',  
                 'plot.y.title': 'Voltage (V)',
-                'plot.y2.points': 'AC_I_1',  # 'AC_I_2', 'AC_I_3',
+                'plot.y2.points': 'AC_IRMS_1, AC_IRMS_2, AC_IRMS_3',  
                 'plot.y2.title': 'Current (A)',
-                # 'plot.%s_TARGET.min_error' % y: '%s_TARGET_MIN' % y,
-                # 'plot.%s_TARGET.max_error' % y: '%s_TARGET_MAX' % y,
                 }
+                # Remove the None in the dataset file
                 ts.result_file(rms_dataset_filename, params=result_params)
+                result_summary.write('%s, %s, %s,\n' % (dataset_filename, wave_start_filename,
+                                                           rms_dataset_filename))
                 result = script.RESULT_COMPLETE
 
     except script.ScriptFail as e:
@@ -364,14 +362,7 @@ def test_run():
 
     except Exception as e:
         ts.log_error((e, traceback.format_exc()))
-        if dataset_filename is not None:
-            dataset_filename = dataset_filename + ".csv"
-            daq.data_capture(False)
-            ds = daq.data_capture_dataset()
-            ts.log('Saving file: %s' % dataset_filename)
-            ds.to_csv(ts.result_file_path(dataset_filename))
-            result_params['plot.title'] = dataset_filename.split('.csv')[0]
-            ts.result_file(dataset_filename, params=result_params)
+
         ts.log_error('Test script exception: %s' % traceback.format_exc())
 
 

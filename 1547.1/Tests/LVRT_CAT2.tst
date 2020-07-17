@@ -1,13 +1,8 @@
-<suite globals="True" name="VRT">
-  <members>
-    <member name="LVRT_CAT2.tst" />
-    <member name="LVRT_CAT3.tst" />
-    <member name="HVRT_CAT2.tst" />
-    <member name="HVRT_CAT3.tst" />
-  </members>
+<scriptConfig name="LVRT_CAT2" script="VRT">
   <params>
+    <param name="vrt.high_pwr_value" type="float">0.91</param>
     <param name="pvsim.terrasas.channel" type="string">1,2</param>
-    <param name="eut.startup_time" type="int">10</param>
+    <param name="eut.startup_time" type="int">5</param>
     <param name="eut.f_nom" type="float">60.0</param>
     <param name="gridsim.opal.f_nom" type="float">60.0</param>
     <param name="eut.v_low" type="float">116.0</param>
@@ -27,10 +22,16 @@
     <param name="gridsim.opal.p_nom" type="float">24000.0</param>
     <param name="hil.opal.workspace_path" type="string">C:\OPAL-RT\WorkspaceFOREVERYONE</param>
     <param name="das.opal.wfm_dir" type="string">C:\OPAL-RT\WorkspaceFOREVERYONE\IEEE_1547_Fast_Functions\models\IEEE_1547_fast_function\ieee_1547_fast_function_sm_source\OpREDHAWKtarget</param>
+    <param name="vrt.cat" type="string">CAT_2</param>
+    <param name="vrt.hv_ena" type="string">Disabled</param>
+    <param name="vrt.low_pwr_ena" type="string">Disabled</param>
     <param name="der.mode" type="string">Disabled</param>
-    <param name="gridsim.auto_config" type="string">Disabled</param>
     <param name="pvsim.terrasas.curve_type" type="string">EN50530</param>
+    <param name="vrt.lv_ena" type="string">Enabled</param>
+    <param name="vrt.high_pwr_ena" type="string">Enabled</param>
+    <param name="gridsim.auto_config" type="string">Enabled</param>
     <param name="hil.opal.hil_config" type="string">False</param>
+    <param name="vrt.range_steps" type="string">Figure</param>
     <param name="hil.opal.project_dir" type="string">IEEE_1547_Fast_Functions</param>
     <param name="hil.opal.project_name" type="string">IEEE_1547_Fast_Functions.llp</param>
     <param name="hil.opal.rt_lab_model" type="string">IEEE_1547_fast_function</param>
@@ -51,4 +52,4 @@
     <param name="gridsim.opal.freq_params" type="string">frequency_ph_a, frequency_ph_b, frequency_ph_c</param>
     <param name="gridsim.opal.volt_params" type="string">voltage_ph_a, voltage_ph_b, voltage_ph_c</param>
   </params>
-</suite>
+</scriptConfig>
