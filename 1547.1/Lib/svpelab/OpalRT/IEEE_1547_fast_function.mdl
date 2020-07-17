@@ -6,7 +6,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.938"
+    ComputedModelVersion    "1.950"
     NumModelReferences	    0
     NumTestPointedSignals   1
     TestPointedSignal {
@@ -24,7 +24,7 @@ Model {
     PreCompExecutionDomainType "Unset"
     IsExportFunctionModel   0
     NumParameterArguments   0
-    NumExternalFileReferences 38
+    NumExternalFileReferences 39
     ExternalFileReference {
       Reference		      "rtlab/OpComm"
       Path		      "IEEE_1547_fast_function/SC_Meter/OpComm"
@@ -231,6 +231,12 @@ Model {
     }
     ExternalFileReference {
       Reference		      "simulink/Logic and Bit\nOperations/Compare\nTo Constant"
+      Path		      "IEEE_1547_fast_function/SM_Source/Waveform_Generator/Compare To Constant1"
+      SID		      "28904"
+      Type		      "LIBRARY_BLOCK"
+    }
+    ExternalFileReference {
+      Reference		      "simulink/Logic and Bit\nOperations/Compare\nTo Constant"
       Path		      "IEEE_1547_fast_function/SM_Source/Waveform_Generator/Compare To Constant6"
       SID		      "28832"
       Type		      "LIBRARY_BLOCK"
@@ -311,7 +317,7 @@ Model {
 	  LoadSaveID		  "28145"
 	  Extents		  [1882.0, 872.0]
 	  ZoomFactor		  [1.0]
-	  Offset		  [-194.95111387853945, -520.021541262136]
+	  Offset		  [-353.7109375, -460.0]
 	}
 	Object {
 	  $ObjectID		  6
@@ -353,10 +359,10 @@ Model {
 	  $ObjectID		  10
 	  IsActive		  [0]
 	  ViewObjType		  "SimulinkSubsys"
-	  LoadSaveID		  "27892"
-	  Extents		  [1366.0, 768.0]
-	  ZoomFactor		  [0.8]
-	  Offset		  [-655.3515625, -126.375]
+	  LoadSaveID		  "27945"
+	  Extents		  [1882.0, 872.0]
+	  ZoomFactor		  [1.25]
+	  Offset		  [-702.36875, -240.3]
 	}
 	Object {
 	  $ObjectID		  11
@@ -405,9 +411,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "eapablaz"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Mon Jul 13 15:28:01 2020"
-  RTWModifiedTimeStamp	  516552452
-  ModelVersionFormat	  "1.%<AutoIncrement:938>"
+  LastModifiedDate	  "Fri Jul 17 15:00:11 2020"
+  RTWModifiedTimeStamp	  516898761
+  ModelVersionFormat	  "1.%<AutoIncrement:950>"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
   LibraryLinkDisplay	  "disabled"
@@ -1679,7 +1685,7 @@ Model {
     ShowPageBoundaries	    off
     ZoomFactor		    "200"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    "28900"
+    SIDHighWatermark	    "28915"
     Block {
       BlockType		      SubSystem
       Name		      "Model Initialization2"
@@ -1782,7 +1788,7 @@ Model {
       RequestExecContextInheritance off
       System {
 	Name			"SC_Meter"
-	Location		[8, 8, 1944, 1064]
+	Location		[-8, -8, 1928, 1048]
 	Open			on
 	PortBlocksUseCompactNotation off
 	SetExecutionDomain	off
@@ -2201,7 +2207,7 @@ Model {
 	  ContentPreviewEnabled	  on
 	  System {
 	    Name		    "FRT"
-	    Location		    [8, 8, 1944, 1064]
+	    Location		    [-8, -8, 1928, 1048]
 	    Open		    on
 	    PortBlocksUseCompactNotation off
 	    SetExecutionDomain	    off
@@ -3421,8 +3427,8 @@ Model {
 	  ContentPreviewEnabled	  on
 	  System {
 	    Name		    "Input_Connection"
-	    Location		    [8, 8, 1944, 1064]
-	    Open		    on
+	    Location		    [-8, -8, 1928, 1048]
+	    Open		    off
 	    PortBlocksUseCompactNotation off
 	    SetExecutionDomain	    off
 	    ExecutionDomainType	    "Deduce"
@@ -3436,7 +3442,7 @@ Model {
 	    TiledPaperMargins	    [0.500000, 0.500000, 0.500000, 0.500000]
 	    TiledPageScale	    1
 	    ShowPageBoundaries	    off
-	    ZoomFactor		    "80"
+	    ZoomFactor		    "100"
 	    Block {
 	      BlockType		      Sum
 	      Name		      "Add2"
@@ -3533,7 +3539,7 @@ Model {
 	      Position		      [220, 100, 270, 130]
 	      ZOrder		      12524
 	      ShowName		      off
-	      Value		      "0.034058"
+	      Value		      "0"
 	    }
 	    Block {
 	      BlockType		      Constant
@@ -3542,7 +3548,7 @@ Model {
 	      Position		      [215, 220, 265, 250]
 	      ZOrder		      12529
 	      ShowName		      off
-	      Value		      "0.067540"
+	      Value		      "0"
 	    }
 	    Block {
 	      BlockType		      Constant
@@ -3551,7 +3557,6 @@ Model {
 	      Position		      [90, 190, 170, 220]
 	      ZOrder		      12527
 	      ShowName		      off
-	      Value		      "499.197080"
 	    }
 	    Block {
 	      BlockType		      Constant
@@ -3560,7 +3565,7 @@ Model {
 	      Position		      [220, 345, 270, 375]
 	      ZOrder		      12534
 	      ShowName		      off
-	      Value		      "0.037741"
+	      Value		      "0"
 	    }
 	    Block {
 	      BlockType		      Constant
@@ -3569,7 +3574,6 @@ Model {
 	      Position		      [95, 315, 175, 345]
 	      ZOrder		      12532
 	      ShowName		      off
-	      Value		      "498.302881"
 	    }
 	    Block {
 	      BlockType		      Constant
@@ -3632,7 +3636,6 @@ Model {
 	      Position		      [95, 70, 175, 100]
 	      ZOrder		      12522
 	      ShowName		      off
-	      Value		      "509.604013"
 	    }
 	    Block {
 	      BlockType		      From
@@ -3833,8 +3836,8 @@ Model {
 	      Position		      [455, 26, 530, 94]
 	      ZOrder		      12525
 	      ShowName		      off
-	      Numerator		      "[2*pi*1000]"
-	      Denominator	      "[1 2*pi*1000]"
+	      Numerator		      "[2*pi*3000]"
+	      Denominator	      "[1 2*pi*3000]"
 	      Port {
 		PortNumber		1
 		Name			"voltage_pha"
@@ -3847,8 +3850,8 @@ Model {
 	      Position		      [450, 146, 525, 214]
 	      ZOrder		      12530
 	      ShowName		      off
-	      Numerator		      "[2*pi*1000]"
-	      Denominator	      "[1 2*pi*1000]"
+	      Numerator		      "[2*pi*3000]"
+	      Denominator	      "[1 2*pi*3000]"
 	      Port {
 		PortNumber		1
 		Name			"voltage_phb"
@@ -4258,8 +4261,8 @@ Model {
 	  ContentPreviewEnabled	  on
 	  System {
 	    Name		    "Output_Connection"
-	    Location		    [-8, -8, 1928, 1058]
-	    Open		    off
+	    Location		    [-8, -8, 1928, 1048]
+	    Open		    on
 	    PortBlocksUseCompactNotation off
 	    SetExecutionDomain	    off
 	    ExecutionDomainType	    "Deduce"
@@ -4493,7 +4496,7 @@ Model {
 	  ContentPreviewEnabled	  on
 	  System {
 	    Name		    "PCRT"
-	    Location		    [8, 8, 1944, 1064]
+	    Location		    [-8, -8, 1928, 1048]
 	    Open		    on
 	    PortBlocksUseCompactNotation off
 	    SetExecutionDomain	    off
@@ -6918,7 +6921,6 @@ Model {
 	      SID		      "28404"
 	      Position		      [-435, -33, -405, -17]
 	      ZOrder		      13035
-	      Value		      "120"
 	      Port {
 		PortNumber		1
 		Name			"voltage_ph_a"
@@ -6930,7 +6932,6 @@ Model {
 	      SID		      "28405"
 	      Position		      [-435, 2, -405, 18]
 	      ZOrder		      13033
-	      Value		      "120"
 	      Port {
 		PortNumber		1
 		Name			"voltage_ph_b"
@@ -6942,7 +6943,6 @@ Model {
 	      SID		      "28406"
 	      Position		      [-435, 37, -405, 53]
 	      ZOrder		      13034
-	      Value		      "120"
 	      Port {
 		PortNumber		1
 		Name			"voltage_ph_c"
@@ -9507,7 +9507,7 @@ Model {
 	      BlockType		      Inport
 	      Name		      "input_meas"
 	      SID		      "28146"
-	      Position		      [410, -137, 440, -123]
+	      Position		      [410, -132, 440, -118]
 	      ZOrder		      12994
 	      IconDisplay	      "Port number"
 	    }
@@ -9694,11 +9694,11 @@ Model {
 	      BlockType		      Mux
 	      Name		      "Mux1"
 	      SID		      "28677"
-	      Ports		      [3, 1]
-	      Position		      [525, -144, 530, -76]
+	      Ports		      [2, 1]
+	      Position		      [525, -142, 530, -73]
 	      ZOrder		      13168
 	      ShowName		      off
-	      Inputs		      "3"
+	      Inputs		      "2"
 	      DisplayOption	      "bar"
 	    }
 	    Block {
@@ -9730,13 +9730,13 @@ Model {
 	      SourceProductName	      "RT-LAB"
 	      MultiThreadCoSim	      "auto"
 	      Static_File	      on
-	      Decimation	      "1"
+	      Decimation	      "5"
 	      varname		      "Data"
 	      Filename		      "VRT_Data.mat"
 	      rtpath		      "'./'"
 	      nrtpath		      "'.\\'"
 	      Acq_Group		      "26"
-	      file_size		      "2.8160e11"
+	      file_size		      "2e+9"
 	      write_offline	      off
 	      Sim_Mode		      off
 	      Nb_Samples	      "1000"
@@ -9981,6 +9981,160 @@ Model {
 		  ZeroCross		  on
 		}
 		Block {
+		  BlockType		  Constant
+		  Name			  "Condition_A_Enable"
+		  SID			  "28881"
+		  Position		  [140, -235, 170, -205]
+		  ZOrder		  13151
+		}
+		Block {
+		  BlockType		  Switch
+		  Name			  "Condition_A_Time"
+		  SID			  "28610"
+		  Position		  [280, -143, 410, -97]
+		  ZOrder		  13116
+		  Threshold		  "0.5"
+		  InputSameDT		  off
+		  SaturateOnIntegerOverflow off
+		}
+		Block {
+		  BlockType		  Constant
+		  Name			  "Condition_A_Voltage"
+		  SID			  "28616"
+		  Position		  [100, -188, 170, -162]
+		  ZOrder		  13110
+		  Value			  "94"
+		  Port {
+		    PortNumber		    1
+		    Name		    "voltage_ph_a"
+		  }
+		}
+		Block {
+		  BlockType		  Constant
+		  Name			  "Condition_B_Enable"
+		  SID			  "28882"
+		  Position		  [310, -60, 340, -30]
+		  ZOrder		  13152
+		}
+		Block {
+		  BlockType		  Switch
+		  Name			  "Condition_B_Time"
+		  SID			  "28611"
+		  Position		  [290, 0, 390, 50]
+		  ZOrder		  13117
+		  Threshold		  "1"
+		  InputSameDT		  off
+		  SaturateOnIntegerOverflow off
+		}
+		Block {
+		  BlockType		  Constant
+		  Name			  "Condition_B_Voltage"
+		  SID			  "28617"
+		  Position		  [100, -16, 170, 6]
+		  ZOrder		  13111
+		  Value			  "3"
+		}
+		Block {
+		  BlockType		  Constant
+		  Name			  "Condition_C_Enable"
+		  SID			  "28883"
+		  Position		  [290, 70, 320, 100]
+		  ZOrder		  13153
+		}
+		Block {
+		  BlockType		  Switch
+		  Name			  "Condition_C_Time"
+		  SID			  "28612"
+		  Position		  [290, 120, 390, 170]
+		  ZOrder		  13118
+		  Threshold		  "1.5"
+		  InputSameDT		  off
+		  SaturateOnIntegerOverflow off
+		}
+		Block {
+		  BlockType		  Constant
+		  Name			  "Condition_C_Voltage"
+		  SID			  "28618"
+		  Position		  [110, 149, 180, 171]
+		  ZOrder		  13112
+		  Value			  "50"
+		}
+		Block {
+		  BlockType		  Constant
+		  Name			  "Condition_D_Enable"
+		  SID			  "28884"
+		  Position		  [310, 195, 340, 225]
+		  ZOrder		  13154
+		}
+		Block {
+		  BlockType		  Switch
+		  Name			  "Condition_D_Time"
+		  SID			  "28613"
+		  Position		  [290, 265, 390, 315]
+		  ZOrder		  13119
+		  Threshold		  "2"
+		  InputSameDT		  off
+		  SaturateOnIntegerOverflow off
+		}
+		Block {
+		  BlockType		  Constant
+		  Name			  "Condition_D_Voltage"
+		  SID			  "28619"
+		  Position		  [120, 239, 185, 261]
+		  ZOrder		  13113
+		  Value			  "70"
+		}
+		Block {
+		  BlockType		  Constant
+		  Name			  "Condition_E_Enable"
+		  SID			  "28885"
+		  Position		  [430, 305, 460, 335]
+		  ZOrder		  13155
+		}
+		Block {
+		  BlockType		  Switch
+		  Name			  "Condition_E_Time"
+		  SID			  "28614"
+		  Position		  [290, 370, 390, 420]
+		  ZOrder		  13120
+		  Threshold		  "2.5"
+		  InputSameDT		  off
+		  SaturateOnIntegerOverflow off
+		}
+		Block {
+		  BlockType		  Constant
+		  Name			  "Condition_E_Voltage"
+		  SID			  "28620"
+		  Position		  [105, 347, 175, 363]
+		  ZOrder		  13114
+		  Value			  "88"
+		}
+		Block {
+		  BlockType		  Constant
+		  Name			  "Condition_F_Enable"
+		  SID			  "28886"
+		  Position		  [430, 440, 460, 470]
+		  ZOrder		  13156
+		}
+		Block {
+		  BlockType		  Switch
+		  Name			  "Condition_F_Time"
+		  SID			  "28615"
+		  Position		  [290, 470, 390, 520]
+		  ZOrder		  13121
+		  Threshold		  "3"
+		  InputSameDT		  off
+		  SaturateOnIntegerOverflow off
+		}
+		Block {
+		  BlockType		  Constant
+		  Name			  "Condition_F_Voltage"
+		  SID			  "28621"
+		  Position		  [115, 451, 190, 469]
+		  ZOrder		  13115
+		  Value			  "94"
+		}
+		Block {
 		  BlockType		  From
 		  Name			  "From"
 		  SID			  "28604"
@@ -10121,63 +10275,12 @@ Model {
 		  Value			  "3"
 		}
 		Block {
-		  BlockType		  Constant
-		  Name			  "cond_a_ena"
-		  SID			  "28881"
-		  Position		  [140, -235, 170, -205]
-		  ZOrder		  13151
-		}
-		Block {
-		  BlockType		  Constant
-		  Name			  "cond_b_ena"
-		  SID			  "28882"
-		  Position		  [330, -50, 360, -20]
-		  ZOrder		  13152
-		}
-		Block {
-		  BlockType		  Constant
-		  Name			  "cond_c_ena"
-		  SID			  "28883"
-		  Position		  [290, 70, 320, 100]
-		  ZOrder		  13153
-		}
-		Block {
-		  BlockType		  Constant
-		  Name			  "cond_d_ena"
-		  SID			  "28884"
-		  Position		  [300, 195, 330, 225]
-		  ZOrder		  13154
-		}
-		Block {
-		  BlockType		  Constant
-		  Name			  "cond_e_ena"
-		  SID			  "28885"
-		  Position		  [430, 305, 460, 335]
-		  ZOrder		  13155
-		}
-		Block {
-		  BlockType		  Constant
-		  Name			  "cond_f_ena"
-		  SID			  "28886"
-		  Position		  [430, 440, 460, 470]
-		  ZOrder		  13156
-		}
-		Block {
 		  BlockType		  Switch
-		  Name			  "condition A"
-		  SID			  "28610"
-		  Position		  [280, -143, 410, -97]
-		  ZOrder		  13116
-		  Threshold		  "0.5"
-		  InputSameDT		  off
-		  SaturateOnIntegerOverflow off
-		}
-		Block {
-		  BlockType		  Switch
-		  Name			  "condition A Enable"
+		  Name			  "Threhold_A"
 		  SID			  "28623"
 		  Position		  [610, -200, 710, -150]
 		  ZOrder		  13129
+		  HideAutomaticName	  off
 		  Criteria		  "u2 ~= 0"
 		  Threshold		  "0.6"
 		  InputSameDT		  off
@@ -10185,28 +10288,7 @@ Model {
 		}
 		Block {
 		  BlockType		  Switch
-		  Name			  "condition A Enable1"
-		  SID			  "28628"
-		  Position		  [630, 430, 730, 480]
-		  ZOrder		  13134
-		  Criteria		  "u2 ~= 0"
-		  Threshold		  "0.6"
-		  InputSameDT		  off
-		  SaturateOnIntegerOverflow off
-		}
-		Block {
-		  BlockType		  Switch
-		  Name			  "condition B"
-		  SID			  "28611"
-		  Position		  [290, 0, 390, 50]
-		  ZOrder		  13117
-		  Threshold		  "1"
-		  InputSameDT		  off
-		  SaturateOnIntegerOverflow off
-		}
-		Block {
-		  BlockType		  Switch
-		  Name			  "condition B Enable"
+		  Name			  "Threhold_B"
 		  SID			  "28626"
 		  Position		  [610, -70, 710, -20]
 		  ZOrder		  13132
@@ -10217,17 +10299,7 @@ Model {
 		}
 		Block {
 		  BlockType		  Switch
-		  Name			  "condition C"
-		  SID			  "28612"
-		  Position		  [290, 120, 390, 170]
-		  ZOrder		  13118
-		  Threshold		  "1.5"
-		  InputSameDT		  off
-		  SaturateOnIntegerOverflow off
-		}
-		Block {
-		  BlockType		  Switch
-		  Name			  "condition C Enable"
+		  Name			  "Threhold_C"
 		  SID			  "28634"
 		  Position		  [610, 60, 710, 110]
 		  ZOrder		  13140
@@ -10238,17 +10310,7 @@ Model {
 		}
 		Block {
 		  BlockType		  Switch
-		  Name			  "condition D"
-		  SID			  "28613"
-		  Position		  [290, 265, 390, 315]
-		  ZOrder		  13119
-		  Threshold		  "2"
-		  InputSameDT		  off
-		  SaturateOnIntegerOverflow off
-		}
-		Block {
-		  BlockType		  Switch
-		  Name			  "condition D Enable"
+		  Name			  "Threhold_D"
 		  SID			  "28633"
 		  Position		  [610, 185, 710, 235]
 		  ZOrder		  13139
@@ -10259,17 +10321,7 @@ Model {
 		}
 		Block {
 		  BlockType		  Switch
-		  Name			  "condition E"
-		  SID			  "28614"
-		  Position		  [290, 370, 390, 420]
-		  ZOrder		  13120
-		  Threshold		  "2.5"
-		  InputSameDT		  off
-		  SaturateOnIntegerOverflow off
-		}
-		Block {
-		  BlockType		  Switch
-		  Name			  "condition E Enable"
+		  Name			  "Threhold_E"
 		  SID			  "28631"
 		  Position		  [610, 295, 710, 345]
 		  ZOrder		  13137
@@ -10280,65 +10332,14 @@ Model {
 		}
 		Block {
 		  BlockType		  Switch
-		  Name			  "condition F"
-		  SID			  "28615"
-		  Position		  [290, 470, 390, 520]
-		  ZOrder		  13121
-		  Threshold		  "3"
+		  Name			  "Threhold_F"
+		  SID			  "28628"
+		  Position		  [630, 430, 730, 480]
+		  ZOrder		  13134
+		  Criteria		  "u2 ~= 0"
+		  Threshold		  "0.6"
 		  InputSameDT		  off
 		  SaturateOnIntegerOverflow off
-		}
-		Block {
-		  BlockType		  Constant
-		  Name			  "voltage_ph_seqA"
-		  SID			  "28616"
-		  Position		  [100, -188, 170, -162]
-		  ZOrder		  13110
-		  Value			  "94"
-		  Port {
-		    PortNumber		    1
-		    Name		    "voltage_ph_a"
-		  }
-		}
-		Block {
-		  BlockType		  Constant
-		  Name			  "voltage_ph_seqB"
-		  SID			  "28617"
-		  Position		  [100, -16, 170, 6]
-		  ZOrder		  13111
-		  Value			  "3"
-		}
-		Block {
-		  BlockType		  Constant
-		  Name			  "voltage_ph_seqC"
-		  SID			  "28618"
-		  Position		  [110, 149, 180, 171]
-		  ZOrder		  13112
-		  Value			  "50"
-		}
-		Block {
-		  BlockType		  Constant
-		  Name			  "voltage_ph_seqD"
-		  SID			  "28619"
-		  Position		  [120, 239, 185, 261]
-		  ZOrder		  13113
-		  Value			  "70"
-		}
-		Block {
-		  BlockType		  Constant
-		  Name			  "voltage_ph_seqE"
-		  SID			  "28620"
-		  Position		  [105, 347, 175, 363]
-		  ZOrder		  13114
-		  Value			  "88"
-		}
-		Block {
-		  BlockType		  Constant
-		  Name			  "voltage_ph_seqF"
-		  SID			  "28621"
-		  Position		  [115, 451, 190, 469]
-		  ZOrder		  13115
-		  Value			  "94"
 		}
 		Block {
 		  BlockType		  Outport
@@ -10453,14 +10454,14 @@ Model {
 		  ZOrder		  203
 		  SrcBlock		  "From4"
 		  SrcPort		  1
-		  DstBlock		  "condition E"
+		  DstBlock		  "Condition_E_Time"
 		  DstPort		  2
 		}
 		Line {
 		  ZOrder		  204
 		  SrcBlock		  "From3"
 		  SrcPort		  1
-		  DstBlock		  "condition D"
+		  DstBlock		  "Condition_D_Time"
 		  DstPort		  2
 		}
 		Line {
@@ -10468,7 +10469,7 @@ Model {
 		  SrcBlock		  "From5"
 		  SrcPort		  1
 		  Points		  [33, 0; 0, -15]
-		  DstBlock		  "condition F"
+		  DstBlock		  "Condition_F_Time"
 		  DstPort		  2
 		}
 		Line {
@@ -10476,7 +10477,7 @@ Model {
 		  SrcBlock		  "From2"
 		  SrcPort		  1
 		  Points		  [53, 0; 0, -50]
-		  DstBlock		  "condition C"
+		  DstBlock		  "Condition_C_Time"
 		  DstPort		  2
 		}
 		Line {
@@ -10484,7 +10485,7 @@ Model {
 		  SrcBlock		  "From1"
 		  SrcPort		  1
 		  Points		  [70, 0; 0, -65]
-		  DstBlock		  "condition B"
+		  DstBlock		  "Condition_B_Time"
 		  DstPort		  2
 		}
 		Line {
@@ -10495,7 +10496,7 @@ Model {
 		  Branch {
 		    ZOrder		    225
 		    Points		    [0, -30]
-		    DstBlock		    "condition A"
+		    DstBlock		    "Condition_A_Time"
 		    DstPort		    3
 		  }
 		  Branch {
@@ -10506,58 +10507,58 @@ Model {
 		}
 		Line {
 		  ZOrder		  210
-		  SrcBlock		  "voltage_ph_seqB"
+		  SrcBlock		  "Condition_B_Voltage"
 		  SrcPort		  1
 		  Points		  [100, 0]
-		  DstBlock		  "condition B"
+		  DstBlock		  "Condition_B_Time"
 		  DstPort		  1
 		}
 		Line {
 		  ZOrder		  213
-		  SrcBlock		  "voltage_ph_seqC"
+		  SrcBlock		  "Condition_C_Voltage"
 		  SrcPort		  1
 		  Points		  [50, 0; 0, -30]
-		  DstBlock		  "condition C"
+		  DstBlock		  "Condition_C_Time"
 		  DstPort		  1
 		}
 		Line {
 		  ZOrder		  215
-		  SrcBlock		  "voltage_ph_seqD"
+		  SrcBlock		  "Condition_D_Voltage"
 		  SrcPort		  1
 		  Points		  [9, 0; 0, 25]
-		  DstBlock		  "condition D"
+		  DstBlock		  "Condition_D_Time"
 		  DstPort		  1
 		}
 		Line {
 		  ZOrder		  216
 		  SrcBlock		  "From"
 		  SrcPort		  1
-		  DstBlock		  "condition A"
+		  DstBlock		  "Condition_A_Time"
 		  DstPort		  2
 		}
 		Line {
 		  ZOrder		  217
-		  SrcBlock		  "voltage_ph_seqE"
+		  SrcBlock		  "Condition_E_Voltage"
 		  SrcPort		  1
 		  Points		  [26, 0; 0, 25]
-		  DstBlock		  "condition E"
+		  DstBlock		  "Condition_E_Time"
 		  DstPort		  1
 		}
 		Line {
 		  ZOrder		  218
-		  SrcBlock		  "condition E"
+		  SrcBlock		  "Condition_E_Time"
 		  SrcPort		  1
 		  Points		  [23, 0; 0, 1; 4, 0]
 		  Branch {
 		    ZOrder		    294
 		    Points		    [0, -40; -183, 0; 0, 154]
-		    DstBlock		    "condition F"
+		    DstBlock		    "Condition_F_Time"
 		    DstPort		    3
 		  }
 		  Branch {
 		    ZOrder		    293
 		    Points		    [128, 0; 0, -64; 39, 0; 0, -27]
-		    DstBlock		    "condition E Enable"
+		    DstBlock		    "Threhold_E"
 		    DstPort		    1
 		  }
 		}
@@ -10565,39 +10566,39 @@ Model {
 		  Name			  "voltage_ph_a"
 		  ZOrder		  220
 		  Labels		  [0, 0]
-		  SrcBlock		  "voltage_ph_seqA"
+		  SrcBlock		  "Condition_A_Voltage"
 		  SrcPort		  1
 		  Points		  [61, 0; 0, 15]
 		  Branch {
 		    ZOrder		    269
 		    Points		    [0, 8; -28, 0; 0, 17]
-		    DstBlock		    "condition A"
+		    DstBlock		    "Condition_A_Time"
 		    DstPort		    1
 		  }
 		  Branch {
 		    ZOrder		    268
-		    DstBlock		    "condition A Enable"
+		    DstBlock		    "Threhold_A"
 		    DstPort		    3
 		  }
 		}
 		Line {
 		  ZOrder		  221
-		  SrcBlock		  "voltage_ph_seqF"
+		  SrcBlock		  "Condition_F_Voltage"
 		  SrcPort		  1
 		  Points		  [16, 0; 0, 20]
-		  DstBlock		  "condition F"
+		  DstBlock		  "Condition_F_Time"
 		  DstPort		  1
 		}
 		Line {
 		  ZOrder		  376
-		  SrcBlock		  "cond_f_ena"
+		  SrcBlock		  "Condition_F_Enable"
 		  SrcPort		  1
 		  DstBlock		  "Compare\nTo Constant5"
 		  DstPort		  1
 		}
 		Line {
 		  ZOrder		  245
-		  SrcBlock		  "condition A Enable1"
+		  SrcBlock		  "Threhold_F"
 		  SrcPort		  1
 		  Points		  [236, 0; 0, -90]
 		  Branch {
@@ -10632,121 +10633,121 @@ Model {
 		}
 		Line {
 		  ZOrder		  254
-		  SrcBlock		  "condition F"
+		  SrcBlock		  "Condition_F_Time"
 		  SrcPort		  1
 		  Points		  [188, 0; 0, -55]
-		  DstBlock		  "condition A Enable1"
+		  DstBlock		  "Threhold_F"
 		  DstPort		  1
 		}
 		Line {
 		  ZOrder		  256
-		  SrcBlock		  "condition E Enable"
+		  SrcBlock		  "Threhold_E"
 		  SrcPort		  1
 		  Points		  [19, 0; 0, 66; -164, 0; 0, 84]
-		  DstBlock		  "condition A Enable1"
+		  DstBlock		  "Threhold_F"
 		  DstPort		  3
 		}
 		Line {
 		  ZOrder		  262
-		  SrcBlock		  "condition D Enable"
+		  SrcBlock		  "Threhold_D"
 		  SrcPort		  1
 		  Points		  [9, 0; 0, 48; -129, 0]
-		  DstBlock		  "condition E Enable"
+		  DstBlock		  "Threhold_E"
 		  DstPort		  3
 		}
 		Line {
 		  ZOrder		  264
-		  SrcBlock		  "condition C Enable"
+		  SrcBlock		  "Threhold_C"
 		  SrcPort		  1
 		  Points		  [9, 0; 0, 86; -158, 0; 0, 54]
-		  DstBlock		  "condition D Enable"
+		  DstBlock		  "Threhold_D"
 		  DstPort		  3
 		}
 		Line {
 		  ZOrder		  265
-		  SrcBlock		  "condition B Enable"
+		  SrcBlock		  "Threhold_B"
 		  SrcPort		  1
 		  Points		  [9, 0; 0, 89; -191, 0; 0, 56]
-		  DstBlock		  "condition C Enable"
+		  DstBlock		  "Threhold_C"
 		  DstPort		  3
 		}
 		Line {
 		  ZOrder		  266
-		  SrcBlock		  "condition A Enable"
+		  SrcBlock		  "Threhold_A"
 		  SrcPort		  1
 		  Points		  [9, 0; 0, 71; -205, 0; 0, 74]
-		  DstBlock		  "condition B Enable"
+		  DstBlock		  "Threhold_B"
 		  DstPort		  3
 		}
 		Line {
 		  ZOrder		  270
-		  SrcBlock		  "condition A"
+		  SrcBlock		  "Condition_A_Time"
 		  SrcPort		  1
 		  Points		  [18, 0]
 		  Branch {
 		    ZOrder		    343
 		    Points		    [0, 63; -172, 0; 0, 97]
-		    DstBlock		    "condition B"
+		    DstBlock		    "Condition_B_Time"
 		    DstPort		    3
 		  }
 		  Branch {
 		    ZOrder		    342
 		    Points		    [110, 0; 0, -70]
-		    DstBlock		    "condition A Enable"
+		    DstBlock		    "Threhold_A"
 		    DstPort		    1
 		  }
 		}
 		Line {
 		  ZOrder		  271
-		  SrcBlock		  "condition B"
+		  SrcBlock		  "Condition_B_Time"
 		  SrcPort		  1
 		  Points		  [13, 0]
 		  Branch {
 		    ZOrder		    288
 		    Points		    [0, 171; -140, 0; 0, -36]
-		    DstBlock		    "condition C"
+		    DstBlock		    "Condition_C_Time"
 		    DstPort		    3
 		  }
 		  Branch {
 		    ZOrder		    287
 		    Points		    [0, -37; 99, 0; 0, -48]
-		    DstBlock		    "condition B Enable"
+		    DstBlock		    "Threhold_B"
 		    DstPort		    1
 		  }
 		}
 		Line {
 		  ZOrder		  272
-		  SrcBlock		  "condition C"
+		  SrcBlock		  "Condition_C_Time"
 		  SrcPort		  1
 		  Points		  [22, 0]
 		  Branch {
 		    ZOrder		    290
 		    Points		    [0, 196; -149, 0; 0, -36]
-		    DstBlock		    "condition D"
+		    DstBlock		    "Condition_D_Time"
 		    DstPort		    3
 		  }
 		  Branch {
 		    ZOrder		    289
 		    Points		    [97, 0; 0, -75]
-		    DstBlock		    "condition C Enable"
+		    DstBlock		    "Threhold_C"
 		    DstPort		    1
 		  }
 		}
 		Line {
 		  ZOrder		  273
-		  SrcBlock		  "condition D"
+		  SrcBlock		  "Condition_D_Time"
 		  SrcPort		  1
 		  Points		  [12, 0]
 		  Branch {
 		    ZOrder		    292
 		    Points		    [0, 156; -139, 0; 0, -36]
-		    DstBlock		    "condition E"
+		    DstBlock		    "Condition_E_Time"
 		    DstPort		    3
 		  }
 		  Branch {
 		    ZOrder		    291
 		    Points		    [142, 0; 0, -95]
-		    DstBlock		    "condition D Enable"
+		    DstBlock		    "Threhold_D"
 		    DstPort		    1
 		  }
 		}
@@ -10754,14 +10755,13 @@ Model {
 		  ZOrder		  332
 		  SrcBlock		  "Compare\nTo Constant6"
 		  SrcPort		  1
-		  DstBlock		  "condition A Enable"
+		  DstBlock		  "Threhold_A"
 		  DstPort		  2
 		}
 		Line {
 		  ZOrder		  370
-		  SrcBlock		  "cond_b_ena"
+		  SrcBlock		  "Condition_B_Enable"
 		  SrcPort		  1
-		  Points		  [43, 0; 0, -10]
 		  DstBlock		  "Compare\nTo Constant1"
 		  DstPort		  1
 		}
@@ -10769,12 +10769,12 @@ Model {
 		  ZOrder		  334
 		  SrcBlock		  "Compare\nTo Constant1"
 		  SrcPort		  1
-		  DstBlock		  "condition B Enable"
+		  DstBlock		  "Threhold_B"
 		  DstPort		  2
 		}
 		Line {
 		  ZOrder		  371
-		  SrcBlock		  "cond_c_ena"
+		  SrcBlock		  "Condition_C_Enable"
 		  SrcPort		  1
 		  DstBlock		  "Compare\nTo Constant2"
 		  DstPort		  1
@@ -10783,14 +10783,13 @@ Model {
 		  ZOrder		  336
 		  SrcBlock		  "Compare\nTo Constant2"
 		  SrcPort		  1
-		  DstBlock		  "condition C Enable"
+		  DstBlock		  "Threhold_C"
 		  DstPort		  2
 		}
 		Line {
 		  ZOrder		  373
-		  SrcBlock		  "cond_d_ena"
+		  SrcBlock		  "Condition_D_Enable"
 		  SrcPort		  1
-		  Points		  [39, 0; 0, 15; 22, 0; 0, -15]
 		  DstBlock		  "Compare\nTo Constant3"
 		  DstPort		  1
 		}
@@ -10798,12 +10797,12 @@ Model {
 		  ZOrder		  338
 		  SrcBlock		  "Compare\nTo Constant3"
 		  SrcPort		  1
-		  DstBlock		  "condition D Enable"
+		  DstBlock		  "Threhold_D"
 		  DstPort		  2
 		}
 		Line {
 		  ZOrder		  374
-		  SrcBlock		  "cond_e_ena"
+		  SrcBlock		  "Condition_E_Enable"
 		  SrcPort		  1
 		  DstBlock		  "Compare\nTo Constant4"
 		  DstPort		  1
@@ -10812,19 +10811,19 @@ Model {
 		  ZOrder		  340
 		  SrcBlock		  "Compare\nTo Constant4"
 		  SrcPort		  1
-		  DstBlock		  "condition E Enable"
+		  DstBlock		  "Threhold_E"
 		  DstPort		  2
 		}
 		Line {
 		  ZOrder		  341
 		  SrcBlock		  "Compare\nTo Constant5"
 		  SrcPort		  1
-		  DstBlock		  "condition A Enable1"
+		  DstBlock		  "Threhold_F"
 		  DstPort		  2
 		}
 		Line {
 		  ZOrder		  367
-		  SrcBlock		  "cond_a_ena"
+		  SrcBlock		  "Condition_A_Enable"
 		  SrcPort		  1
 		  Points		  [171, 0; 0, 45]
 		  DstBlock		  "Compare\nTo Constant6"
@@ -11130,6 +11129,7 @@ Model {
 	      ZOrder		      217
 	      SrcBlock		      "Mux1"
 	      SrcPort		      1
+	      Points		      [0, -5]
 	      DstBlock		      "OpWriteFile"
 	      DstPort		      1
 	    }
@@ -11160,19 +11160,9 @@ Model {
 	      ZOrder		      319
 	      SrcBlock		      "VRT_Trigger"
 	      SrcPort		      1
-	      Points		      [62, 0]
-	      Branch {
-		ZOrder			336
-		Points			[0, 220]
-		DstBlock		"Mux1"
-		DstPort			3
-	      }
-	      Branch {
-		ZOrder			335
-		Points			[78, 0; 0, 45]
-		DstBlock		"OpTrigger"
-		DstPort			1
-	      }
+	      Points		      [140, 0; 0, 45]
+	      DstBlock		      "OpTrigger"
+	      DstPort		      1
 	    }
 	    Line {
 	      ZOrder		      311
@@ -11217,7 +11207,7 @@ Model {
 	      ZOrder		      356
 	      SrcBlock		      "wavegen_mag_command"
 	      SrcPort		      1
-	      Points		      [451, 0; 0, -85]
+	      Points		      [451, 0; 0, -65]
 	      DstBlock		      "Mux1"
 	      DstPort		      2
 	    }
@@ -11295,6 +11285,36 @@ Model {
 	      ZOrder		      11971
 	      Port		      "4"
 	      IconDisplay	      "Port number"
+	    }
+	    Block {
+	      BlockType		      Logic
+	      Name		      "AND"
+	      SID		      "28903"
+	      Ports		      [2, 1]
+	      Position		      [133, 219, 168, 251]
+	      ZOrder		      13080
+	      IconShape		      "distinctive"
+	      AllPortsSameDT	      off
+	      OutDataTypeStr	      "boolean"
+	    }
+	    Block {
+	      BlockType		      Reference
+	      Name		      "Compare\nTo Constant1"
+	      SID		      "28904"
+	      Ports		      [1, 1]
+	      Position		      [-15, 180, 15, 210]
+	      ZOrder		      13081
+	      ShowName		      off
+	      LibraryVersion	      "1.444"
+	      SourceBlock	      "simulink/Logic and Bit\nOperations/Compare\nTo Constant"
+	      SourceType	      "Compare To Constant"
+	      SourceProductName	      "Simulink"
+	      SourceProductBaseCode   "SL"
+	      ContentPreviewEnabled   off
+	      relop		      "=="
+	      const		      "1"
+	      OutDataTypeStr	      "boolean"
+	      ZeroCross		      on
 	    }
 	    Block {
 	      BlockType		      Reference
@@ -12668,11 +12688,19 @@ Model {
 	    }
 	    Block {
 	      BlockType		      Constant
+	      Name		      "ROCOM_ENABLE"
+	      SID		      "28902"
+	      Position		      [-95, 187, -60, 203]
+	      ZOrder		      13079
+	      Value		      "0"
+	    }
+	    Block {
+	      BlockType		      Constant
 	      Name		      "ROCOM_END_TIME"
 	      SID		      "28873"
 	      Position		      [-210, 307, -175, 323]
 	      ZOrder		      13072
-	      Value		      "3"
+	      Value		      "100"
 	    }
 	    Block {
 	      BlockType		      Constant
@@ -12688,7 +12716,7 @@ Model {
 	      SID		      "28872"
 	      Position		      [-210, 262, -175, 278]
 	      ZOrder		      13071
-	      Value		      "2.5"
+	      Value		      "0"
 	    }
 	    Block {
 	      BlockType		      Constant
@@ -13086,22 +13114,6 @@ Model {
 	      DstPort		      2
 	    }
 	    Line {
-	      ZOrder		      130
-	      SrcBlock		      "XOR"
-	      SrcPort		      1
-	      Points		      [60, 0; 0, 40; 5, 0]
-	      Branch {
-		ZOrder			192
-		DstBlock		"Switch1"
-		DstPort			2
-	      }
-	      Branch {
-		ZOrder			132
-		DstBlock		"Generic rate limiter\n3"
-		DstPort			enable
-	      }
-	    }
-	    Line {
 	      ZOrder		      131
 	      SrcBlock		      "Switch1"
 	      SrcPort		      1
@@ -13124,6 +13136,47 @@ Model {
 	      SrcPort		      1
 	      Points		      [14, 0; 0, -125]
 	      DstBlock		      "Switch1"
+	      DstPort		      1
+	    }
+	    Line {
+	      ZOrder		      198
+	      SrcBlock		      "AND"
+	      SrcPort		      1
+	      Points		      [9, 0; 0, 29]
+	      Branch {
+		ZOrder			200
+		Points			[0, 51]
+		DstBlock		"Switch1"
+		DstPort			2
+	      }
+	      Branch {
+		ZOrder			199
+		Points			[-32, 0]
+		DstBlock		"Generic rate limiter\n3"
+		DstPort			enable
+	      }
+	    }
+	    Line {
+	      ZOrder		      202
+	      SrcBlock		      "XOR"
+	      SrcPort		      1
+	      Points		      [22, 0; 0, -35]
+	      DstBlock		      "AND"
+	      DstPort		      2
+	    }
+	    Line {
+	      ZOrder		      204
+	      SrcBlock		      "Compare\nTo Constant1"
+	      SrcPort		      1
+	      Points		      [54, 0; 0, 35]
+	      DstBlock		      "AND"
+	      DstPort		      1
+	    }
+	    Line {
+	      ZOrder		      205
+	      SrcBlock		      "ROCOM_ENABLE"
+	      SrcPort		      1
+	      DstBlock		      "Compare\nTo Constant1"
 	      DstPort		      1
 	    }
 	  }
@@ -13458,7 +13511,6 @@ Model {
 	  ZOrder		  3621
 	  SrcBlock		  "From12"
 	  SrcPort		  1
-	  Points		  [25, 0]
 	  DstBlock		  "VRT"
 	  DstPort		  2
 	}
@@ -13466,7 +13518,6 @@ Model {
 	  ZOrder		  3758
 	  SrcBlock		  "From10"
 	  SrcPort		  1
-	  Points		  [25, 0]
 	  DstBlock		  "VRT"
 	  DstPort		  1
 	}
@@ -13495,7 +13546,6 @@ Model {
 	  ZOrder		  3634
 	  SrcBlock		  "From18"
 	  SrcPort		  1
-	  Points		  [25, 0]
 	  DstBlock		  "VRT"
 	  DstPort		  3
 	}
