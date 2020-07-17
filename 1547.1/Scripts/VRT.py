@@ -296,7 +296,8 @@ def test_run():
                 ts.log(f"The start time will be at {vrt_start_time}")
                 ts.log(f"The stop time will be at {vrt_stop_time}")
                 ts.log(f"Total VRT time is {vrt_stop_time-vrt_start_time}")
-
+                VoltRideTrough.waveform_config(
+                    param = {"pre_trigger":vrt_start_time-5,"post_trigger":vrt_stop_time+5})
                 if phil is not None:
                     #Set model parameters
                     phil.set_parameters(vrt_parameters)
