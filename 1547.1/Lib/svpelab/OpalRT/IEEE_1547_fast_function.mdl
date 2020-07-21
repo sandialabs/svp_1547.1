@@ -6,7 +6,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.950"
+    ComputedModelVersion    "1.951"
     NumModelReferences	    0
     NumTestPointedSignals   1
     TestPointedSignal {
@@ -314,10 +314,10 @@ Model {
 	  $ObjectID		  5
 	  IsActive		  [1]
 	  ViewObjType		  "SimulinkSubsys"
-	  LoadSaveID		  "28145"
+	  LoadSaveID		  "28216"
 	  Extents		  [1882.0, 872.0]
-	  ZoomFactor		  [1.0]
-	  Offset		  [-353.7109375, -460.0]
+	  ZoomFactor		  [1.0876288659793814]
+	  Offset		  [-407.5988966232228, -252.872037914692]
 	}
 	Object {
 	  $ObjectID		  6
@@ -409,11 +409,11 @@ Model {
   Creator		  "DETLDAQ"
   UpdateHistory		  "UpdateHistoryNever"
   ModifiedByFormat	  "%<Auto>"
-  LastModifiedBy	  "eapablaz"
+  LastModifiedBy	  "apabl"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Fri Jul 17 15:00:11 2020"
-  RTWModifiedTimeStamp	  516898761
-  ModelVersionFormat	  "1.%<AutoIncrement:950>"
+  LastModifiedDate	  "Tue Jul 21 09:36:55 2020"
+  RTWModifiedTimeStamp	  517224778
+  ModelVersionFormat	  "1.%<AutoIncrement:951>"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
   LibraryLinkDisplay	  "disabled"
@@ -4301,7 +4301,7 @@ Model {
 	      portNb		      "19"
 	      FcnNos		      "Slot 1 Module A Subsection 1"
 	      size		      "32"
-	      maxcount		      "8"
+	      maxcount		      "-2"
 	      count		      "8"
 	      numchan		      "8"
 	      israngeinput	      off
@@ -9488,7 +9488,7 @@ Model {
 	  System {
 	    Name		    "VRT"
 	    Location		    [-8, -8, 1928, 1048]
-	    Open		    on
+	    Open		    off
 	    PortBlocksUseCompactNotation off
 	    SetExecutionDomain	    off
 	    ExecutionDomainType	    "Deduce"
@@ -9807,7 +9807,7 @@ Model {
 	      System {
 		Name			"VRT_State_Machine"
 		Location		[-8, -8, 1928, 1048]
-		Open			off
+		Open			on
 		PortBlocksUseCompactNotation off
 		SetExecutionDomain	off
 		ExecutionDomainType	"Deduce"
@@ -9821,7 +9821,7 @@ Model {
 		TiledPaperMargins	[0.500000, 0.500000, 0.500000, 0.500000]
 		TiledPageScale		1
 		ShowPageBoundaries	off
-		ZoomFactor		"100"
+		ZoomFactor		"109"
 		Block {
 		  BlockType		  Inport
 		  Name			  "voltage_pha"
@@ -9986,6 +9986,7 @@ Model {
 		  SID			  "28881"
 		  Position		  [140, -235, 170, -205]
 		  ZOrder		  13151
+		  Value			  "0"
 		}
 		Block {
 		  BlockType		  Switch
@@ -10015,6 +10016,7 @@ Model {
 		  SID			  "28882"
 		  Position		  [310, -60, 340, -30]
 		  ZOrder		  13152
+		  Value			  "0"
 		}
 		Block {
 		  BlockType		  Switch
@@ -10040,6 +10042,7 @@ Model {
 		  SID			  "28883"
 		  Position		  [290, 70, 320, 100]
 		  ZOrder		  13153
+		  Value			  "0"
 		}
 		Block {
 		  BlockType		  Switch
@@ -10065,6 +10068,7 @@ Model {
 		  SID			  "28884"
 		  Position		  [310, 195, 340, 225]
 		  ZOrder		  13154
+		  Value			  "0"
 		}
 		Block {
 		  BlockType		  Switch
@@ -10090,6 +10094,7 @@ Model {
 		  SID			  "28885"
 		  Position		  [430, 305, 460, 335]
 		  ZOrder		  13155
+		  Value			  "0"
 		}
 		Block {
 		  BlockType		  Switch
@@ -10115,6 +10120,7 @@ Model {
 		  SID			  "28886"
 		  Position		  [430, 440, 460, 470]
 		  ZOrder		  13156
+		  Value			  "0"
 		}
 		Block {
 		  BlockType		  Switch
