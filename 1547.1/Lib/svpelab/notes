@@ -1,0 +1,26 @@
+
+Data AC/DC channel names have three parts:
+
+- category (AC/DC)
+- type (V, I, VRMS, IRMS, P, Q, S, PF, FREQ)
+- id (optional)
+
+Example names:
+AC_V
+AC_I
+
+AC_V_1
+AC_I_1
+AC_VRMS_1
+
+DC_V
+DC_I
+
+A dataset consists of a set of time series data channels organized as parallel arrays and some
+additional optional properties.
+
+Optional roperties:
+Start time of dataset
+Sample rate of dataset (samples/sec)
+Trigger sample (record index into dataset)
+

@@ -1,0 +1,112 @@
+<result name="2020-07-02_17-22-45-275__1547.1 Testing - manual__FRT__FRT_MANUAL" type="result">
+  <params />
+  <results>
+    <result name="1547.1 Testing - manual" type="suite">
+      <params />
+      <results>
+        <result name="FRT" type="suite">
+          <params />
+          <results>
+            <result filename="1547.1 Testing - manual\FRT\FRT_MANUAL\FRT_MANUAL.log" name="FRT_MANUAL" status="Complete" type="test">
+              <params />
+              <results>
+                <result filename="1547.1 Testing - manual\FRT\FRT_MANUAL\result_summary.csv" name="result_summary.csv" type="file">
+                  <params />
+                  <results />
+                </result>
+                <result filename="1547.1 Testing - manual\FRT\FRT_MANUAL\FRT_Low-Frequency_1.csv" name="FRT_Low-Frequency_1.csv" type="file">
+                  <params>
+                    <param name="plot.y2.points" type="string">AC_FREQ_1,AC_FREQ_2,AC_FREQ_3</param>
+                    <param name="plot.y.points" type="string">AC_P_1,AC_P_2,AC_P_3</param>
+                    <param name="plot.y.title" type="string">Active Power</param>
+                    <param name="plot.title" type="string">FRT_Low-Frequency_1</param>
+                    <param name="plot.F_TARGET.max_error" type="string">F_TARGET_MAX</param>
+                    <param name="plot.F_TARGET.min_error" type="string">F_TARGET_MIN</param>
+                    <param name="plot.y2.title" type="string">Frequency</param>
+                    <param name="plot.x.points" type="string">TIME</param>
+                    <param name="plot.x.title" type="string">Time (sec)</param>
+                  </params>
+                  <results />
+                </result>
+                <result filename="1547.1 Testing - manual\FRT\FRT_MANUAL\FRT_Low-Frequency_2.csv" name="FRT_Low-Frequency_2.csv" type="file">
+                  <params>
+                    <param name="plot.y2.points" type="string">AC_FREQ_1,AC_FREQ_2,AC_FREQ_3</param>
+                    <param name="plot.y.points" type="string">AC_P_1,AC_P_2,AC_P_3</param>
+                    <param name="plot.y.title" type="string">Active Power</param>
+                    <param name="plot.title" type="string">FRT_Low-Frequency_2</param>
+                    <param name="plot.F_TARGET.max_error" type="string">F_TARGET_MAX</param>
+                    <param name="plot.F_TARGET.min_error" type="string">F_TARGET_MIN</param>
+                    <param name="plot.y2.title" type="string">Frequency</param>
+                    <param name="plot.x.points" type="string">TIME</param>
+                    <param name="plot.x.title" type="string">Time (sec)</param>
+                  </params>
+                  <results />
+                </result>
+                <result filename="1547.1 Testing - manual\FRT\FRT_MANUAL\FRT_Low-Frequency_3.csv" name="FRT_Low-Frequency_3.csv" type="file">
+                  <params>
+                    <param name="plot.y2.points" type="string">AC_FREQ_1,AC_FREQ_2,AC_FREQ_3</param>
+                    <param name="plot.y.points" type="string">AC_P_1,AC_P_2,AC_P_3</param>
+                    <param name="plot.y.title" type="string">Active Power</param>
+                    <param name="plot.title" type="string">FRT_Low-Frequency_3</param>
+                    <param name="plot.F_TARGET.max_error" type="string">F_TARGET_MAX</param>
+                    <param name="plot.F_TARGET.min_error" type="string">F_TARGET_MIN</param>
+                    <param name="plot.y2.title" type="string">Frequency</param>
+                    <param name="plot.x.points" type="string">TIME</param>
+                    <param name="plot.x.title" type="string">Time (sec)</param>
+                  </params>
+                  <results />
+                </result>
+                <result filename="1547.1 Testing - manual\FRT\FRT_MANUAL\FRT_High-Frequency_1.csv" name="FRT_High-Frequency_1.csv" type="file">
+                  <params>
+                    <param name="plot.y2.points" type="string">AC_FREQ_1,AC_FREQ_2,AC_FREQ_3</param>
+                    <param name="plot.y.points" type="string">AC_P_1,AC_P_2,AC_P_3</param>
+                    <param name="plot.y.title" type="string">Active Power</param>
+                    <param name="plot.title" type="string">FRT_High-Frequency_1</param>
+                    <param name="plot.F_TARGET.max_error" type="string">F_TARGET_MAX</param>
+                    <param name="plot.F_TARGET.min_error" type="string">F_TARGET_MIN</param>
+                    <param name="plot.y2.title" type="string">Frequency</param>
+                    <param name="plot.x.points" type="string">TIME</param>
+                    <param name="plot.x.title" type="string">Time (sec)</param>
+                  </params>
+                  <results />
+                </result>
+                <result filename="1547.1 Testing - manual\FRT\FRT_MANUAL\FRT_High-Frequency_2.csv" name="FRT_High-Frequency_2.csv" type="file">
+                  <params>
+                    <param name="plot.y2.points" type="string">AC_FREQ_1,AC_FREQ_2,AC_FREQ_3</param>
+                    <param name="plot.y.points" type="string">AC_P_1,AC_P_2,AC_P_3</param>
+                    <param name="plot.y.title" type="string">Active Power</param>
+                    <param name="plot.title" type="string">FRT_High-Frequency_2</param>
+                    <param name="plot.F_TARGET.max_error" type="string">F_TARGET_MAX</param>
+                    <param name="plot.F_TARGET.min_error" type="string">F_TARGET_MIN</param>
+                    <param name="plot.y2.title" type="string">Frequency</param>
+                    <param name="plot.x.points" type="string">TIME</param>
+                    <param name="plot.x.title" type="string">Time (sec)</param>
+                  </params>
+                  <results />
+                </result>
+                <result filename="1547.1 Testing - manual\FRT\FRT_MANUAL\FRT_High-Frequency_3.csv" name="FRT_High-Frequency_3.csv" type="file">
+                  <params>
+                    <param name="plot.y2.points" type="string">AC_FREQ_1,AC_FREQ_2,AC_FREQ_3</param>
+                    <param name="plot.y.points" type="string">AC_P_1,AC_P_2,AC_P_3</param>
+                    <param name="plot.y.title" type="string">Active Power</param>
+                    <param name="plot.title" type="string">FRT_High-Frequency_3</param>
+                    <param name="plot.F_TARGET.max_error" type="string">F_TARGET_MAX</param>
+                    <param name="plot.F_TARGET.min_error" type="string">F_TARGET_MIN</param>
+                    <param name="plot.y2.title" type="string">Frequency</param>
+                    <param name="plot.x.points" type="string">TIME</param>
+                    <param name="plot.x.title" type="string">Time (sec)</param>
+                  </params>
+                  <results />
+                </result>
+                <result filename="1547.1 Testing - manual\FRT\FRT_MANUAL\FRT_MANUAL.xlsx" name="FRT_MANUAL.xlsx" type="file">
+                  <params />
+                  <results />
+                </result>
+              </results>
+            </result>
+          </results>
+        </result>
+      </results>
+    </result>
+  </results>
+</result>
