@@ -164,14 +164,14 @@ def test_run():
         VoltVar = p1547.VoltVar(ts=ts, imbalance=True)
         VoltRideTrough = p1547.VoltageRideThrough(ts=ts,support_interfaces = {"hil" : phil})
 
-        ''' RTLab OpWriteFile Math using worst case scenario of 160 seconds, 10 signals and Ts = 50e-6
-        Duration of acquisition in number of points: Npoints = (Tend - Tstart) / (Ts * dec) = 4/(0.000050*1) = 80000
-        Acquisition frame duration: Tframe = Nbss * Ts * dec = 1000*0.000050*1 = 0.05 sec
-        Number of buffers to be acquired: Nbuffers = Npoints / Nbss = (Tend - Tstart) / Tframe = 3200
+        ''' RTLab OpWriteFile Math using worst case scenario of 160 seconds, 10 signals and Ts = 40e-6
+        Duration of acquisition in number of points: Npoints = (Tend - Tstart) / (Ts * dec) = (160)/(0.000040*5) = 800000
+        Acquisition frame duration: Tframe = Nbss * Ts * dec = 1000*0.000040*5 = 0.2 sec
+        Number of buffers to be acquired: Nbuffers = Npoints / Nbss = (Tend - Tstart) / Tframe = 800
         Minimum file size: MinSize= Nbuffers x SizeBuf = [(Tend - Tstart) / Ts ] * (Nsig+1) * 8 * Nbss 
-            = (160/50e-6)*(10+1)*8*1000 = 2.8160e+11
-        SizeBuf = 1/Nbuffers * {[(Tend - Tstart) / Ts ]*(Nsig+1)*8*Nbss} = [(160/0.000050)*(10+1)*8*1e3]/3200 = 88000000
-        Size of one buffer in bytes (SizeBuf) = (Nsig+1) * 8 * Nbss (Minimum) = 8*8*20 = 1280
+            = (160/40e-6)*(9+1)*8*1000 = 3.2000e+11
+        SizeBuf = 1/Nbuffers * {[(Tend - Tstart) / Ts ]*(Nsig+1)*8*Nbss} = [(160/0.000040)*(9+1)*8*1e3]/800 = 4.0000e+08
+        Size of one buffer in bytes (SizeBuf) = (Nsig+1) * 8 * Nbss (Minimum) = (9+1)*8*1000 = 80000
         '''
 
         # result params
@@ -421,7 +421,7 @@ def run(test_script):
     sys.exit(rc)
 
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.4.0')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.4.1')
 
 # PRI test parameters
 info.param_group('vrt', label='Test Parameters')
@@ -434,10 +434,10 @@ info.param('vrt.low_pwr_value', label='Low Power Output level (Between 25-50%):'
 info.param('vrt.high_pwr_ena', label='High Power Output Test :', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('vrt.high_pwr_value', label='High Power Output level (Over 90%):', default=0.91, active='vrt.high_pwr_ena',
            active_value='Enabled')
-#info.param('vrt.response_time', label='Test Response Time (secs)', default=299.0)
 info.param('vrt.cat', label='Category II and/or III:', default=CAT_2, values=[CAT_2, CAT_3, "Both"])
+# TODO: The consecutive option needs a way to verify the first test to apply a different perturbation accordongly.
 #info.param('vrt.consecutive_ena', label='Consecutive Ride-Through test?', default='Enabled', values=['Disabled', 'Enabled'])
-# TODO : This should be change for following the "figure" or "Random"
+info.param('vrt.phase_comb', label="Phase combination (e.g. '3' will apply the vrt to all three phases)", default='1', values=['1', '2','3'])
 info.param('vrt.range_steps', label='Ride-Through Profile ("Figure" is following the RT images from standard)', default='Figure', values=['Figure', 'Random'])
 
 
