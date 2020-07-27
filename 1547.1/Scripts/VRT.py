@@ -439,7 +439,7 @@ info.param('vrt.cat', label='Category II and/or III:', default=CAT_2, values=[CA
 #info.param('vrt.consecutive_ena', label='Consecutive Ride-Through test?', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('vrt.phase_comb', label="Phase combination (e.g. '3' will apply the vrt to all three phases)", default='1', values=['1', '2','3'])
 info.param('vrt.range_steps', label='Ride-Through Profile ("Figure" is following the RT images from standard)', default='Figure', values=['Figure', 'Random'])
-
+info.param('vrt.dataset_type', label='Waveform or  RMS ?', default="RMS",values=['RMS', 'WAVEFORM'])
 
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)
