@@ -277,7 +277,7 @@ def test_run():
             for pwr in pwr_lvl:
                 dataset_filename = f'VRT_{current_mode}_{round(pwr*100)}PCT'
                 ts.log(f'------------{dataset_filename}------------')
-                daq.data_capture(True)
+                daq.data_capture(False)
 
                 """
                 Setting up available power to appropriate power level 
@@ -336,20 +336,20 @@ def test_run():
 
 
                 
-                ts.log('Sampling RMS complete')
-                ds = daq.data_capture_dataset()
-                ts.log('Saving file: %s' % rms_dataset_filename)
-                ds.to_csv(ts.result_file_path(rms_dataset_filename))
-                ds.remove_none_row(ts.result_file_path(rms_dataset_filename),"TIME")
-                result_params = {
-                'plot.title': rms_dataset_filename.split('.csv')[0],
-                'plot.x.title': 'Time (sec)',
-                'plot.x.points': 'TIME',
-                'plot.y.points': 'AC_VRMS_1, AC_VRMS_2, AC_VRMS_3',  
-                'plot.y.title': 'Voltage (V)',
-                'plot.y2.points': 'AC_IRMS_1, AC_IRMS_2, AC_IRMS_3',  
-                'plot.y2.title': 'Current (A)',
-                }
+                # ts.log('Sampling RMS complete')
+                # ds = daq.data_capture_dataset()
+                # ts.log('Saving file: %s' % rms_dataset_filename)
+                # ds.to_csv(ts.result_file_path(rms_dataset_filename))
+                # ds.remove_none_row(ts.result_file_path(rms_dataset_filename),"TIME")
+                # result_params = {
+                # 'plot.title': rms_dataset_filename.split('.csv')[0],
+                # 'plot.x.title': 'Time (sec)',
+                # 'plot.x.points': 'TIME',
+                # 'plot.y.points': 'AC_VRMS_1, AC_VRMS_2, AC_VRMS_3',  
+                # 'plot.y.title': 'Voltage (V)',
+                # 'plot.y2.points': 'AC_IRMS_1, AC_IRMS_2, AC_IRMS_3',  
+                # 'plot.y2.title': 'Current (A)',
+                # }
                 # Remove the None in the dataset file
                 ts.result_file(rms_dataset_filename, params=result_params)
                 result_summary.write('%s, %s, %s,\n' % (dataset_filename, wave_start_filename,
