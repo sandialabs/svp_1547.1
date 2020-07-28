@@ -335,7 +335,7 @@ def test_run():
                 ts.result_file(wave_start_filename)        
 
 
-                
+                # TODO : Add this if raw_waveform is acquire
                 # ts.log('Sampling RMS complete')
                 # ds = daq.data_capture_dataset()
                 # ts.log('Saving file: %s' % rms_dataset_filename)
@@ -351,9 +351,8 @@ def test_run():
                 # 'plot.y2.title': 'Current (A)',
                 # }
                 # Remove the None in the dataset file
-                ts.result_file(rms_dataset_filename, params=result_params)
-                result_summary.write('%s, %s, %s,\n' % (dataset_filename, wave_start_filename,
-                                                           rms_dataset_filename))
+                #ts.result_file(rms_dataset_filename, params=result_params)
+                result_summary.write('%s, %s,\n' % (dataset_filename, wave_start_filename))
                 result = script.RESULT_COMPLETE
 
     except script.ScriptFail as e:
