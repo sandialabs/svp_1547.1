@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Questions can be directed to support@sunspec.org
 """
-
 import sys
 import os
 import traceback
@@ -146,7 +145,6 @@ def test_run():
         # Take the highest value for the steady state wait time
         tr_min = min(ts.param_value('fw.test_1_tr'),ts.param_value('vw.test_1_tr'))
         tr_vw = ts.param_value('vw.test_1_tr')
-
 
         """
         a) - Connect the EUT according to the instructions and specifications provided by the manufacturer.

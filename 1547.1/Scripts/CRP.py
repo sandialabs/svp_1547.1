@@ -238,6 +238,9 @@ def test_run():
                 dataset_filename = '%s_v=%0.1f' % (q_test_name, v_in)
                 ts.log('------------{}------------'.format(dataset_filename))
 
+                # Setting up step label
+                lib_1547.set_step_label(starting_label='F')
+
                 q_target *= var_rated
                 ts.log('Starting data capture for fixed Q relative = %s' % q_target)
                 daq.data_capture(True)  # Start the data acquisition systems

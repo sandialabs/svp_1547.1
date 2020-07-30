@@ -3,8 +3,8 @@
 
 ---
 
-This repository contains all of the open-source OpenSVP components written in Python 2.7. 
-Hence, Python 2.7+ is required.
+This repository contains all of the open-source OpenSVP components written in Python 3.7. 
+Hence, Python 3.7+ is required.
 
 ## Contribution
 
@@ -19,7 +19,6 @@ Please refer to the [Install section](/1547.1/doc/INSTALL.md) for detailed instr
 Current compliance test scripts available:
 
 #### Limit Active Power
-
    Limit Active Power (LAP):
    - [x] Limit active power mode 
 
@@ -44,6 +43,11 @@ Current compliance test scripts available:
 - [x] Frequency-watt or Frequency-droop - above nominal frequency (FW)
 - [x] Frequency-watt or Frequency-droop - below nominal frequency (FW)
 
+#### Ride-Through support
+- [X] Phase-Change Ride-Through
+- [ ] High/Low Frequency Ride-Through (Ongoing)
+- [ ] Voltage Ride-Through
+
 #### Prioritization of DER responses
 - [x] Test for voltage and frequency regulation priority (PRI)
 
@@ -52,13 +56,14 @@ Current compliance test scripts available:
 - [ ] Load rejection overvoltage (LROV) test
 
 #### Varia
-- [x] Interoperability test
-- [ ] Nameplate data test
+- [ ] Interoperability test
 
 ### Support
 
 For any bugs/issues, please refer to the [bug tracker][bug-tracker-url] section.
 
+🐙 was here.
 
-[bug-tracker-url]: https://github.com/jayatsandia/svp_1547.1/issues
-[1547-1-url]: https://github.com/jayatsandia/svp_1547.1
+[bug-tracker-url]: https://github.com/BuiMCanmet/svp_1547.1/issues
+[1547-1-url]: https://github.com/BuiMCanmet/svp_1547.1/tree/master_python37
+

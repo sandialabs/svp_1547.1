@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Questions can be directed to support@sunspec.org
 """
-
 import sys
 import os
 import traceback
