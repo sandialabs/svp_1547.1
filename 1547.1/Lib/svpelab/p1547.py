@@ -949,8 +949,8 @@ class VoltVar(EutParameters, UtilParameters, DataLogging, CriteriaValidation, Im
         self.criteria_mode = [True, True, True]
         EutParameters.__init__(self, ts)
         UtilParameters.__init__(self)
-        DataLogging.__init__(self, meas_values=['V', 'Q'], x_criteria=['V'], y_criteria=['Q'])
-        CriteriaValidation.__init__(self, self.criteria_mode)
+        #DataLogging.__init__(self, meas_values=['V', 'Q'], x_criteria=['V'], y_criteria=['Q'])
+        #CriteriaValidation.__init__(self, self.criteria_mode)
         if imbalance:
             ImbalanceComponent.__init__(self)
         #self.pairs = {}
@@ -1000,7 +1000,9 @@ class VoltVar(EutParameters, UtilParameters, DataLogging, CriteriaValidation, Im
         }
 
 
-class VoltWatt(EutParameters, UtilParameters, DataLogging, ImbalanceComponent):
+#class VoltWatt(EutParameters, UtilParameters, DataLogging, ImbalanceComponent):
+class VoltWatt(EutParameters, UtilParameters):
+
     """
     param curve: choose curve characterization [1-3] 1 is default
     """
@@ -1264,23 +1266,29 @@ class WattVar(EutParameters, UtilParameters):
 """
 This section is for the Active function
 """
-class ActiveFunction(VoltWatt, VoltVar):
+class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
+                     VoltWatt, VoltVar):
     """
     This class acts as the main function
     As multiple functions might be needed for a compliance script, this function will inherit
     of all functions if needed.
     """
-    def __init__(self, ts, functions):
+    def __init__(self, ts, functions, script_name):
         # Values defined as target/step values which will be controlled as step
         x_criterias = []
+        self.x_criteria = []
         # Values defined as values which will be controlled as step
         y_criterias = []
+        self.y_criteria={}
+
         self.param = {}
+        self.criterias = []
+
+        self.script_complete_name = script_name
         #EutParameters.__init__(self, ts)
         #UtilParameters.__init__(self)
 
         self.ts.log(f'Functions to be activated in this test script = {functions}')
-        self.y_criteria={}
 
         if VW in functions:
             VoltWatt.__init__(self, ts)

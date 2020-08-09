@@ -94,11 +94,12 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
         A separate module has been create for the 1547.1 Standard
         """
         #lib_1547 = p1547.module_1547(ts=ts, aif=VV)
-        VoltVar = p1547.VoltVar(ts=ts, imbalance=False)
-        ts.log_debug("1547.1 Library configured for %s" % VoltVar.get_script_name())
+        #VoltVar = p1547.VoltVar(ts=ts, imbalance=False)
+        ActiveFunction = p1547.ActiveFunction(ts=ts, functions=VV, script_name='Volt-Var')
+        ts.log_debug("1547.1 Library configured for %s" % ActiveFunction.get_script_name())
 
         # result params
-        result_params = VoltVar.get_rslt_param_plot()
+        result_params = ActiveFunction.get_rslt_param_plot()
         ts.log_debug(result_params)
 
         '''
