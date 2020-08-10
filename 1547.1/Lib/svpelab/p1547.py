@@ -937,7 +937,7 @@ class HilModel(object):
 This section is for Voltage stabilization function such as VV, VW, CPF and CRP
 """
 
-class VoltVar(EutParameters, UtilParameters, DataLogging, CriteriaValidation, ImbalanceComponent):
+class VoltVar(EutParameters, UtilParameters):
 
     meas_values = ['V', 'Q', 'P']
     x_criteria = ['V']
@@ -1274,13 +1274,13 @@ class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
     of all functions if needed.
     """
     def __init__(self, ts, functions, script_name):
+        self.ts=ts
         # Values defined as target/step values which will be controlled as step
         x_criterias = []
         self.x_criteria = []
         # Values defined as values which will be controlled as step
         y_criterias = []
         self.y_criteria={}
-
         self.param = {}
         self.criterias = []
 

@@ -119,7 +119,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
 
         # DAS soft channels
         #das_points = {'sc': ('Q_TARGET', 'Q_TARGET_MIN', 'Q_TARGET_MAX', 'Q_MEAS', 'V_TARGET', 'V_MEAS', 'event')}
-        das_points = VoltVar.get_sc_points()
+        das_points = ActiveFunction.get_sc_points()
         # initialize data acquisition system
         daq = das.das_init(ts, sc_points=das_points['sc'])
 
@@ -191,7 +191,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
         result_summary_filename = 'result_summary.csv'
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
-        result_summary.write(VoltVar.get_rslt_sum_col_name())
+        result_summary.write(ActiveFunction.get_rslt_sum_col_name())
 
         '''
         d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
@@ -208,16 +208,16 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
         '''
         for vv_curve in vv_curves:
             ts.log('Starting test with characteristic curve %s' % (vv_curve))
-            VoltVar.reset_curve(vv_curve)
-            VoltVar.reset_time_settings(tr=vv_response_time[vv_curve], number_tr=2)
-            v_pairs = VoltVar.get_params(curve=vv_curve)
+            ActiveFunction.reset_curve(vv_curve)
+            ActiveFunction.reset_time_settings(tr=vv_response_time[vv_curve], number_tr=2)
+            v_pairs = ActiveFunction.get_params(curve=vv_curve)
             ts.log_debug('v_pairs:%s' % v_pairs)
 
             '''
             ff) Repeat test steps d) through ee) at EUT power set at 20% and 66% of rated power.
             '''
             for power in pwr_lvls:
-                VoltVar.reset_pwr(power)
+                ActiveFunction.reset_pwr(power)
 
                 if pv is not None:
                     pv_power_setting = (p_rated * power)
