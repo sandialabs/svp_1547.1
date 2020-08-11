@@ -94,8 +94,11 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
         A separate module has been create for the 1547.1 Standard
         """
         #lib_1547 = p1547.module_1547(ts=ts, aif=VV)
-        #VoltVar = p1547.VoltVar(ts=ts, imbalance=False)
-        ActiveFunction = p1547.ActiveFunction(ts=ts, functions=VV, script_name='Volt-Var')
+        #ActiveFunction = p1547.ActiveFunction(ts=ts, imbalance=False)
+        ActiveFunction = p1547.ActiveFunction(ts=ts,
+                                              functions=[VV],
+                                              script_name='Volt-Var',
+                                              criteria_mode=[True,True,True])
         ts.log_debug("1547.1 Library configured for %s" % ActiveFunction.get_script_name())
 
         # result params
@@ -210,7 +213,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             ts.log('Starting test with characteristic curve %s' % (vv_curve))
             ActiveFunction.reset_curve(vv_curve)
             ActiveFunction.reset_time_settings(tr=vv_response_time[vv_curve], number_tr=2)
-            v_pairs = ActiveFunction.get_params(curve=vv_curve)
+            v_pairs = ActiveFunction.get_params(function=VV, curve=vv_curve)
             ts.log_debug('v_pairs:%s' % v_pairs)
 
             '''
@@ -280,39 +283,39 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
 
 
                     v_steps_dict = collections.OrderedDict()
-                    a_v = VoltVar.MRA['V'] * 1.5
+                    a_v = ActiveFunction.MRA['V'] * 1.5
 
-                    VoltVar.set_step_label(starting_label='G')
+                    ActiveFunction.set_step_label(starting_label='G')
 
                     # Capacitive test
                     # Starting from step F
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V3'] - a_v
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V3'] + a_v
-                    v_steps_dict[VoltVar.get_step_label()] = (v_pairs['V3'] + v_pairs['V4']) / 2
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V4'] - a_v
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V4'] + a_v
-                    v_steps_dict[VoltVar.get_step_label()] = v_high - a_v
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V4'] + a_v
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V4'] - a_v
-                    v_steps_dict[VoltVar.get_step_label()] = (v_pairs['V3'] + v_pairs['V4']) / 2
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V3'] + a_v
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V3'] - a_v
-                    v_steps_dict[VoltVar.get_step_label()] = v_ref*v_nom
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V3'] - a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V3'] + a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = (v_pairs['V3'] + v_pairs['V4']) / 2
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V4'] - a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V4'] + a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_high - a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V4'] + a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V4'] - a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = (v_pairs['V3'] + v_pairs['V4']) / 2
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V3'] + a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V3'] - a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_ref*v_nom
 
                     # Inductive test
                     # Step S
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V2'] + a_v
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V2'] - a_v
-                    v_steps_dict[VoltVar.get_step_label()] = (v_pairs['V1'] + v_pairs['V2']) / 2
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V1'] + a_v
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V1'] - a_v
-                    v_steps_dict[VoltVar.get_step_label()] = v_low + a_v
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V1'] - a_v
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V1'] + a_v
-                    v_steps_dict[VoltVar.get_step_label()] = (v_pairs['V1'] + v_pairs['V2']) / 2
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V2'] - a_v
-                    v_steps_dict[VoltVar.get_step_label()] = v_pairs['V2'] + a_v
-                    v_steps_dict[VoltVar.get_step_label()] = v_ref*v_nom
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V2'] + a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V2'] - a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = (v_pairs['V1'] + v_pairs['V2']) / 2
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V1'] + a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V1'] - a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_low + a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V1'] - a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V1'] + a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = (v_pairs['V1'] + v_pairs['V2']) / 2
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V2'] - a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V2'] + a_v
+                    v_steps_dict[ActiveFunction.get_step_label()] = v_ref*v_nom
 
 
                     for step, target in v_steps_dict.items():
@@ -341,7 +344,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     ts.log_debug(v_steps_dict)
 
                     dataset_filename = 'VV_%s_PWR_%d_vref_%d' % (vv_curve, power * 100, v_ref*100)
-                    VoltVar.reset_filename(filename=dataset_filename)
+                    ActiveFunction.reset_filename(filename=dataset_filename)
                     #ts.log('------------{}------------'.format(dataset_filename))
                     # Start the data acquisition systems
                     daq.data_capture(True)
@@ -351,14 +354,14 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                         ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_step, step_label))
                         #q_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
                         #ts.log_debug(q_initial)
-                        VoltVar.start(daq=daq, step_label=step_label)
+                        ActiveFunction.start(daq=daq, step_label=step_label)
 
                         if grid is not None:
                             grid.voltage(v_step)
 
-                        VoltVar.record_timeresponse(daq=daq, step_value=v_step)
-                        VoltVar.evaluate_criterias()
-                        result_summary.write(VoltVar.write_rslt_sum())
+                        ActiveFunction.record_timeresponse(daq=daq, step_value=v_step)
+                        ActiveFunction.evaluate_criterias()
+                        result_summary.write(ActiveFunction.write_rslt_sum())
 
                     ts.log('Sampling complete')
                     dataset_filename = dataset_filename + ".csv"
@@ -463,11 +466,14 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
         """
         A separate module has been create for the 1547.1 Standard
         """
-        VoltVar = p1547.VoltVar(ts=ts, imbalance=True)
-        ts.log_debug('1547.1 Library configured for %s' % VoltVar.get_script_name())
+        ActiveFunction = p1547.ActiveFunction(ts=ts,
+                                              script_name='Volt-Var',
+                                              functions=[VV],
+                                              criteria_mode=[True, True, True])
+        ts.log_debug('1547.1 Library configured for %s' % ActiveFunction.get_script_name())
 
         # Get the rslt parameters for plot
-        result_params = VoltVar.get_rslt_param_plot()
+        result_params = ActiveFunction.get_rslt_param_plot()
 
         '''
         a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
@@ -488,7 +494,7 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
         pv.power_on()  # Turn on DC so the EUT can be initialized
 
         # DAS soft channels
-        das_points = VoltVar.get_sc_points()
+        das_points = ActiveFunction.get_sc_points()
 
         # initialize data acquisition system
         daq = das.das_init(ts, sc_points=das_points['sc'])
@@ -516,7 +522,7 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
 
-        result_summary.write(VoltVar.get_rslt_sum_col_name())
+        result_summary.write(ActiveFunction.get_rslt_sum_col_name())
 
         '''
          d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
@@ -538,19 +544,20 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
         for imbalance_response in imbalance_resp:
 
             #Default 2 time responses cycles
-            VoltVar.reset_time_settings(tr=pf_response_time)
+            #ActiveFunction.reset_time_settings(tr=pf_response_time)
 
             for vv_curve in vv_curves:
 
                 '''
                  e) Set EUT volt-watt parameters to the values specified by Characteristic 1. All other function be turned off.
                  '''
-                #Setting up v_pairs value corresponding to desired curve
-                VoltVar.reset_curve(curve=vv_curve)
-                v_pairs = VoltVar.get_params()
+                ts.log('Starting test with characteristic curve %s' % (vv_curve))
+                ActiveFunction.reset_curve(vv_curve)
+                ActiveFunction.reset_time_settings(tr=vv_response_time[vv_curve], number_tr=2)
+                v_pairs = ActiveFunction.get_params(function=VV, curve=vv_curve)
                 ts.log_debug('v_pairs:%s' % v_pairs)
                 #Setting up step label
-                VoltVar.set_step_label(starting_label='G')
+                ActiveFunction.set_step_label(starting_label='G')
 
 
                 # it is assumed the EUT is on
@@ -579,7 +586,7 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                 derive, active power, apparent power, reactive power, and power factor.
                 '''
 
-                step = VoltVar.get_step_label()
+                step = ActiveFunction.get_step_label()
 
                 daq.sc['event'] = step
                 daq.data_sample()
@@ -589,11 +596,11 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
 
                 ts.log('Starting imbalance test with VV mode at %s' % (imbalance_response))
 
-                VoltVar.set_imbalance_config(imbalance_angle_fix=imbalance_fix)
+                ActiveFunction.set_imbalance_config(imbalance_angle_fix=imbalance_fix)
                 #ts.log_debug(f'{imbalance_response}')
                 dataset_filename = f'VV_IMB_{imbalance_fix}_{imbalance_response}'
 
-                VoltVar.reset_filename(filename=dataset_filename)
+                ActiveFunction.reset_filename(filename=dataset_filename)
                 ts.log('------------{}------------'.format(dataset_filename))
                 # Start the data acquisition systems
                 daq.data_capture(True)
@@ -602,52 +609,52 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                 h) For multiphase units, step the AC test source voltage to Case A from Table 24.
                 '''
                 if grid is not None:
-                    step_label = VoltVar.get_step_label()
+                    step_label = ActiveFunction.get_step_label()
                     ts.log('Voltage step: setting Grid simulator to case A (IEEE 1547.1-Table 24)(%s)' % step)
-                    VoltVar.start(daq=daq, step_label=step_label)
-                    v_target = VoltVar.set_grid_asymmetric(grid=grid, case='case_a', imbalance_resp=imbalance_response)
+                    ActiveFunction.start(daq=daq, step_label=step_label)
+                    v_target = ActiveFunction.set_grid_asymmetric(grid=grid, case='case_a', imbalance_resp=imbalance_response)
                     ts.log_debug(f'v_target={v_target}')
-                    VoltVar.record_timeresponse(daq=daq, step_value=v_target)
-                    VoltVar.evaluate_criterias()
-                    result_summary.write(VoltVar.write_rslt_sum())
+                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
+                    ActiveFunction.evaluate_criterias()
+                    result_summary.write(ActiveFunction.write_rslt_sum())
 
                 '''
                 i) For multiphase units, step the AC test source voltage to VN.
                 '''
                 if grid is not None:
-                    step_label = VoltVar.get_step_label()
-                    VoltVar.start(daq=daq, step_label=step_label)
+                    step_label = ActiveFunction.get_step_label()
+                    ActiveFunction.start(daq=daq, step_label=step_label)
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
-                    #v_target = VoltVar.set_grid_asymmetric(grid=grid, case='case_a', imbalance_resp=imbalance_resp)
+                    #v_target = ActiveFunction.set_grid_asymmetric(grid=grid, case='case_a', imbalance_resp=imbalance_resp)
                     grid.voltage(v_nom)
-                    VoltVar.record_timeresponse(daq=daq, step_value=v_nom)
-                    VoltVar.evaluate_criterias()
-                    result_summary.write(VoltVar.write_rslt_sum())
+                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_nom)
+                    ActiveFunction.evaluate_criterias()
+                    result_summary.write(ActiveFunction.write_rslt_sum())
 
                 """
                 j) For multiphase units, step the AC test source voltage to Case B from Table 24.
                 """
                 if grid is not None:
-                    step_label = VoltVar.get_step_label()
-                    VoltVar.start(daq=daq, step_label=step_label)
+                    step_label = ActiveFunction.get_step_label()
+                    ActiveFunction.start(daq=daq, step_label=step_label)
                     ts.log('Voltage step: setting Grid simulator to case B (IEEE 1547.1-Table 24)(%s)' % step)
-                    v_target = VoltVar.set_grid_asymmetric(grid=grid, case='case_b', imbalance_resp=imbalance_response)
-                    VoltVar.record_timeresponse(daq=daq, step_value=v_target)
-                    VoltVar.evaluate_criterias()
-                    result_summary.write(VoltVar.write_rslt_sum())
+                    v_target = ActiveFunction.set_grid_asymmetric(grid=grid, case='case_b', imbalance_resp=imbalance_response)
+                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
+                    ActiveFunction.evaluate_criterias()
+                    result_summary.write(ActiveFunction.write_rslt_sum())
 
                 """
                 k) For multiphase units, step the AC test source voltage to VN
                 """
                 if grid is not None:
-                    step_label = VoltVar.get_step_label()
-                    VoltVar.start(daq=daq, step_label=step_label)
+                    step_label = ActiveFunction.get_step_label()
+                    ActiveFunction.start(daq=daq, step_label=step_label)
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
-                    #v_target = VoltVar.set_grid_asymmetric(grid=grid, case='case_a', imbalance_resp=imbalance_resp)
+                    #v_target = ActiveFunction.set_grid_asymmetric(grid=grid, case='case_a', imbalance_resp=imbalance_resp)
                     grid.voltage(v_nom)
-                    VoltVar.record_timeresponse(daq=daq, step_value=v_nom)
-                    VoltVar.evaluate_criterias()
-                    result_summary.write(VoltVar.write_rslt_sum())
+                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_nom)
+                    ActiveFunction.evaluate_criterias()
+                    result_summary.write(ActiveFunction.write_rslt_sum())
 
                 ts.log('Sampling complete')
                 dataset_filename = dataset_filename + ".csv"

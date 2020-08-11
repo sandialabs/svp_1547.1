@@ -214,7 +214,7 @@ class UtilParameters:
         :param type_meas:   (str) Either V, P, PF, I, F, VA, or Q
         :return:            (list of str) List of labeled measurements, e.g., ['AC_VRMS_1', 'AC_VRMS_2', 'AC_VRMS_3']
         """
-
+        self.ts.log_debug(f'type_array={self.type_meas}')
         meas_root = self.type_meas[type_meas]
 
         if self.phases == 'Single phase':
@@ -256,6 +256,7 @@ class UtilParameters:
                 nb_phases = 2
 
             elif self.phases == 'Three phase':
+                self.ts.log_debug(f'type_meas={type_meas}')
                 value1 = data.get(self.get_measurement_label(type_meas)[0])
                 value2 = data.get(self.get_measurement_label(type_meas)[1])
                 value3 = data.get(self.get_measurement_label(type_meas)[2])
@@ -287,15 +288,16 @@ class UtilParameters:
 
 
 class DataLogging:
-    def __init__(self, meas_values, x_criteria, y_criteria):
+    #def __init__(self, meas_values, x_criteria, y_criteria):
+    def __init__(self):
         self.type_meas = {'V': 'AC_VRMS', 'I': 'AC_IRMS', 'P': 'AC_P', 'Q': 'AC_Q', 'VA': 'AC_S',
                           'F': 'AC_FREQ', 'PF': 'AC_PF'}
         # Values to be recorded
-        self.meas_values = meas_values
+        #self.meas_values = meas_values
         # Values defined as target/step values which will be controlled as step
-        self.x_criteria = x_criteria
+        #self.x_criteria = x_criteria
         # Values defined as values which will be controlled as step
-        self.y_criteria = y_criteria
+        #self.y_criteria = y_criteria
         self.rslt_sum_col_name = ''
         self.sc_points = {}
         #self._config()
@@ -394,7 +396,7 @@ class DataLogging:
 
         #y_points = '%s_TARGET,%s_MEAS' % (y, y)
         #y2_points = '%s_TARGET,%s_MEAS' % (y2, y2)
-
+        self.ts.log_debug(f'y_variables={y_variables}')
         for y in y_variables:
             self.ts.log_debug('y_temp: %s' % y)
             #y_temp = self.get_measurement_label('%s' % y)
@@ -454,7 +456,7 @@ class DataLogging:
         """
 
         xs = self.x_criteria
-        ys = self.y_criteria
+        ys = list(self.y_criteria.keys())
         first_iter = self.tr_value['FIRST_ITER']
         last_iter = self.tr_value['LAST_ITER']
         row_data = []
@@ -512,16 +514,23 @@ class DataLogging:
         else:
             self.initial_value[self.x_criteria] = {'x_value': self.get_measurement_total(data=data, type_meas=self.x_criteria, log=False)}
             daq.sc['%s_MEAS' % self.x_criteria] = self.initial_value[self.x_criteria]['x_value']
-        if isinstance(self.y_criteria, list):
-            for ys in self.y_criteria:
+
+        if isinstance(self.y_criteria, dict):
+            for ys in list(self.y_criteria.keys()):
+                self.ts.log_debug(f'ys={ys}')
                 self.initial_value[ys] = {'y_value': self.get_measurement_total(data=data, type_meas=ys, log=False)}
                 daq.sc['%s_MEAS' % ys] = self.initial_value[ys]["y_value"]
         else:
             self.initial_value[self.y_criteria] = {'y_value': self.get_measurement_total(data=data, type_meas=self.y_criteria, log=False)}
             daq.sc['%s_MEAS' % self.y_criteria] = self.initial_value[self.y_criteria]['y_value']
-        daq.data_sample()
 
-        #return self.initial_value
+        """
+        elif isinstance(self.y_criteria, list):
+            for ys in self.y_criteria:
+                self.initial_value[ys] = {'y_value': self.get_measurement_total(data=data, type_meas=ys, log=False)}
+                daq.sc['%s_MEAS' % ys] = self.initial_value[ys]["y_value"]
+        """
+        daq.data_sample()
 
     def record_timeresponse(self, daq, step_value, pwr_lvl=1.0, curve=1, x_target=None, y_target=None):
         """
@@ -539,7 +548,7 @@ class DataLogging:
         """
 
         x = self.x_criteria
-        y = self.y_criteria
+        y = list(self.y_criteria.keys())
         #self.tr = tr
 
         first_tr = self.initial_value['timestamp'] + timedelta(seconds=self.tr)
@@ -571,9 +580,10 @@ class DataLogging:
             # update daq.sc values for Y_TARGET, Y_TARGET_MIN, and Y_TARGET_MAX
 
             # store the daq.sc['Y_TARGET'], daq.sc['Y_TARGET_MIN'], and daq.sc['Y_TARGET_MAX'] in tr_value
-
+            self.ts.log_debug(f'meas_values={self.meas_values}')
             for meas_value in self.meas_values:
                 try:
+                    self.ts.log_debug(f'meas_values={meas_value}')
                     self.tr_value['%s_TR_%s' % (meas_value, tr_iter)] = daq.sc['%s_MEAS' % meas_value]
 
                     self.ts.log('Value %s: %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
@@ -582,9 +592,12 @@ class DataLogging:
                         self.tr_value['%s_TR_TARG_%s' % (meas_value, tr_iter)] = step_value
                         self.ts.log('X Value (%s) = %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
                     elif meas_value in y:
-                        daq.sc['%s_TARGET' % meas_value] = self.update_target_value(step_value)
+                        self.ts.log_debug(f'in y meas value')
+                        daq.sc['%s_TARGET' % meas_value] = self.update_target_value(value=step_value,
+                                                                                    function=self.y_criteria[meas_value])
                         daq.sc['%s_TARGET_MIN' % meas_value], daq.sc[
-                            '%s_TARGET_MAX' % meas_value] = self.calculate_min_max_values(daq=daq, data=data)
+                            '%s_TARGET_MAX' % meas_value] = self.calculate_min_max_values(data=data,
+                                                                                          function=self.y_criteria[meas_value])
                         self.tr_value[f'{meas_value}_TR_TARG_{tr_iter}'] = daq.sc['%s_TARGET' % meas_value]
                         self.tr_value[f'{meas_value}_TR_{tr_iter}_MIN'] = daq.sc['%s_TARGET_MIN' % meas_value]
                         self.tr_value[f'{meas_value}_TR_{tr_iter}_MAX'] = daq.sc['%s_TARGET_MAX' % meas_value]
@@ -609,7 +622,7 @@ class DataLogging:
     def update_target_value(self, value, function):
 
         if function == VV:
-            vv_pairs=self.get_params(function=VV, region=self.curve)
+            vv_pairs=self.get_params(function=VV, curve=self.curve)
             x = [vv_pairs['V1'], vv_pairs['V2'],
                  vv_pairs['V3'], vv_pairs['V4']]
             y = [vv_pairs['Q1'], vv_pairs['Q2'],
@@ -619,7 +632,7 @@ class DataLogging:
             return round(q_value, 1)
 
         if function == VW:
-            vw_pairs = self.get_params(function=VW, region=self.region)
+            vw_pairs = self.get_params(function=VW, curve=self.region)
             x = [vw_pairs['V1'], vw_pairs['V2']]
             y = [vw_pairs['P1'], vw_pairs['P2']]
             p_value = float(np.interp(value, x, y))
@@ -642,8 +655,8 @@ class DataLogging:
             return target_min, target_max
 
 class CriteriaValidation:
-    def __init__(self, criteria):
-        self.criteria_mode = criteria
+    def __init__(self, criteria_mode):
+        self.criteria_mode = criteria_mode
 
     def evaluate_criterias(self):
         if self.criteria_mode[0] is True:
@@ -688,8 +701,10 @@ class CriteriaValidation:
             The expected output, Y(Tr), at one times the open loop response time,
             is calculated as 90%*(Y_final_tr - Y_initial ) + Y_initial
         """
+        self.ts.log_debug(f'y_criterias={self.y_criteria}')
 
-        y = self.y_criteria[0]
+        y = list(self.y_criteria.keys())[0]
+        self.ts.log_debug(f'y={y}')
         mra_y = self.MRA[y]
 
         duration = self.tr_value[f"timestamp_{tr}"] - self.initial_value['timestamp']
@@ -708,6 +723,7 @@ class CriteriaValidation:
             #y_start = tr_value['%s_INITIAL' % y]
             mra_t = self.MRA['T'] * duration  # MRA(X) = MRA(time) = 0.01*duration
 
+        self.ts.log_debug(self.tr_value)
         y_ss = self.tr_value[f'{y}_TR_TARG_{tr}']
         y_target = self.calculate_open_loop_value(y0=y_start, y_ss=y_ss, duration=duration, tr=tr)  # 90%
         y_meas = self.tr_value[f'{y}_TR_{tr}']
@@ -959,7 +975,7 @@ class VoltVar(EutParameters, UtilParameters):
         #self.script_name = VV
         #self.script_complete_name = 'Volt-Var'
         #self._config()
-        VoltVar.set_params()
+        VoltVar.set_params(self)
 
     #def _config(self):
 
@@ -967,6 +983,7 @@ class VoltVar(EutParameters, UtilParameters):
         # self.set_imbalance_config()
 
     def set_params(self):
+        self.param[VV] = {}
         self.param[VV][1] = {
             'V1': round(0.92 * self.v_nom, 2),
             'V2': round(0.98 * self.v_nom, 2),
@@ -1013,7 +1030,7 @@ class VoltWatt(EutParameters, UtilParameters):
         self.pairs = {}
         self.param = [0, 0, 0, 0]
         self.target_dict = []
-        self.script_name = VW
+        #self.script_name = VW
         self.script_complete_name = 'Volt-Watt'
         self.rslt_sum_col_name = 'P_TR_ACC_REQ, TR_REQ, P_FINAL_ACC_REQ, V_MEAS, P_MEAS, P_TARGET, P_TARGET_MIN,' \
                                  'P_TARGET_MAX, STEP, FILENAME\n'
@@ -1273,7 +1290,7 @@ class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
     As multiple functions might be needed for a compliance script, this function will inherit
     of all functions if needed.
     """
-    def __init__(self, ts, functions, script_name):
+    def __init__(self, ts, script_name, functions, criteria_mode):
         self.ts=ts
         # Values defined as target/step values which will be controlled as step
         x_criterias = []
@@ -1282,9 +1299,9 @@ class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
         y_criterias = []
         self.y_criteria={}
         self.param = {}
-        self.criterias = []
+        #self.criterias = criterias
 
-        self.script_complete_name = script_name
+        self.script_name = script_name
         #EutParameters.__init__(self, ts)
         #UtilParameters.__init__(self)
 
@@ -1305,7 +1322,7 @@ class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
         self.meas_values = list(OrderedDict.fromkeys(x_criterias+list(self.y_criteria.keys())))
 
         DataLogging.__init__(self)
-        CriteriaValidation.__init__(self)
+        CriteriaValidation.__init__(self, criteria_mode=criteria_mode)
 """
 This section is for Ride-Through test
 """
