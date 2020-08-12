@@ -85,6 +85,8 @@ class EutParameters(object):
         try:
             self.v_nom = ts.param_value('eut.v_nom')
             self.s_rated = ts.param_value('eut.s_rated')
+            self.v_high = ts.param_value('eut.v_high')
+            self.v_low = ts.param_value('eut.v_low')
 
             '''
             Minimum required accuracy (MRA) (per Table 3 of IEEE Std 1547-2018)
@@ -1016,6 +1018,78 @@ class VoltVar(EutParameters, UtilParameters):
             'Q4': round(self.var_rated * -1.0, 2)
         }
 
+    def create_vv_dict_steps(self, v_ref, mode='Normal'):
+        """
+        Function to create dictionnary depending on which mode volt-watt is running
+        :param mode: string [None, Volt-Var, etc]
+        :return: Voltage step dictionnary
+        """
+
+        v_steps_dict = collections.OrderedDict()
+        a_v = self.MRA['V'] * 1.5
+        v_pairs = self.get_params(function=VV, curve=self.curve)
+        self.set_step_label(starting_label='G')
+        if mode=='Vref-test':
+            pass
+        elif mode=='Imbalanced grid':
+            pass
+            #TODO to be decided if we can put imbalanced steps in here
+        else:
+            # Capacitive test
+            # Starting from step F
+            v_steps_dict[self.get_step_label()] = v_pairs['V3'] - a_v
+            v_steps_dict[self.get_step_label()] = v_pairs['V3'] + a_v
+            v_steps_dict[self.get_step_label()] = (v_pairs['V3'] + v_pairs['V4']) / 2
+            v_steps_dict[self.get_step_label()] = v_pairs['V4'] - a_v
+            v_steps_dict[self.get_step_label()] = v_pairs['V4'] + a_v
+            v_steps_dict[self.get_step_label()] = self.v_high - a_v
+            v_steps_dict[self.get_step_label()] = v_pairs['V4'] + a_v
+            v_steps_dict[self.get_step_label()] = v_pairs['V4'] - a_v
+            v_steps_dict[self.get_step_label()] = (v_pairs['V3'] + v_pairs['V4']) / 2
+            v_steps_dict[self.get_step_label()] = v_pairs['V3'] + a_v
+            v_steps_dict[self.get_step_label()] = v_pairs['V3'] - a_v
+            v_steps_dict[self.get_step_label()] = v_ref * self.v_nom
+
+            # Inductive test
+            # Step S
+            v_steps_dict[self.get_step_label()] = v_pairs['V2'] + a_v
+            v_steps_dict[self.get_step_label()] = v_pairs['V2'] - a_v
+            v_steps_dict[self.get_step_label()] = (v_pairs['V1'] + v_pairs['V2']) / 2
+            v_steps_dict[self.get_step_label()] = v_pairs['V1'] + a_v
+            v_steps_dict[self.get_step_label()] = v_pairs['V1'] - a_v
+            v_steps_dict[self.get_step_label()] = self.v_low + a_v
+            v_steps_dict[self.get_step_label()] = v_pairs['V1'] - a_v
+            v_steps_dict[self.get_step_label()] = v_pairs['V1'] + a_v
+            v_steps_dict[self.get_step_label()] = (v_pairs['V1'] + v_pairs['V2']) / 2
+            v_steps_dict[self.get_step_label()] = v_pairs['V2'] - a_v
+            v_steps_dict[self.get_step_label()] = v_pairs['V2'] + a_v
+            v_steps_dict[self.get_step_label()] = v_ref * self.v_nom
+
+            for step, target in v_steps_dict.items():
+                v_steps_dict.update({step: round(target, 2)})
+                if target > self.v_high:
+                    v_steps_dict.update({step: self.v_high})
+                elif target < self.v_low:
+                    v_steps_dict.update({step: self.v_low})
+
+                # Skips steps when V4 is higher than Vmax of EUT
+            if v_pairs['V4'] > self.v_high:
+                self.ts.log_debug('Since V4 is higher than Vmax, Skipping a few steps')
+                del v_steps_dict['Step J']
+                del v_steps_dict['Step K']
+                del v_steps_dict['Step M']
+                del v_steps_dict['Step N']
+
+                # Skips steps when V1 is lower than Vmin of EUT
+            if v_pairs['V1'] < self.v_low:
+                self.ts.log_debug('Since V1 is lower than Vmin, Skipping a few steps')
+                del v_steps_dict['Step V']
+                del v_steps_dict['Step W']
+                del v_steps_dict['Step Y']
+                del v_steps_dict['Step Z']
+
+            self.ts.log_debug(v_steps_dict)
+            return v_steps_dict
 
 #class VoltWatt(EutParameters, UtilParameters, DataLogging, ImbalanceComponent):
 class VoltWatt(EutParameters, UtilParameters):
@@ -1323,6 +1397,8 @@ class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
 
         DataLogging.__init__(self)
         CriteriaValidation.__init__(self, criteria_mode=criteria_mode)
+        ImbalanceComponent.__init__(self)
+
 """
 This section is for Ride-Through test
 """

@@ -281,67 +281,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                         '''
                         ts.log_debug('Initial EUT VV settings are %s' % eut.volt_var())
 
-
-                    v_steps_dict = collections.OrderedDict()
-                    a_v = ActiveFunction.MRA['V'] * 1.5
-
-                    ActiveFunction.set_step_label(starting_label='G')
-
-                    # Capacitive test
-                    # Starting from step F
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V3'] - a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V3'] + a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = (v_pairs['V3'] + v_pairs['V4']) / 2
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V4'] - a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V4'] + a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_high - a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V4'] + a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V4'] - a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = (v_pairs['V3'] + v_pairs['V4']) / 2
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V3'] + a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V3'] - a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_ref*v_nom
-
-                    # Inductive test
-                    # Step S
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V2'] + a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V2'] - a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = (v_pairs['V1'] + v_pairs['V2']) / 2
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V1'] + a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V1'] - a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_low + a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V1'] - a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V1'] + a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = (v_pairs['V1'] + v_pairs['V2']) / 2
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V2'] - a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_pairs['V2'] + a_v
-                    v_steps_dict[ActiveFunction.get_step_label()] = v_ref*v_nom
-
-
-                    for step, target in v_steps_dict.items():
-                        v_steps_dict.update({step: round(target, 2)})
-                        if target > v_high:
-                            v_steps_dict.update({step: v_high})
-                        elif target < v_low:
-                            v_steps_dict.update({step: v_low})
-
-                    #Skips steps when V4 is higher than Vmax of EUT
-                    if v_pairs['V4'] > v_high:
-                        ts.log_debug('Since V4 is higher than Vmax, Skipping a few steps')
-                        del v_steps_dict['Step J']
-                        del v_steps_dict['Step K']
-                        del v_steps_dict['Step M']
-                        del v_steps_dict['Step N']
-
-                    # Skips steps when V1 is lower than Vmin of EUT
-                    if v_pairs['V1'] < v_low:
-                        ts.log_debug('Since V1 is lower than Vmin, Skipping a few steps')
-                        del v_steps_dict['Step V']
-                        del v_steps_dict['Step W']
-                        del v_steps_dict['Step Y']
-                        del v_steps_dict['Step Z']
-
-                    ts.log_debug(v_steps_dict)
+                    v_steps_dict = ActiveFunction.create_vv_dict_steps(v_ref=v_ref)
 
                     dataset_filename = 'VV_%s_PWR_%d_vref_%d' % (vv_curve, power * 100, v_ref*100)
                     ActiveFunction.reset_filename(filename=dataset_filename)
@@ -350,10 +290,9 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     daq.data_capture(True)
 
                     for step_label, v_step in v_steps_dict.items():
-                        #v_step_dict_updated = {V: v_step}
+
                         ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_step, step_label))
-                        #q_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
-                        #ts.log_debug(q_initial)
+
                         ActiveFunction.start(daq=daq, step_label=step_label)
 
                         if grid is not None:
