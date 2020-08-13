@@ -47,10 +47,11 @@ import numpy as np
 import collections
 import cmath
 
-
-
-
-
+VW = 'VW'
+V = 'V'
+F = 'F'
+P = 'P'
+Q = 'Q'
 
 def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
 
@@ -91,13 +92,20 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         absorb['p_min_prime'] = ts.param_value('eut_vw.p_min_prime')
 
         """
+        Version validation
+        """
+        p1547.VersionValidation(script_version=ts.info.version)
+        """
         A separate module has been create for the 1547.1 Standard
         """
-        lib_1547 = p1547.module_1547(ts=ts, aif='VW', absorb=absorb)
-        ts.log_debug("1547.1 Library configured for %s" % lib_1547.get_test_name())
+        ActiveFunction = p1547.ActiveFunction(ts=ts,
+                                              functions=[VW],
+                                              script_name='Volt-Watt',
+                                              criteria_mode=[True, True, True])
+        ts.log_debug("1547.1 Library configured for %s" % ActiveFunction.get_script_name())
 
         # result params
-        result_params = lib_1547.get_rslt_param_plot()
+        result_params = ActiveFunction.get_rslt_param_plot()
 
         '''
         a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
@@ -114,7 +122,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
 
         # DAS soft channels
         #das_points = {'sc': ('P_TARGET', 'P_TARGET_MIN', 'P_TARGET_MAX', 'P_MEAS', 'V_TARGET','V_MEAS','event')}
-        das_points = lib_1547.get_sc_points()
+        das_points = ActiveFunction.get_sc_points()
 
         # initialize data acquisition system
         daq = das.das_init(ts, sc_points=das_points['sc'])
@@ -155,7 +163,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
         '''
         # grid simulator is initialized with test parameters and enabled
-        grid = gridsim.gridsim_init(ts)  # Turn on AC so the EUT can be initialized
+        grid = gridsim.gridsim_init(ts, support_interfaces={'hil': chil})  # Turn on AC so the EUT can be initialized
         if grid is not None:
             grid.voltage(v_nom)
 
@@ -163,7 +171,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         result_summary_filename = 'result_summary.csv'
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
-        result_summary.write(lib_1547.get_rslt_sum_col_name())
+        result_summary.write(ActiveFunction.get_rslt_sum_col_name())
 
 
 
@@ -178,13 +186,14 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         '''
         for vw_curve in vw_curves:
             ts.log('Starting test with characteristic curve %s' % (vw_curve))
-            v_pairs = lib_1547.get_params(curve=vw_curve)
-            a_v = lib_1547.MSA_V * 1.5
+            ActiveFunction.reset_curve(vw_curve)
+            ActiveFunction.reset_time_settings(tr=vw_response_time[vw_curve], number_tr=2)
+            v_pairs = ActiveFunction.get_params(curve=vw_curve, function=VW)
+            #a_v = ActiveFunction.MSA_V * 1.5
             '''
             t) Repeat steps d) through t) at EUT power set at 20% and 66% of rated power.
             '''
             for power in pwr_lvls:
-
 
                 '''
                 d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
@@ -230,85 +239,35 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
                     vw_params = {'Ena': True, 'ActCrv': 1, 'curve': vw_curve_params}
                     ts.log_debug('Writing the following params to EUT: %s' % vw_params)
                     eut.volt_watt(params=vw_params)
-                    #eut.volt_var(params={'Ena': False})
-                    #eut.fixed_pf(params={'Ena': False})
+
                     '''
                     f) Verify volt-watt mode is reported as active and that the correct characteristic is reported.
                     '''
                     ts.log_debug('Initial EUT VW settings are %s' % eut.volt_watt())
 
                 '''
-                g) Begin the adjustment towards V_h. Step the AC test source voltage to a_v below V_1.
-
-                STD_CHANGE: When V2 >= VH, some steps should be skipped.
-                k) If V2 is less than VH, step the AC test source voltage to av above V2, else skip to step o).
-
-                JAY NOTE: VRT requirements are such that VH should always be larger than V2 (1.1 pu). DER will operate
-                within the 0.88 - 1.1 pu range continuously.
+                Refer to P1547 Library and IEEE1547.1 standard for steps 
                 '''
-                #Setting starting letter for label
-                lib_1547.set_step_label('G')
-                v_steps_dict = collections.OrderedDict()
-                #Step G
-                v_steps_dict[lib_1547.get_step_label()] = v_min + a_v
-                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V1'] - a_v
-                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V1'] + a_v
-                v_steps_dict[lib_1547.get_step_label()] = (v_pairs['V2'] + v_pairs['V1']) / 2
-                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V2'] - a_v
-                #Step K
-                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V2'] + a_v
-                v_steps_dict[lib_1547.get_step_label()] = v_max - a_v
-                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V2'] + a_v
-                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V2'] - a_v
-                #Step P
-                v_steps_dict[lib_1547.get_step_label()] = (v_pairs['V1'] + v_pairs['V2']) / 2
-                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V1'] + a_v
-                v_steps_dict[lib_1547.get_step_label()] = v_pairs['V1'] - a_v
-                v_steps_dict[lib_1547.get_step_label()] = v_min + a_v
-
-                if v_pairs['V2'] > v_max:
-                    del v_steps_dict['Step K']
-                    del v_steps_dict['Step L']
-                    del v_steps_dict['Step M']
-                    del v_steps_dict['Step N']
-                    del v_steps_dict['Step O']
-
-                # Ensure voltage step doesn't exceed the EUT boundaries and round V to 2 decimal places
-                for step, voltage in v_steps_dict.items():
-                    v_steps_dict.update({step: np.around(voltage, 2)})
-                    if voltage > v_max:
-                        ts.log("{0} voltage step (value : {1}) changed to VH (v_max)".format(step, voltage))
-                        v_steps_dict.update({step: v_max})
-                    elif voltage < v_min:
-                        ts.log("{0} voltage step (value : {1}) changed to VL (v_min)".format(step, voltage))
-                        v_steps_dict.update({step: v_min})
-
-                ts.log_debug('curve points:  %s' % v_pairs)
+                v_steps_dict = ActiveFunction.create_vw_dict_steps()
 
                 # Configure the data acquisition system
                 ts.log('Starting data capture for power = %s' % power)
                 dataset_filename = ('VW_{0}_PWR_{1}'.format(vw_curve, power))
+                ActiveFunction.reset_filename(filename=dataset_filename)
                 ts.log('------------{}------------'.format(dataset_filename))
                 daq.data_capture(True)
 
                 for step_label, v_step in v_steps_dict.items():
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_step, step_label))
-                    p_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
+                    ActiveFunction.start(daq=daq, step_label=step_label)
+
                     step_dict = {'V': v_step}
                     if grid is not None:
                         grid.voltage(step_dict['V'])
-                    lib_1547.process_data(
-                        daq=daq,
-                        tr=vw_response_time[vw_curve],
-                        step=step_label,
-                        initial_value=p_initial,
-                        curve=vw_curve,
-                        pwr_lvl=power,
-                        x_target=step_dict,
-                        y_target=None,
-                        result_summary=result_summary,
-                        filename=dataset_filename
-                    )
+
+                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_step)
+                    ActiveFunction.evaluate_criterias()
+                    result_summary.write(ActiveFunction.write_rslt_sum())
 
                 # create result workbook
                 ts.log('Sampling complete')
@@ -321,13 +280,11 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
                 ts.result_file(dataset_filename, params=result_params)
                 result = script.RESULT_COMPLETE
 
-        return result
 
     except script.ScriptFail as e:
         reason = str(e)
         if reason:
             ts.log_error(reason)
-
 
     except Exception as e:
         if dataset_filename is not None:
@@ -338,8 +295,8 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
             ds.to_csv(ts.result_file_path(dataset_filename))
             result_params['plot.title'] = dataset_filename.split('.csv')[0]
             ts.result_file(dataset_filename, params=result_params)
+        ts.log_error('Test script exception: %s' % traceback.format_exc())
         raise
-
 
     finally:
         if daq is not None:
@@ -359,6 +316,8 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
             eut.close()
         if result_summary is not None:
             result_summary.close()
+
+    return result
 
 
 def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
@@ -399,12 +358,11 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
         """
         A separate module has been create for the 1547.1 Standard
         """
-        lib_1547 = p1547.module_1547(ts=ts, aif='VW', imbalance_angle_fix=imbalance_fix)
-        ts.log_debug('1547.1 Library configured for %s' % lib_1547.get_test_name())
-
-
-
-
+        ActiveFunction = p1547.ActiveFunction(ts=ts,
+                                              functions=[VW],
+                                              script_name='Volt-Watt',
+                                              criteria_mode=[True, True, True])
+        ts.log_debug('1547.1 Library configured for %s' % ActiveFunction.get_script_name())
 
         '''
         a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
@@ -415,7 +373,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
             chil.config()
 
         # grid simulator is initialized with test parameters and enabled
-        grid = gridsim.gridsim_init(ts)  # Turn on AC so the EUT can be initialized
+        grid = gridsim.gridsim_init(ts, support_interfaces={'hil': chil})  # Turn on AC so the EUT can be initialized
         if grid is not None:
             grid.voltage(v_nom)
 
@@ -427,7 +385,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
 
         # DAS soft channels
         #das_points = {'sc': ('P_TARGET', 'P_TARGET_MIN', 'P_TARGET_MAX', 'P_MEAS', 'V_TARGET', 'V_MEAS', 'event')}
-        das_points = lib_1547.get_sc_points()
+        das_points = ActiveFunction.get_sc_points()
         # initialize data acquisition system
         daq = das.das_init(ts, sc_points=das_points['sc'])
         if daq is not None:
@@ -447,7 +405,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
         if eut is not None:
             eut.config()
             #Disable all functions on EUT
-            eut.deactivate_all_fct()
+            #eut.deactivate_all_fct()
             ts.log_debug(eut.measurements())
             ts.log_debug(
                 'L/HVRT and trip parameters set to the widest range : v_min: {0} V, v_max: {1} V'.format(v_min, v_max))
@@ -515,8 +473,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                 if eut is not None:
                     #eut.deactivate_all_fct()
                     pass
-                v_pairs = lib_1547.get_params(curve=vw_curve)
-
+                v_pairs = ActiveFunction.get_params(curve=vw_curve, function=VW)
 
                 # it is assumed the EUT is on
                 eut = der.der_init(ts)
@@ -541,8 +498,8 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                 """
                 Test start
                 """
-                lib_1547.set_step_label('G')
-                daq.sc['event'] = lib_1547.get_step_label()
+                ActiveFunction.set_step_label('G')
+                daq.sc['event'] = ActiveFunction.get_step_label()
                 daq.data_sample()
                 ts.log('Wait for steady state to be reached')
                 ts.sleep(2 * vw_response_time[vw_curve])
@@ -558,87 +515,45 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                 '''
 
                 if grid is not None:
-                    step = lib_1547.get_step_label()
+                    step_label = ActiveFunction.get_step_label()
                     ts.log('Voltage step: setting Grid simulator to case A (IEEE 1547.1-Table 24)(%s)' % step)
-                    initial_values = lib_1547.get_initial_value(daq=daq, step=step)
+                    ActiveFunction.start(daq=daq, step_label=step_label)
                     step_dict = {'V': v_nom*(1.07+0.91+0.91)/3}
-                    lib_1547.set_grid_asymmetric(grid=grid, case='case_a')
-                    lib_1547.process_data(
-                        daq=daq,
-                        tr=vw_response_time[vw_curve],
-                        step=step,
-                        initial_value=initial_values,
-                        curve=vw_curve,
-                        pwr_lvl=1.0,
-                        x_target=step_dict,
-                        result_summary=result_summary,
-                        filename=dataset_filename
-                    )
+                    ActiveFunction.set_grid_asymmetric(grid=grid, case='case_a')
 
                 '''
                 Step i) For multiphase units, step the AC test source voltage to VN.
                 '''
                 if grid is not None:
-                    step = lib_1547.get_step_label()
+                    step_label = ActiveFunction.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
-                    initial_values = lib_1547.get_initial_value(daq=daq, step=step)
+                    ActiveFunction.start(daq=daq, step_label=step_label)
                     step_dict = {'V': v_nom}
                     grid.voltage(step_dict['V'])
-                    lib_1547.process_data(
-                        daq=daq,
-                        tr=vw_response_time[vw_curve],
-                        step=step,
-                        curve=vw_curve,
-                        pwr_lvl=1.0,
-                        x_target=step_dict,
-                        initial_value=initial_values,
-                        result_summary=result_summary,
-                        filename=dataset_filename
-                    )
+
                 '''
                 Step j) For multiphase units, step the AC test source voltage to Case B from Table 24
                 '''
                 if grid is not None:
-                    step = lib_1547.get_step_label()
+                    step_label = ActiveFunction.get_step_label()
                     ts.log('Voltage step: setting Grid simulator to case B (IEEE 1547.1-Table 24)(%s)' % step)
-                    initial_values = lib_1547.get_initial_value(daq=daq, step=step)
+                    ActiveFunction.start(daq=daq, step_label=step_label)
                     step_dict = {'V': v_nom*(0.91+1.07+1.07)/3}
-                    lib_1547.set_grid_asymmetric(grid=grid, case='case_b')
-                    lib_1547.process_data(
-                        daq=daq,
-                        tr=vw_response_time[vw_curve],
-                        step=step,
-                        curve=vw_curve,
-                        pwr_lvl=1.0,
-                        x_target=step_dict,
-                        initial_value=initial_values,
-                        result_summary=result_summary,
-                        filename=dataset_filename
-                    )
+                    ActiveFunction.set_grid_asymmetric(grid=grid, case='case_b')
 
                 '''
                 Step k) For multiphase units, step the AC test source voltage to VN.
                 '''
                 if grid is not None:
-                    step = lib_1547.get_step_label()
+                    step_label = ActiveFunction.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
-                    initial_values = lib_1547.get_initial_value(daq=daq, step=step)
+                    ActiveFunction.start(daq=daq, step_label=step_label)
                     step_dict = {'V': v_nom}
                     grid.voltage(step_dict['V'])
-                    lib_1547.process_data(
-                        daq=daq,
-                        tr=vw_response_time[vw_curve],
-                        step=step,
-                        curve=vw_curve,
-                        pwr_lvl=1.0,
-                        x_target=step_dict,
-                        initial_value=initial_values,
-                        result_summary=result_summary,
-                        filename=dataset_filename
-                    )
+
 
                 # Get the rslt parameters for plot
-                result_params = lib_1547.get_rslt_param_plot()
+                result_params = ActiveFunction.get_rslt_param_plot()
                 ts.log('Sampling complete')
                 dataset_filename = dataset_filename + ".csv"
                 daq.data_capture(False)

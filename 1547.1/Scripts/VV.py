@@ -91,14 +91,17 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
         phases = ts.param_value('eut.phases')
 
         """
+        Version validation
+        """
+        p1547.VersionValidation(script_version=ts.info.version)
+
+        """
         A separate module has been create for the 1547.1 Standard
         """
-        #lib_1547 = p1547.module_1547(ts=ts, aif=VV)
-        #ActiveFunction = p1547.ActiveFunction(ts=ts, imbalance=False)
         ActiveFunction = p1547.ActiveFunction(ts=ts,
                                               functions=[VV],
                                               script_name='Volt-Var',
-                                              criteria_mode=[True,True,True])
+                                              criteria_mode=[True, True, True])
         ts.log_debug("1547.1 Library configured for %s" % ActiveFunction.get_script_name())
 
         # result params
@@ -186,7 +189,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
         '''
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
         '''
-        grid = gridsim.gridsim_init(ts,support_interfaces={'hil': chil})  # Turn on AC so the EUT can be initialized
+        grid = gridsim.gridsim_init(ts, support_interfaces={'hil': chil})  # Turn on AC so the EUT can be initialized
         if grid is not None:
             grid.voltage(v_nom)
 
@@ -214,7 +217,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             ActiveFunction.reset_curve(vv_curve)
             ActiveFunction.reset_time_settings(tr=vv_response_time[vv_curve], number_tr=2)
             v_pairs = ActiveFunction.get_params(function=VV, curve=vv_curve)
-            ts.log_debug('v_pairs:%s' % v_pairs)
+            #ts.log_debug('v_pairs:%s' % v_pairs)
 
             '''
             ff) Repeat test steps d) through ee) at EUT power set at 20% and 66% of rated power.
@@ -330,7 +333,6 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             ts.result_file(dataset_filename, params=result_params)
         ts.log_error('Test script exception: %s' % traceback.format_exc())
 
-
     finally:
         if daq is not None:
             daq.close()
@@ -429,8 +431,9 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
 
         # pv simulator is initialized with test parameters and enabled
         pv = pvsim.pvsim_init(ts)
-        pv.power_set(p_rated)
-        pv.power_on()  # Turn on DC so the EUT can be initialized
+        if pv is not None:
+            pv.power_set(p_rated)
+            pv.power_on()  # Turn on DC so the EUT can be initialized
 
         # DAS soft channels
         das_points = ActiveFunction.get_sc_points()

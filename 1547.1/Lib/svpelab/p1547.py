@@ -78,6 +78,10 @@ class p1547Error(Exception):
 """
 This section is for EUT parameters needed such as V, P, Q, etc.
 """
+def VersionValidation(script_version):
+    if script_version != VERSION:
+        raise p1547Error(f'Error in p1547 library version is {VERSION} while script version is {script_version}.'
+                         f'Update library and script version accordingly.')
 
 class EutParameters(object):
     def __init__(self, ts):
@@ -607,6 +611,7 @@ class DataLogging:
                                      (meas_value, daq.sc['%s_MEAS' % meas_value],
                                       daq.sc['%s_TARGET_MIN' % meas_value], daq.sc['%s_TARGET_MAX' % meas_value]))
                 except Exception as e:
+                    self.ts.log_error('Test script exception: %s' % traceback.format_exc())
                     self.ts.log_debug('Measured value (%s) not recorded: %s' % (meas_value, e))
 
             #self.tr_value[tr_iter]["timestamp"] = tr_
@@ -634,7 +639,7 @@ class DataLogging:
             return round(q_value, 1)
 
         if function == VW:
-            vw_pairs = self.get_params(function=VW, curve=self.region)
+            vw_pairs = self.get_params(function=VW, curve=self.curve)
             x = [vw_pairs['V1'], vw_pairs['V2']]
             y = [vw_pairs['P1'], vw_pairs['P2']]
             p_value = float(np.interp(value, x, y))
@@ -962,29 +967,17 @@ class VoltVar(EutParameters, UtilParameters):
     y_criteria = {'Q': VV}
     script_complete_name = 'Volt-Var'
 
-    def __init__(self, ts, imbalance=False):
-        self.ts = ts
+    def __init__(self, ts):
         self.criteria_mode = [True, True, True]
         EutParameters.__init__(self, ts)
         UtilParameters.__init__(self)
-        #DataLogging.__init__(self, meas_values=['V', 'Q'], x_criteria=['V'], y_criteria=['Q'])
-        #CriteriaValidation.__init__(self, self.criteria_mode)
-        if imbalance:
-            ImbalanceComponent.__init__(self)
-        #self.pairs = {}
-        #self.param = [0, 0, 0, 0]
-        #self.target_dict = []
-        #self.script_name = VV
-        #self.script_complete_name = 'Volt-Var'
-        #self._config()
         VoltVar.set_params(self)
 
-    #def _config(self):
-
-        # Create the pairs need
-        # self.set_imbalance_config()
-
     def set_params(self):
+        """
+        Function to set VV curves points
+        :return:
+        """
         self.param[VV] = {}
         self.param[VV][1] = {
             'V1': round(0.92 * self.v_nom, 2),
@@ -1091,38 +1084,29 @@ class VoltVar(EutParameters, UtilParameters):
             self.ts.log_debug(v_steps_dict)
             return v_steps_dict
 
-#class VoltWatt(EutParameters, UtilParameters, DataLogging, ImbalanceComponent):
 class VoltWatt(EutParameters, UtilParameters):
+
+    meas_values = ['V', 'Q', 'P']
+    x_criteria = ['V']
+    y_criteria = {'P': VW}
+    script_complete_name = 'Volt-Watt'
 
     """
     param curve: choose curve characterization [1-3] 1 is default
     """
-    # Default curve initialization will be 1
-    def __init__(self, ts, curve=1):
-        EutParameters.__init__(self, ts)
-        self.curve = curve
-        self.pairs = {}
-        self.param = [0, 0, 0, 0]
-        self.target_dict = []
-        #self.script_name = VW
-        self.script_complete_name = 'Volt-Watt'
-        self.rslt_sum_col_name = 'P_TR_ACC_REQ, TR_REQ, P_FINAL_ACC_REQ, V_MEAS, P_MEAS, P_TARGET, P_TARGET_MIN,' \
-                                 'P_TARGET_MAX, STEP, FILENAME\n'
+    def __init__(self, ts):
+        self.ts = ts
         self.criteria_mode = [True, True, True]
-        # Values to be recorded
-        self.meas_values = ['V', 'P']
-        # Values defined as target/step values which will be controlled as step
-        self.x_criteria = ['V']
-        # Values defined as values which will be controlled as step
-        self.y_criteria = ['P']
-        self._config()
-
-    def _config(self):
-        self.set_params()
-        # Create the pairs need
-        # self.set_imbalance_config()
+        EutParameters.__init__(self, ts)
+        UtilParameters.__init__(self)
+        VoltWatt.set_params(self)
 
     def set_params(self):
+        """
+        Function to set VW curves points
+        :return:
+        """
+        self.param[VW] = {}
         self.param[VW][1] = {
             'V1': round(1.06 * self.v_nom, 2),
             'V2': round(1.10 * self.v_nom, 2),
@@ -1138,6 +1122,72 @@ class VoltWatt(EutParameters, UtilParameters):
             'V2': round(1.10 * self.v_nom, 2),
             'P1': round(self.p_rated, 2)
         }
+
+        if self.p_min > (0.2 * self.p_rated):
+            self.param[VW][1]['P2'] = int(0.2 * self.p_rated)
+            self.param[VW][2]['P2'] = int(0.2 * self.p_rated)
+            self.param[VW][3]['P2'] = int(0.2 * self.p_rated)
+        else:
+            self.param[VW][1]['P2'] = int(self.p_min)
+            self.param[VW][2]['P2'] = int(self.p_min)
+            self.param[VW][3]['P2'] = int(self.p_min)
+        if self.absorb == 'Yes':
+            self.param[VW][1]['P2'] = 0
+            self.param[VW][2]['P2'] = self.p_rated_prime
+            self.param[VW][3]['P2'] = self.p_rated_prime
+
+        self.ts.log_debug('VW settings: %s' % self.param[VW])
+
+    def create_vw_dict_steps(self, mode='Normal'):
+        """
+        This function creates the dictionary steps for Volt-Watt
+        :param mode (string): Verifies if VW is operating under normal or imbalanced grid mode
+        :return: vw_dict_steps (dictionary)
+        """
+        if mode == 'Normal':
+            # Setting starting letter for label
+            self.set_step_label('G')
+            v_steps_dict = collections.OrderedDict()
+            v_pairs = self.get_params(curve=self.curve, function=VW)
+            a_v = self.MRA['V'] * 1.5
+
+            # Step G
+            v_steps_dict[self.get_step_label()] = self.v_low + a_v
+            v_steps_dict[self.get_step_label()] = v_pairs['V1'] - a_v
+            v_steps_dict[self.get_step_label()] = v_pairs['V1'] + a_v
+            v_steps_dict[self.get_step_label()] = (v_pairs['V2'] + v_pairs['V1']) / 2
+            v_steps_dict[self.get_step_label()] = v_pairs['V2'] - a_v
+            # Step K
+            v_steps_dict[self.get_step_label()] = v_pairs['V2'] + a_v
+            v_steps_dict[self.get_step_label()] = self.v_high - a_v
+            v_steps_dict[self.get_step_label()] = v_pairs['V2'] + a_v
+            v_steps_dict[self.get_step_label()] = v_pairs['V2'] - a_v
+            # Step P
+            v_steps_dict[self.get_step_label()] = (v_pairs['V1'] + v_pairs['V2']) / 2
+            v_steps_dict[self.get_step_label()] = v_pairs['V1'] + a_v
+            v_steps_dict[self.get_step_label()] = v_pairs['V1'] - a_v
+            v_steps_dict[self.get_step_label()] = self.v_low + a_v
+
+            if v_pairs['V2'] > self.v_high:
+                del v_steps_dict['Step K']
+                del v_steps_dict['Step L']
+                del v_steps_dict['Step M']
+                del v_steps_dict['Step N']
+                del v_steps_dict['Step O']
+
+            # Ensure voltage step doesn't exceed the EUT boundaries and round V to 2 decimal places
+            for step, voltage in v_steps_dict.items():
+                v_steps_dict.update({step: np.around(voltage, 2)})
+                if voltage > self.v_high:
+                    self.ts.log("{0} voltage step (value : {1}) changed to VH (v_max)".format(step, voltage))
+                    v_steps_dict.update({step: self.v_high})
+                elif voltage < self.v_low:
+                    self.ts.log("{0} voltage step (value : {1}) changed to VL (v_min)".format(step, voltage))
+                    v_steps_dict.update({step: self.v_low})
+
+            self.ts.log_debug('curve points:  %s' % v_pairs)
+
+            return v_steps_dict
 
 class ConstantPowerFactor(EutParameters, UtilParameters, ImbalanceComponent):
     def __init__(self, ts, curve=1):
