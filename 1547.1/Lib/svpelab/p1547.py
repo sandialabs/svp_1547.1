@@ -373,8 +373,11 @@ class DataLogging:
         for meas_value in self.meas_values:
             row_data.append('%s_MEAS' % meas_value)
 
+            self.ts.log(f'xs={xs} and meas={meas_value}')
             if meas_value in xs:
+                self.ts.log(f'v')
                 row_data.append('%s_TARGET' % meas_value)
+                self.ts.log(f'v')
 
             elif meas_value in ys:
                 row_data.append('%s_TARGET' % meas_value)
@@ -385,7 +388,7 @@ class DataLogging:
         row_data.append('FILENAME')
 
         self.rslt_sum_col_name = ','.join(row_data) + '\n'
-
+        self.ts.log_debug(f'summary column={self.rslt_sum_col_name}')
     def get_rslt_param_plot(self):
         """
         This getters function creates and returns all the predefined columns for the plotting process

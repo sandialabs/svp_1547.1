@@ -189,7 +189,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
             ActiveFunction.reset_curve(vw_curve)
             ActiveFunction.reset_time_settings(tr=vw_response_time[vw_curve], number_tr=2)
             v_pairs = ActiveFunction.get_params(curve=vw_curve, function=VW)
-            #a_v = ActiveFunction.MSA_V * 1.5
+
             '''
             t) Repeat steps d) through t) at EUT power set at 20% and 66% of rated power.
             '''
@@ -364,6 +364,8 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                                               criteria_mode=[True, True, True])
         ts.log_debug('1547.1 Library configured for %s' % ActiveFunction.get_script_name())
 
+        ActiveFunction.set_imbalance_config(imbalance_angle_fix=imbalance_fix)
+
         '''
         a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
         '''
@@ -386,8 +388,10 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
         # DAS soft channels
         #das_points = {'sc': ('P_TARGET', 'P_TARGET_MIN', 'P_TARGET_MAX', 'P_MEAS', 'V_TARGET', 'V_MEAS', 'event')}
         das_points = ActiveFunction.get_sc_points()
+
         # initialize data acquisition system
         daq = das.das_init(ts, sc_points=das_points['sc'])
+
         if daq is not None:
             daq.sc['P_TARGET'] = p_rated
             daq.sc['P_TARGET_MIN'] = 100
@@ -395,7 +399,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
             daq.sc['V_TARGET'] = v_nom
             daq.sc['event'] = 'None'
 
-            ts.log('DAS device: %s' % daq.info())
+        ts.log('DAS device: %s' % daq.info())
 
         '''
         b) Set all voltage trip parameters to the widest range of adjustability. Disable all reactive/active power
@@ -452,9 +456,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
         result_summary_filename = 'result_summary.csv'
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
-
-        result_summary.write('P_TR_ACC_REQ, TR_REQ, P_FINAL_ACC_REQ, V_MEAS, P_MEAS, P_TARGET, P_TARGET_MIN, '
-                             'P_TARGET_MAX, STEP, FILENAME\n')
+        result_summary.write(ActiveFunction.get_rslt_sum_col_name())
 
         '''
         d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
@@ -466,6 +468,7 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
 
         for imbalance_response in imbalance_resp:
             for vw_curve in vw_curves:
+
                 '''
                 e) Set EUT volt-watt parameters to the values specified by Characteristic 1. All other function be
                 turned off.
@@ -473,6 +476,9 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                 if eut is not None:
                     #eut.deactivate_all_fct()
                     pass
+                ts.log('Starting test with characteristic curve %s' % (vw_curve))
+                ActiveFunction.reset_curve(vw_curve)
+                ActiveFunction.reset_time_settings(tr=vw_response_time[vw_curve], number_tr=2)
                 v_pairs = ActiveFunction.get_params(curve=vw_curve, function=VW)
 
                 # it is assumed the EUT is on
@@ -516,41 +522,48 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
 
                 if grid is not None:
                     step_label = ActiveFunction.get_step_label()
-                    ts.log('Voltage step: setting Grid simulator to case A (IEEE 1547.1-Table 24)(%s)' % step)
+                    ts.log('Voltage step: setting Grid simulator to case A (IEEE 1547.1-Table 24)(%s)' % step_label)
                     ActiveFunction.start(daq=daq, step_label=step_label)
-                    step_dict = {'V': v_nom*(1.07+0.91+0.91)/3}
-                    ActiveFunction.set_grid_asymmetric(grid=grid, case='case_a')
-
+                    v_target=ActiveFunction.set_grid_asymmetric(grid=grid, case='case_a')
+                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
+                    ActiveFunction.evaluate_criterias()
+                    result_summary.write(ActiveFunction.write_rslt_sum())
                 '''
                 Step i) For multiphase units, step the AC test source voltage to VN.
                 '''
                 if grid is not None:
                     step_label = ActiveFunction.get_step_label()
-                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
+                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step_label))
                     ActiveFunction.start(daq=daq, step_label=step_label)
-                    step_dict = {'V': v_nom}
-                    grid.voltage(step_dict['V'])
+                    v_target = v_nom
+                    grid.voltage(v_target)
+                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
+                    ActiveFunction.evaluate_criterias()
+                    result_summary.write(ActiveFunction.write_rslt_sum())
 
                 '''
                 Step j) For multiphase units, step the AC test source voltage to Case B from Table 24
                 '''
                 if grid is not None:
                     step_label = ActiveFunction.get_step_label()
-                    ts.log('Voltage step: setting Grid simulator to case B (IEEE 1547.1-Table 24)(%s)' % step)
+                    ts.log('Voltage step: setting Grid simulator to case B (IEEE 1547.1-Table 24)(%s)' % step_label)
                     ActiveFunction.start(daq=daq, step_label=step_label)
-                    step_dict = {'V': v_nom*(0.91+1.07+1.07)/3}
-                    ActiveFunction.set_grid_asymmetric(grid=grid, case='case_b')
-
+                    v_target=ActiveFunction.set_grid_asymmetric(grid=grid, case='case_b')
+                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
+                    ActiveFunction.evaluate_criterias()
+                    result_summary.write(ActiveFunction.write_rslt_sum())
                 '''
                 Step k) For multiphase units, step the AC test source voltage to VN.
                 '''
                 if grid is not None:
                     step_label = ActiveFunction.get_step_label()
-                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
+                    ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step_label))
                     ActiveFunction.start(daq=daq, step_label=step_label)
-                    step_dict = {'V': v_nom}
-                    grid.voltage(step_dict['V'])
-
+                    v_target = v_nom
+                    grid.voltage(v_target)
+                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
+                    ActiveFunction.evaluate_criterias()
+                    result_summary.write(ActiveFunction.write_rslt_sum())
 
                 # Get the rslt parameters for plot
                 result_params = ActiveFunction.get_rslt_param_plot()
@@ -693,7 +706,7 @@ def run(test_script):
 
     sys.exit(rc)
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.3.0')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.4.2')
 
 # VW test parameters
 info.param_group('vw', label='Test Parameters')
