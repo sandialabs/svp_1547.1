@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -106,3 +107,12 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+=======
+*
+!*/
+!.gitignore
+!Scripts/*.py
+!Suites/*.ste
+!Tests/*.tst
+!Lib/svpelab/p1547.py
+>>>>>>> V1.4.0
