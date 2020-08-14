@@ -164,7 +164,7 @@ def test_run():
         # DAS soft channels
         das_points = ActiveFunction.get_sc_points()
         # initialize data acquisition
-        daq = das.das_init(ts, sc_points=das_points['sc'])
+        daq = das.das_init(ts, sc_points=das_points['sc'], support_interfaces={'hil': chil})
 
         if daq is not None:
             daq.sc['V_MEAS'] = 120
@@ -181,30 +181,31 @@ def test_run():
         control functions.
         """
         # it is assumed the EUT is on
-        eut = der.der_init(ts)
+        eut = der.der_init(ts, support_interfaces={'hil': chil})
         if eut is not None:
             eut.config()
             ts.log_debug('If not done already, set L/HVRT and trip parameters to the widest range of adjustability.')
 
         # Special considerations for CHIL ASGC/Typhoon startup #
         if chil is not None:
-            inv_power = eut.measurements().get('W')
-            timeout = 120.
-            if inv_power <= p_rated * 0.85:
-                pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
-                ts.sleep(3)
-                eut.connect(params={'Conn': True})
-            while inv_power <= p_rated * 0.85 and timeout >= 0:
-                ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
-                       (inv_power, timeout))
-                ts.sleep(1)
-                timeout -= 1
+            if eut.measurements() is not None:
                 inv_power = eut.measurements().get('W')
-                if timeout == 0:
-                    result = script.RESULT_FAIL
-                    raise der.DERError('Inverter did not start.')
-            ts.log('Waiting for EUT to ramp up')
-            ts.sleep(8)
+                timeout = 120.
+                if inv_power <= p_rated * 0.85:
+                    pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                    ts.sleep(3)
+                    eut.connect(params={'Conn': True})
+                while inv_power <= p_rated * 0.85 and timeout >= 0:
+                    ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                        (inv_power, timeout))
+                    ts.sleep(1)
+                    timeout -= 1
+                    inv_power = eut.measurements().get('W')
+                    if timeout == 0:
+                        result = script.RESULT_FAIL
+                        raise der.DERError('Inverter did not start.')
+                ts.log('Waiting for EUT to ramp up')
+                ts.sleep(8)
 
         """
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
@@ -261,14 +262,17 @@ def test_run():
                 ts.log('------------{}------------'.format(dataset_filename))
                 ActiveFunction.reset_filename(filename=dataset_filename)
                 # Start the data acquisition systems
-                daq.data_capture(True)
                 daq.sc['PF_TARGET'] = pf_target
                 if eut is not None:
-                    parameters = {'Ena': True, 'PF': pf_target}
+                    parameters = {'Ena': True, 'PF': pf_target,"RvrtTms":pf_response_time}
                     ts.log('PF set: %s' % parameters)
                     eut.fixed_pf(params=parameters)
                     pf_setting = eut.fixed_pf()
                     ts.log('PF setting read: %s' % pf_setting)
+                if chil is not None:
+                    ts.log('Start simulation of CHIL')
+                    chil.start_simulation()
+                daq.data_capture(True)
 
                 """
                 f) Wait for steady state to be reached.
