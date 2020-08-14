@@ -221,7 +221,6 @@ class UtilParameters:
         :param type_meas:   (str) Either V, P, PF, I, F, VA, or Q
         :return:            (list of str) List of labeled measurements, e.g., ['AC_VRMS_1', 'AC_VRMS_2', 'AC_VRMS_3']
         """
-        self.ts.log_debug(f'type_array={self.type_meas}')
         meas_root = self.type_meas[type_meas]
 
         if self.phases == 'Single phase':
@@ -527,7 +526,6 @@ class DataLogging:
 
         if isinstance(self.y_criteria, dict):
             for ys in list(self.y_criteria.keys()):
-                self.ts.log_debug(f'ys={ys}')
                 self.initial_value[ys] = {'y_value': self.get_measurement_total(data=data, type_meas=ys, log=False)}
                 daq.sc['%s_MEAS' % ys] = self.initial_value[ys]["y_value"]
         else:
@@ -576,7 +574,6 @@ class DataLogging:
                     self.tr_value['%s_TR_%s_MAX' % (meas_value, i)] = None
         tr_iter = 1
         for tr_ in tr_list:
-            #self.ts.log_debug(f'tr_={tr_list}')
             now = datetime.now()
             if now <= tr_:
                 time_to_sleep = tr_ - datetime.now()
@@ -590,10 +587,8 @@ class DataLogging:
             # update daq.sc values for Y_TARGET, Y_TARGET_MIN, and Y_TARGET_MAX
 
             # store the daq.sc['Y_TARGET'], daq.sc['Y_TARGET_MIN'], and daq.sc['Y_TARGET_MAX'] in tr_value
-            self.ts.log_debug(f'meas_values={self.meas_values}')
             for meas_value in self.meas_values:
                 try:
-                    self.ts.log_debug(f'meas_values={meas_value}')
                     self.tr_value['%s_TR_%s' % (meas_value, tr_iter)] = daq.sc['%s_MEAS' % meas_value]
 
                     self.ts.log('Value %s: %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
@@ -607,8 +602,6 @@ class DataLogging:
                             self.tr_value['%s_TR_TARG_%s' % (meas_value, tr_iter)] = step_value
                             self.ts.log('X Value (%s) = %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
                     elif meas_value in y:
-                        self.ts.log_debug(f'in y meas value {list(step_dict.keys())}')
-                        self.ts.log_debug(f'in y meas value {meas_value in list(step_dict.keys())}')
                         if step_dict is not None:
                             daq.sc['%s_TARGET' % meas_value] = self.update_target_value(step_dict=step_dict,
                                                                                         function=self.y_criteria[meas_value])
@@ -666,24 +659,24 @@ class DataLogging:
             return round(p_value, 1)
 
         if function == CPF:
-            self.ts.log_debug(f'value_dict={step_dict}')
             q_value = math.sqrt(pow(step_dict['P'], 2) * ((1 / pow(step_dict['PF'], 2)) - 1))
             return q_value
 
+        if function == CRP:
+            q_value = step_dict['Q']
+            return round(q_value, 1)
+
     def calculate_min_max_values(self, data, function, step_dict=None):
+
         if function == VV:
             v_meas = self.get_measurement_total(data=data, type_meas='V', log=False)
             target_min = self.update_target_value(v_meas + self.MRA['V'] * 1.5, function=VV) - (self.MRA['Q'] * 1.5)
             target_max = self.update_target_value(v_meas - self.MRA['V'] * 1.5, function=VV) + (self.MRA['Q'] * 1.5)
 
-            return target_min, target_max
-
         elif function == VW:
             v_meas = self.get_measurement_total(data=data, type_meas='V', log=False)
             target_min = self.update_target_value(value=v_meas + self.MRA['V'] * 1.5, function=VW) - (self.MRA['P'] * 1.5)
             target_max = self.update_target_value(value=v_meas - self.MRA['V'] * 1.5, function=VW) + (self.MRA['P'] * 1.5)
-
-            return target_min, target_max
 
         elif function == CPF:
             p_meas = self.get_measurement_total(data=data, type_meas='P', log=False)
@@ -691,9 +684,12 @@ class DataLogging:
                 self.update_target_value(value=p_meas + self.MRA['P'] * 1.5, function=CPF, step_dict=step_dict) - 1.5 * self.MRA['Q']
             target_max = \
                 self.update_target_value(value=p_meas - self.MRA['P'] * 1.5, function=CPF, step_dict=step_dict) + 1.5 * self.MRA['Q']
-            return target_min, target_max
 
+        elif function == CRP:
+            target_min = step_dict['Q']-self.MRA['Q']
+            target_max = step_dict['Q']+self.MRA['Q']
 
+        return target_min, target_max
 class CriteriaValidation:
     def __init__(self, criteria_mode):
         self.criteria_mode = criteria_mode
@@ -741,10 +737,7 @@ class CriteriaValidation:
             The expected output, Y(Tr), at one times the open loop response time,
             is calculated as 90%*(Y_final_tr - Y_initial ) + Y_initial
         """
-        self.ts.log_debug(f'y_criterias={self.y_criteria}')
-
         y = list(self.y_criteria.keys())[0]
-        self.ts.log_debug(f'y={y}')
         mra_y = self.MRA[y]
 
         duration = self.tr_value[f"timestamp_{tr}"] - self.initial_value['timestamp']
@@ -758,12 +751,10 @@ class CriteriaValidation:
             y_start = 0.0  # only look at 90% of target
             mra_t = 0  # direct 90% evaluation without consideration of MRA(time)
         else:
-            #self.ts.log_debug(f'{self.initial_value[y]}')
             y_start = self.initial_value[y]['y_value']
             #y_start = tr_value['%s_INITIAL' % y]
             mra_t = self.MRA['T'] * duration  # MRA(X) = MRA(time) = 0.01*duration
 
-        self.ts.log_debug(self.tr_value)
         y_ss = self.tr_value[f'{y}_TR_TARG_{tr}']
         y_target = self.calculate_open_loop_value(y0=y_start, y_ss=y_ss, duration=duration, tr=tr)  # 90%
         y_meas = self.tr_value[f'{y}_TR_{tr}']
@@ -1234,8 +1225,6 @@ class ConstantPowerFactor(EutParameters, UtilParameters):
         EutParameters.__init__(self, ts)
         UtilParameters.__init__(self)
 
-    def set_params(self):
-        pass
 
 class ConstantReactivePower(EutParameters, UtilParameters):
     meas_values = ['V', 'Q', 'P']
@@ -1249,8 +1238,6 @@ class ConstantReactivePower(EutParameters, UtilParameters):
         EutParameters.__init__(self, ts)
         UtilParameters.__init__(self)
 
-    def set_params(self):
-        pass
 
 """
 This section is for 
