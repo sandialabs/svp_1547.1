@@ -115,6 +115,8 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
         if pv is not None:
             pv.power_set(p_rated)
             pv.power_on()  # Turn on DC so the EUT can be initialized
+            daq.set_dc_measurement(pv)  # send pv obj to daq to get dc measurements
+            ts.sleep(0.5)
 
         # DAS soft channels
         #das_points = {'sc': ('Q_TARGET', 'Q_TARGET_MIN', 'Q_TARGET_MAX', 'Q_MEAS', 'V_TARGET', 'V_MEAS', 'event')}
@@ -185,6 +187,8 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
         grid = gridsim.gridsim_init(ts,support_interfaces={'hil': chil})  # Turn on AC so the EUT can be initialized
         if grid is not None:
             grid.voltage(v_nom)
+            if chil is not None:  # If using HIL, give the grid simulator the hil object
+                grid.config(chil)
 
         # open result summary file
         result_summary_filename = 'result_summary.csv'
@@ -313,7 +317,6 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     v_steps_dict[VoltVar.get_step_label()] = v_pairs['V2'] + a_v
                     v_steps_dict[VoltVar.get_step_label()] = v_ref*v_nom
 
-
                     for step, target in v_steps_dict.items():
                         v_steps_dict.update({step: round(target, 2)})
                         if target > v_high:
@@ -346,7 +349,11 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     daq.data_capture(True)
 
                     for step_label, v_step in v_steps_dict.items():
+<<<<<<< HEAD
+                        v_step_dict_updated = {V: v_step}
+=======
                         #v_step_dict_updated = {V: v_step}
+>>>>>>> 87d537f7c24ce4ac1473c12c7f1e41699ca6862d
                         ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_step, step_label))
                         #q_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
                         #ts.log_debug(q_initial)
@@ -449,13 +456,6 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
         p_min_prime = ts.param_value('eut.p_min_prime')
         phases = ts.param_value('eut.phases')
         pf_response_time = ts.param_value('vv.test_1_t_r')
-
-        # Pass/fail accuracies
-        pf_msa = ts.param_value('eut.pf_msa')
-        # According to Table 3-Minimum requirements for manufacturers stated measured and calculated accuracy
-        MSA_Q = 0.05 * s_rated
-        MSA_P = 0.05 * s_rated
-        MSA_V = 0.01 * v_nom
 
         imbalance_fix = ts.param_value('vv.imbalance_fix')
 

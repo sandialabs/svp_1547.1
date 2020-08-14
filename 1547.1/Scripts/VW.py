@@ -111,6 +111,8 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         pv = pvsim.pvsim_init(ts)
         pv.power_set(p_rated)
         pv.power_on()  # Turn on DC so the EUT can be initialized
+        daq.set_dc_measurement(pv)  # send pv obj to daq to get dc measurements
+        ts.sleep(0.5)
 
         # DAS soft channels
         #das_points = {'sc': ('P_TARGET', 'P_TARGET_MIN', 'P_TARGET_MAX', 'P_MEAS', 'V_TARGET','V_MEAS','event')}
@@ -158,14 +160,14 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         grid = gridsim.gridsim_init(ts)  # Turn on AC so the EUT can be initialized
         if grid is not None:
             grid.voltage(v_nom)
+            if chil is not None:  # If using HIL, give the grid simulator the hil object
+                grid.config(chil)
 
         # open result summary file
         result_summary_filename = 'result_summary.csv'
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
         result_summary.write(lib_1547.get_rslt_sum_col_name())
-
-
 
         '''
         v) Test may be repeated for EUT's that can also absorb power using the P' values in the characteristic
@@ -179,7 +181,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         for vw_curve in vw_curves:
             ts.log('Starting test with characteristic curve %s' % (vw_curve))
             v_pairs = lib_1547.get_params(curve=vw_curve)
-            a_v = lib_1547.MSA_V * 1.5
+            a_v = lib_1547.MRA_V * 1.5
             '''
             t) Repeat steps d) through t) at EUT power set at 20% and 66% of rated power.
             '''

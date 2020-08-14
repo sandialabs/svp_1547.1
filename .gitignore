@@ -5,6 +5,9 @@ __pycache__/
 *.bak
 temp
 
+# Lib
+Lib/
+
 # C extensions
 *.so
 

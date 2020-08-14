@@ -133,8 +133,6 @@ def test_run():
         result_params = lib_1547.get_rslt_param_plot()
         ts.log(result_params)
 
-
-
         """
         a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
         """
@@ -144,7 +142,7 @@ def test_run():
             chil.config()
 
         # grid simulator is initialized with test parameters and enabled
-        grid = gridsim.gridsim_init(ts)  # Turn on AC so the EUT can be initialized
+        grid = gridsim.gridsim_init(ts, support_interfaces={'hil': chil})  # Turn on AC so the EUT can be initialized
         if grid is not None:
             grid.voltage(v_nom)
 
@@ -153,12 +151,13 @@ def test_run():
         if pv is not None:
             pv.power_set(p_rated)
             pv.power_on()  # Turn on DC so the EUT can be initialized
+            ts.sleep(0.5)
 
         # DAS soft channels
         das_points = lib_1547.get_sc_points()
 
         # initialize data acquisition
-        daq = das.das_init(ts, sc_points=das_points['sc'])
+        daq = das.das_init(ts, sc_points=das_points['sc'], support_interfaces={'pvsim': pv, 'hil': chil})
 
         if daq is not None:
             daq.sc['V_MEAS'] = 100
@@ -208,7 +207,6 @@ def test_run():
         enable frequency-watt and volt-watt parameters. For volt-watt, set P2 = 0.2Prated.
         """
 
-
         default_curve = 1
 
         if eut is not None:
@@ -244,8 +242,8 @@ def test_run():
             ts.sleep(4*pri_response_time)
 
             # limit maximum power
-            eut.limit_max_power(params={'MaxLimWEna': True,
-                                        'MaxLimW_PCT': 50,
+            eut.limit_max_power(params={'Ena': True,
+                                        'WMaxPct': 50,
                                         'WinTms': 0,
                                         'RmpTms': 0,
                                         'RvrtTms': 0.0})
@@ -419,7 +417,6 @@ def test_run():
             elif current_mode == WV:
                 eut.watt_var(params={'Ena': False})
 
-
             ts.log('Sampling complete')
             dataset_filename = dataset_filename + ".csv"
             daq.data_capture(False)
@@ -447,9 +444,7 @@ def test_run():
             ts.result_file(dataset_filename, params=result_params)
         ts.log_error('Test script exception: %s' % traceback.format_exc())
 
-
     finally:
-
         if grid is not None:
             grid.close()
         if pv is not None:
