@@ -404,6 +404,7 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                                               script_name='Volt-Var',
                                               functions=[VV],
                                               criteria_mode=[True, True, True])
+        ActiveFunction.set_imbalance_config(imbalance_angle_fix=imbalance_fix)
         ts.log_debug('1547.1 Library configured for %s' % ActiveFunction.get_script_name())
 
         # Get the rslt parameters for plot

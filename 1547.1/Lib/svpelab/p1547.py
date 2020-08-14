@@ -118,7 +118,8 @@ class EutParameters(object):
                 'Q': 0.05*ts.param_value('eut.s_rated'),
                 'P': 0.05*ts.param_value('eut.s_rated'),
                 'F': 0.01,
-                'T': 0.01
+                'T': 0.01,
+                'PF': 0.01
             }
 
             self.MRA_V_trans = 0.02 * self.v_nom
@@ -541,7 +542,7 @@ class DataLogging:
         """
         daq.data_sample()
 
-    def record_timeresponse(self, daq, step_value, pwr_lvl=1.0, curve=1, x_target=None, y_target=None):
+    def record_timeresponse(self, daq, step_value=None, step_dict=None):
         """
         Get the data from a specific time response (tr) corresponding to x and y values returns a dictionary
         but also writes in the soft channels of the DAQ system
@@ -597,19 +598,34 @@ class DataLogging:
 
                     self.ts.log('Value %s: %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
                     if meas_value in x:
-                        daq.sc['%s_TARGET' % meas_value] = step_value
-                        self.tr_value['%s_TR_TARG_%s' % (meas_value, tr_iter)] = step_value
-                        self.ts.log('X Value (%s) = %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
+                        if step_dict is not None and meas_value in list(step_dict.keys()):
+                            daq.sc['%s_TARGET' % meas_value] = step_dict[meas_value]
+                            self.tr_value['%s_TR_TARG_%s' % (meas_value, tr_iter)] = step_dict[meas_value]
+                            self.ts.log('X Value (%s) = %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
+                        else:
+                            daq.sc['%s_TARGET' % meas_value] = step_value
+                            self.tr_value['%s_TR_TARG_%s' % (meas_value, tr_iter)] = step_value
+                            self.ts.log('X Value (%s) = %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
                     elif meas_value in y:
-                        self.ts.log_debug(f'in y meas value')
-                        daq.sc['%s_TARGET' % meas_value] = self.update_target_value(value=step_value,
-                                                                                    function=self.y_criteria[meas_value])
-                        daq.sc['%s_TARGET_MIN' % meas_value], daq.sc[
-                            '%s_TARGET_MAX' % meas_value] = self.calculate_min_max_values(data=data,
-                                                                                          function=self.y_criteria[meas_value])
+                        self.ts.log_debug(f'in y meas value {list(step_dict.keys())}')
+                        self.ts.log_debug(f'in y meas value {meas_value in list(step_dict.keys())}')
+                        if step_dict is not None:
+                            daq.sc['%s_TARGET' % meas_value] = self.update_target_value(step_dict=step_dict,
+                                                                                        function=self.y_criteria[meas_value])
+                            daq.sc['%s_TARGET_MIN' % meas_value], daq.sc['%s_TARGET_MAX' % meas_value] = \
+                                self.calculate_min_max_values(data=data,
+                                                              function=self.y_criteria[meas_value],
+                                                              step_dict=step_dict)
+                        else:
+                            daq.sc['%s_TARGET' % meas_value] = self.update_target_value(value=step_value,
+                                                                                        function=self.y_criteria[meas_value])
+                            daq.sc['%s_TARGET_MIN' % meas_value], daq.sc[
+                                '%s_TARGET_MAX' % meas_value] = self.calculate_min_max_values(data=data,
+                                                                                              function=self.y_criteria[meas_value])
                         self.tr_value[f'{meas_value}_TR_TARG_{tr_iter}'] = daq.sc['%s_TARGET' % meas_value]
                         self.tr_value[f'{meas_value}_TR_{tr_iter}_MIN'] = daq.sc['%s_TARGET_MIN' % meas_value]
                         self.tr_value[f'{meas_value}_TR_{tr_iter}_MAX'] = daq.sc['%s_TARGET_MAX' % meas_value]
+
                         self.ts.log('Y Value (%s) = %s. Pass/fail bounds = [%s, %s]' %
                                      (meas_value, daq.sc['%s_MEAS' % meas_value],
                                       daq.sc['%s_TARGET_MIN' % meas_value], daq.sc['%s_TARGET_MAX' % meas_value]))
@@ -629,7 +645,7 @@ class DataLogging:
         # except Exception as e:
         #    raise p1547Error('Error in get_tr_data(): %s' % (str(e)))
 
-    def update_target_value(self, value, function):
+    def update_target_value(self, function, value=None, step_dict=None):
 
         if function == VV:
             vv_pairs=self.get_params(function=VV, curve=self.curve)
@@ -649,7 +665,12 @@ class DataLogging:
             p_value *= self.pwr
             return round(p_value, 1)
 
-    def calculate_min_max_values(self, data, function):
+        if function == CPF:
+            self.ts.log_debug(f'value_dict={step_dict}')
+            q_value = math.sqrt(pow(step_dict['P'], 2) * ((1 / pow(step_dict['PF'], 2)) - 1))
+            return q_value
+
+    def calculate_min_max_values(self, data, function, step_dict=None):
         if function == VV:
             v_meas = self.get_measurement_total(data=data, type_meas='V', log=False)
             target_min = self.update_target_value(v_meas + self.MRA['V'] * 1.5, function=VV) - (self.MRA['Q'] * 1.5)
@@ -659,10 +680,19 @@ class DataLogging:
 
         elif function == VW:
             v_meas = self.get_measurement_total(data=data, type_meas='V', log=False)
-            target_min = self.update_target_value(v_meas + self.MRA['V'] * 1.5, function=VW) - (self.MRA['P'] * 1.5)
-            target_max = self.update_target_value(v_meas - self.MRA['V'] * 1.5, function=VW) + (self.MRA['P'] * 1.5)
+            target_min = self.update_target_value(value=v_meas + self.MRA['V'] * 1.5, function=VW) - (self.MRA['P'] * 1.5)
+            target_max = self.update_target_value(value=v_meas - self.MRA['V'] * 1.5, function=VW) + (self.MRA['P'] * 1.5)
 
             return target_min, target_max
+
+        elif function == CPF:
+            p_meas = self.get_measurement_total(data=data, type_meas='P', log=False)
+            target_min = \
+                self.update_target_value(value=p_meas + self.MRA['P'] * 1.5, function=CPF, step_dict=step_dict) - 1.5 * self.MRA['Q']
+            target_max = \
+                self.update_target_value(value=p_meas - self.MRA['P'] * 1.5, function=CPF, step_dict=step_dict) + 1.5 * self.MRA['Q']
+            return target_min, target_max
+
 
 class CriteriaValidation:
     def __init__(self, criteria_mode):
@@ -1193,9 +1223,9 @@ class VoltWatt(EutParameters, UtilParameters):
             return v_steps_dict
 
 class ConstantPowerFactor(EutParameters, UtilParameters):
-    meas_values = ['V', 'P', 'PF']
-    x_criteria = ['V']
-    y_criteria = {'PF': CPF}
+    meas_values = ['V', 'P', 'Q', 'PF']
+    x_criteria = ['V', 'P']
+    y_criteria = {'Q': CPF}
     script_complete_name = 'Constant Power Factor'
 
     def __init__(self, ts):

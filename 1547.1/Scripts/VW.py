@@ -362,9 +362,8 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                                               functions=[VW],
                                               script_name='Volt-Watt',
                                               criteria_mode=[True, True, True])
-        ts.log_debug('1547.1 Library configured for %s' % ActiveFunction.get_script_name())
-
         ActiveFunction.set_imbalance_config(imbalance_angle_fix=imbalance_fix)
+        ts.log_debug('1547.1 Library configured for %s' % ActiveFunction.get_script_name())
 
         '''
         a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
