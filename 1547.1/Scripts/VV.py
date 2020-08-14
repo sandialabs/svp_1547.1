@@ -395,13 +395,6 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
         phases = ts.param_value('eut.phases')
         pf_response_time = ts.param_value('vv.test_1_t_r')
 
-        # Pass/fail accuracies
-        pf_msa = ts.param_value('eut.pf_msa')
-        # According to Table 3-Minimum requirements for manufacturers stated measured and calculated accuracy
-        MSA_Q = 0.05 * s_rated
-        MSA_P = 0.05 * s_rated
-        MSA_V = 0.01 * v_nom
-
         imbalance_fix = ts.param_value('vv.imbalance_fix')
 
         """
@@ -452,6 +445,11 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
         b) Set all voltage trip parameters to the widest range of adjustability. Disable all reactive/active power
         control functions.
         '''
+        # it is assumed the EUT is on
+        eut = der.der_init(ts)
+        if eut is not None:
+            eut.config()
+            ts.log_debug('If not done already, set L/HVRT and trip parameters to the widest range of adjustability.')
 
         '''
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
@@ -470,7 +468,6 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
          d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
         voltage to Vin_nom.
         '''
-
         if pv is not None:
             pv.iv_curve_config(pmp=p_rated, vmp=v_in_nom)
             pv.irradiance_set(1000.)
@@ -501,9 +498,6 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                 #Setting up step label
                 ActiveFunction.set_step_label(starting_label='G')
 
-
-                # it is assumed the EUT is on
-                eut = der.der_init(ts)
                 if eut is not None:
                     vv_curve_params = {'v': [v_pairs['V1']*(100/v_nom), v_pairs['V2']*(100/v_nom),
                                              v_pairs['V3']*(100/v_nom), v_pairs['V4']*(100/v_nom)],
@@ -565,11 +559,11 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                 '''
                 if grid is not None:
                     step_label = ActiveFunction.get_step_label()
+                    v_target = v_nom
                     ActiveFunction.start(daq=daq, step_label=step_label)
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
-                    #v_target = ActiveFunction.set_grid_asymmetric(grid=grid, case='case_a', imbalance_resp=imbalance_resp)
-                    grid.voltage(v_nom)
-                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_nom)
+                    grid.voltage(v_target)
+                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
                     ActiveFunction.evaluate_criterias()
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
@@ -590,11 +584,11 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                 """
                 if grid is not None:
                     step_label = ActiveFunction.get_step_label()
+                    v_target = v_nom
                     ActiveFunction.start(daq=daq, step_label=step_label)
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
-                    #v_target = ActiveFunction.set_grid_asymmetric(grid=grid, case='case_a', imbalance_resp=imbalance_resp)
                     grid.voltage(v_nom)
-                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_nom)
+                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
                     ActiveFunction.evaluate_criterias()
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
