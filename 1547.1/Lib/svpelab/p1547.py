@@ -1192,89 +1192,35 @@ class VoltWatt(EutParameters, UtilParameters):
 
             return v_steps_dict
 
-class ConstantPowerFactor(EutParameters, UtilParameters, ImbalanceComponent):
-    def __init__(self, ts, curve=1):
-        EutParameters.__init__(self, ts)
-        self.curve = curve
-        self.pairs = {}
-        self.param = [0, 0, 0, 0]
-        self.target_dict = []
-        self.script_name = VW
-        self.script_complete_name = 'Volt-Watt'
-        self.rslt_sum_col_name = 'P_TR_ACC_REQ, TR_REQ, P_FINAL_ACC_REQ, V_MEAS, P_MEAS, P_TARGET, P_TARGET_MIN,' \
-                                 'P_TARGET_MAX, STEP, FILENAME\n'
-        self.criteria_mode = [True, True, True]
-        # Values to be recorded
-        self.meas_values = ['V', 'P']
-        # Values defined as target/step values which will be controlled as step
-        self.x_criteria = ['V']
-        # Values defined as values which will be controlled as step
-        self.y_criteria = ['P']
-        self._config()
+class ConstantPowerFactor(EutParameters, UtilParameters):
+    meas_values = ['V', 'P', 'PF']
+    x_criteria = ['V']
+    y_criteria = {'PF': CPF}
+    script_complete_name = 'Constant Power Factor'
 
-    def _config(self):
-        self.set_params()
-        # Create the pairs need
-        # self.set_imbalance_config()
+    def __init__(self, ts):
+        self.ts = ts
+        self.criteria_mode = [True, True, True]
+        EutParameters.__init__(self, ts)
+        UtilParameters.__init__(self)
 
     def set_params(self):
-        self.param[1] = {
-            'V1': round(1.06 * self.v_nom, 2),
-            'V2': round(1.10 * self.v_nom, 2),
-            'P1': round(self.p_rated, 2)
-        }
-        self.param[2] = {
-            'V1': round(1.05 * self.v_nom, 2),
-            'V2': round(1.10 * self.v_nom, 2),
-            'P1': round(self.p_rated, 2)
-        }
-        self.param[3] = {
-            'V1': round(1.09 * self.v_nom, 2),
-            'V2': round(1.10 * self.v_nom, 2),
-            'P1': round(self.p_rated, 2)
-        }
+        pass
 
-class ConstantReactivePower(EutParameters, UtilParameters, ImbalanceComponent):
-    def __init__(self, ts, curve=1):
-        EutParameters.__init__(self, ts)
-        self.curve = curve
-        self.pairs = {}
-        self.param = [0, 0, 0, 0]
-        self.target_dict = []
-        self.script_name = VW
-        self.script_complete_name = 'Volt-Watt'
-        self.rslt_sum_col_name = 'P_TR_ACC_REQ, TR_REQ, P_FINAL_ACC_REQ, V_MEAS, P_MEAS, P_TARGET, P_TARGET_MIN,' \
-                                 'P_TARGET_MAX, STEP, FILENAME\n'
+class ConstantReactivePower(EutParameters, UtilParameters):
+    meas_values = ['V', 'Q', 'P']
+    x_criteria = ['V']
+    y_criteria = {'Q': CRP}
+    script_complete_name = 'Constant Reactive Power'
+
+    def __init__(self, ts):
+        self.ts = ts
         self.criteria_mode = [True, True, True]
-        # Values to be recorded
-        self.meas_values = ['V', 'P']
-        # Values defined as target/step values which will be controlled as step
-        self.x_criteria = ['V']
-        # Values defined as values which will be controlled as step
-        self.y_criteria = ['P']
-        self._config()
-
-    def _config(self):
-        self.set_params()
-        # Create the pairs need
-        # self.set_imbalance_config()
+        EutParameters.__init__(self, ts)
+        UtilParameters.__init__(self)
 
     def set_params(self):
-        self.param[1] = {
-            'V1': round(1.06 * self.v_nom, 2),
-            'V2': round(1.10 * self.v_nom, 2),
-            'P1': round(self.p_rated, 2)
-        }
-        self.param[2] = {
-            'V1': round(1.05 * self.v_nom, 2),
-            'V2': round(1.10 * self.v_nom, 2),
-            'P1': round(self.p_rated, 2)
-        }
-        self.param[3] = {
-            'V1': round(1.09 * self.v_nom, 2),
-            'V2': round(1.10 * self.v_nom, 2),
-            'P1': round(self.p_rated, 2)
-        }
+        pass
 
 """
 This section is for 
@@ -1411,7 +1357,7 @@ class WattVar(EutParameters, UtilParameters):
 This section is for the Active function
 """
 class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
-                     VoltWatt, VoltVar):
+                     VoltWatt, VoltVar, ConstantReactivePower, ConstantPowerFactor):
     """
     This class acts as the main function
     As multiple functions might be needed for a compliance script, this function will inherit
@@ -1429,8 +1375,6 @@ class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
         #self.criterias = criterias
 
         self.script_name = script_name
-        #EutParameters.__init__(self, ts)
-        #UtilParameters.__init__(self)
 
         self.ts.log(f'Functions to be activated in this test script = {functions}')
 
@@ -1442,6 +1386,14 @@ class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
             VoltVar.__init__(self, ts)
             x_criterias += VoltVar.x_criteria
             self.y_criteria.update(VoltVar.y_criteria)
+        if CPF in functions:
+            ConstantPowerFactor.__init__(self, ts)
+            x_criterias += ConstantPowerFactor.x_criteria
+            self.y_criteria.update(ConstantPowerFactor.y_criteria)
+        if CRP in functions:
+            ConstantReactivePower.__init__(self, ts)
+            x_criterias += ConstantReactivePower.x_criteria
+            self.y_criteria.update(ConstantReactivePower.y_criteria)
 
         #Remove duplicates
         self.x_criteria = list(OrderedDict.fromkeys(x_criterias))
