@@ -113,7 +113,7 @@ def test_run():
         ActiveFunction = p1547.ActiveFunction(ts=ts,
                                               functions='CRP',
                                               script_name='Constant Reactive Power',
-                                              criteria_mode=[True, True, True])
+                                              criteria_mode=[True, False, False])
         ActiveFunction.set_imbalance_config(imbalance_angle_fix=imbalance_fix)
         ts.log_debug("1547.1 Library configured for %s" % ActiveFunction.get_script_name())
 

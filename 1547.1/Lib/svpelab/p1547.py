@@ -690,6 +690,7 @@ class DataLogging:
             target_max = step_dict['Q']+self.MRA['Q']
 
         return target_min, target_max
+
 class CriteriaValidation:
     def __init__(self, criteria_mode):
         self.criteria_mode = criteria_mode
@@ -1220,8 +1221,8 @@ class ConstantPowerFactor(EutParameters, UtilParameters):
     script_complete_name = 'Constant Power Factor'
 
     def __init__(self, ts):
-        self.ts = ts
-        self.criteria_mode = [True, True, True]
+        #self.ts = ts
+        #self.criteria_mode = [True, True, True]
         EutParameters.__init__(self, ts)
         UtilParameters.__init__(self)
 
@@ -1233,8 +1234,8 @@ class ConstantReactivePower(EutParameters, UtilParameters):
     script_complete_name = 'Constant Reactive Power'
 
     def __init__(self, ts):
-        self.ts = ts
-        self.criteria_mode = [True, True, True]
+        #self.ts = ts
+        #self.criteria_mode = [True, True, True]
         EutParameters.__init__(self, ts)
         UtilParameters.__init__(self)
 
@@ -1388,6 +1389,10 @@ class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
         # Values defined as values which will be controlled as step
         y_criterias = []
         self.y_criteria={}
+
+        #Initiating criteria validation after data acquisition
+        CriteriaValidation.__init__(self, criteria_mode=criteria_mode)
+
         self.param = {}
         #self.criterias = criterias
 
@@ -1418,7 +1423,6 @@ class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
         self.meas_values = list(OrderedDict.fromkeys(x_criterias+list(self.y_criteria.keys())))
 
         DataLogging.__init__(self)
-        CriteriaValidation.__init__(self, criteria_mode=criteria_mode)
         ImbalanceComponent.__init__(self)
 
 """
