@@ -49,6 +49,7 @@ import collections
 import cmath
 import math
 
+WV = 'WV'  # Watt-Var
 
 def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
 
@@ -91,11 +92,15 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
         """
         A separate module has been create for the 1547.1 Standard
         """
-        lib_1547 = p1547.module_1547(ts=ts, aif='WV', absorb=absorb)
-        ts.log_debug("1547.1 Library configured for %s" % lib_1547.get_test_name())
+        #lib_1547 = p1547.module_1547(ts=ts, aif='WV', criteria)
+        ActiveFunction = p1547.ActiveFunction(ts=ts,
+                                              functions=[WV],
+                                              script_name='Watt-Var',
+                                              criteria_mode=[True, True, True])
+        ts.log_debug("1547.1 Library configured for %s" % ActiveFunction.get_script_name())
 
         # result params
-        result_params = lib_1547.get_rslt_param_plot()
+        result_params = ActiveFunction.get_rslt_param_plot()
 
         '''
         a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
@@ -113,7 +118,7 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
             pv.power_on()  # Turn on DC so the EUT can be initialized
 
         # DAS soft channels
-        das_points = lib_1547.get_sc_points()
+        das_points = ActiveFunction.get_sc_points()
 
         # initialize data acquisition system
         daq = das.das_init(ts, sc_points=das_points['sc'])
@@ -179,7 +184,7 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
         '''
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
         '''
-        grid = gridsim.gridsim_init(ts)  # Turn on AC so the EUT can be initialized
+        grid = gridsim.gridsim_init(ts, support_interfaces={'hil': chil})  # Turn on AC so the EUT can be initialized
         if grid is not None:
             grid.voltage(v_nom)
 
@@ -187,7 +192,7 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
         result_summary_filename = 'result_summary.csv'
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
-        result_summary.write(lib_1547.get_rslt_sum_col_name())
+        result_summary.write(ActiveFunction.get_rslt_sum_col_name())
 
         '''
         d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
@@ -208,7 +213,9 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
 
         for wv_curve in wv_curves:
             ts.log('Starting test with characteristic curve %s' % (wv_curve))
-            p_pairs = lib_1547.get_params(curve=wv_curve)
+            ActiveFunction.reset_curve(wv_curve)
+            ActiveFunction.reset_time_settings(tr=wv_response_time[wv_curve], number_tr=2)
+            p_pairs = ActiveFunction.get_params(function=WV, curve=wv_curve)
             '''
             d2) Set EUT volt-var parameters to the values specified by Characteristic 1.
             All other function should be turned off. Turn off the autonomously adjusting reference voltage.
@@ -262,43 +269,11 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
                     ts.log('Waiting for EUT to ramp up')
                     ts.sleep(8)
 
-                p_steps_dict = collections.OrderedDict()
-                a_p = lib_1547.MSA_P * 1.5
-
-
-
-                '''
-                i) If V4 is less than VH, step the AC test source voltage to av below V4, else skip to step l).
-                l) Begin the return to VRef. If V4 is less than VH, step the AC test source voltage to av above V4,
-                   else skip to step n).
-                '''
-
-                lib_1547.set_step_label(starting_label='G')
-                p_steps_dict[lib_1547.get_step_label()] = p_min
-
-                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P1'] - a_p
-                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P1'] + a_p
-                p_steps_dict[lib_1547.get_step_label()] = (p_pairs['P1'] + p_pairs['P2']) / 2
-                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P2'] - a_p
-                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P2'] + a_p
-                p_steps_dict[lib_1547.get_step_label()] = (p_pairs['P2'] + p_pairs['P3']) / 2
-                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P3'] - a_p
-                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P3'] + a_p
-                p_steps_dict[lib_1547.get_step_label()] = p_rated
-
-                # Begin the return to Pmin
-                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P3'] + a_p
-                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P3'] - a_p
-                p_steps_dict[lib_1547.get_step_label()] = (p_pairs['P2'] + p_pairs['P3']) / 2
-                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P2'] + a_p
-                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P2'] - a_p
-                p_steps_dict[lib_1547.get_step_label()] = (p_pairs['P1'] + p_pairs['P2']) / 2
-                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P1'] + a_p
-                p_steps_dict[lib_1547.get_step_label()] = p_pairs['P1'] - a_p
-                p_steps_dict[lib_1547.get_step_label()] = p_min
-
+                #Create Watt-Var Dictionary
+                p_steps_dict = ActiveFunction.create_wv_dict_steps()
 
                 filename = 'WV_%s_PWR_%d' % (wv_curve, power * 100)
+                ActiveFunction.reset_filename(filename=filename)
                 ts.log('------------{}------------'.format(dataset_filename))
 
                 # Start the data acquisition systems
@@ -306,23 +281,14 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
 
                 for step_label, p_step in p_steps_dict.items():
                     ts.log('Power step: setting Grid power to %s (W)(%s)' % (p_step, step_label))
-                    q_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
-
+                    ActiveFunction.start(daq=daq, step_label=step_label)
                     step_dict = {'V': v_nom, 'P': p_step}
                     if pv is not None:
                         pv.power_set(step_dict['P'])
 
-                    lib_1547.process_data(
-                        daq=daq,
-                        tr=wv_response_time[wv_curve],
-                        step=step_label,
-                        initial_value=q_initial,
-                        curve=wv_curve,
-                        pwr_lvl=power,
-                        x_target=step_dict,
-                        result_summary = result_summary,
-                        filename = filename
-                    )
+                    ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
+                    ActiveFunction.evaluate_criterias()
+                    result_summary.write(ActiveFunction.write_rslt_sum())
 
                 ts.log('Sampling complete')
                 dataset_filename = filename + ".csv"
@@ -367,11 +333,6 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
             eut.close()
         if result_summary is not None:
             result_summary.close()
-
-        # create result workbook
-        excelfile = ts.config_name() + '.xlsx'
-        rslt.result_workbook(excelfile, ts.results_dir(), ts.result_dir())
-        ts.result_file(excelfile)
 
     return result
 

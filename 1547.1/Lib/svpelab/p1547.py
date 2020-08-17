@@ -194,7 +194,7 @@ class UtilParameters:
         if curve == None:
             return self.param[function]
         else:
-            return self.param[function][curve]
+            return self.param[function][self.curve]
 
     def get_step_label(self):
         """
@@ -603,6 +603,7 @@ class DataLogging:
                             self.ts.log('X Value (%s) = %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
                     elif meas_value in y:
                         if step_dict is not None:
+                            #self.ts.log_debug(f'meas={meas_value} et step_dict={step_dict}')
                             daq.sc['%s_TARGET' % meas_value] = self.update_target_value(step_dict=step_dict,
                                                                                         function=self.y_criteria[meas_value])
                             daq.sc['%s_TARGET_MIN' % meas_value], daq.sc['%s_TARGET_MAX' % meas_value] = \
@@ -666,6 +667,15 @@ class DataLogging:
             q_value = step_dict['Q']
             return round(q_value, 1)
 
+        if function == WV:
+            x = [self.param[WV][self.curve]['P1'], self.param[WV][self.curve]['P2'], self.param[WV][self.curve]['P3']]
+            y = [self.param[WV][self.curve]['Q1'], self.param[WV][self.curve]['Q2'], self.param[WV][self.curve]['Q3']]
+            self.ts.log_debug(f'x={x} y={y}')
+            q_value = float(np.interp(step_dict['P'], x, y))
+            q_value *= self.pwr
+            self.ts.log_debug('Power value: %s --> q_target: %s' % (value, q_value))
+            return q_value
+
     def calculate_min_max_values(self, data, function, step_dict=None):
 
         if function == VV:
@@ -688,6 +698,14 @@ class DataLogging:
         elif function == CRP:
             target_min = step_dict['Q']-self.MRA['Q']
             target_max = step_dict['Q']+self.MRA['Q']
+
+        elif function == WV:
+            p_meas = self.get_measurement_total(data=data, type_meas='P', log=False)
+            #q_meas = self.get_measurement_total(data=data, type_meas='Q', log=False)
+            step_min = {'P': p_meas + self.MRA['P']*1.5}
+            step_max = {'P': p_meas - self.MRA['P']*1.5}
+            target_min = self.update_target_value(step_dict=step_min, function=WV) - (self.MRA['Q'] * 1.5)
+            target_max = self.update_target_value(step_dict=step_max, function=WV) + (self.MRA['Q'] * 1.5)
 
         return target_min, target_max
 
@@ -1330,52 +1348,115 @@ class Interoperability(EutParameters, UtilParameters):
         }
 
 class WattVar(EutParameters, UtilParameters):
+    meas_values = ['P', 'Q']
+    x_criteria = ['P']
+    y_criteria = {'Q': WV}
+    script_complete_name = 'Watt-Var'
+
     def __init__(self, ts, curve=1):
         EutParameters.__init__(self, ts)
-        self.curve = curve
-        self.pairs = {}
-        self.param = [0, 0, 0, 0]
-        self.target_dict = []
-        self.script_name = VW
-        self.script_complete_name = 'Volt-Watt'
-        self.rslt_sum_col_name = 'P_TR_ACC_REQ, TR_REQ, P_FINAL_ACC_REQ, V_MEAS, P_MEAS, P_TARGET, P_TARGET_MIN,' \
-                                 'P_TARGET_MAX, STEP, FILENAME\n'
-        self.criteria_mode = [True, True, True]
-        # Values to be recorded
-        self.meas_values = ['V', 'P']
-        # Values defined as target/step values which will be controlled as step
-        self.x_criteria = ['V']
-        # Values defined as values which will be controlled as step
-        self.y_criteria = ['P']
-        self._config()
-
-    def _config(self):
-        self.set_params()
-        # Create the pairs need
-        # self.set_imbalance_config()
+        UtilParameters.__init__(self)
+        WattVar.set_params(self)
 
     def set_params(self):
-        self.param[1] = {
-            'V1': round(1.06 * self.v_nom, 2),
-            'V2': round(1.10 * self.v_nom, 2),
-            'P1': round(self.p_rated, 2)
-        }
-        self.param[2] = {
-            'V1': round(1.05 * self.v_nom, 2),
-            'V2': round(1.10 * self.v_nom, 2),
-            'P1': round(self.p_rated, 2)
-        }
-        self.param[3] = {
-            'V1': round(1.09 * self.v_nom, 2),
-            'V2': round(1.10 * self.v_nom, 2),
-            'P1': round(self.p_rated, 2)
-        }
+        self.param[WV] = {}
 
+        if self.p_min > 0.2 * self.p_rated:
+            p = self.p_min
+            self.ts.log('P1 power is set using p_min')
+        else:
+            p = 0.2 * self.p_rated
+            self.ts.log('P1 power is set using 20% p_rated')
+
+        if self.absorb is "Yes":
+            self.ts.log('Adding EUT Absorption Points (P1_prime-P3_prime, Q1_prime-Q3_prime)')
+            self.param[WV][1] = {
+                'P1': round(p, 2),
+                'P2': round(0.5 * self.p_rated_prime, 2),
+                'P3': round(1.0 * self.p_rated_prime, 2),
+                'Q1': 0,
+                'Q2': 0,
+                'Q3': round(self.s_rated * 0.44, 2)
+            }
+            self.param[WV][2] = {
+                'P1': round(-p, 2),
+                'P2': round(0.5 * self.p_rated_prime, 2),
+                'P3': round(1.0 * self.p_rated_prime, 2),
+                'Q1': round(self.s_rated * 0.22, 2),
+                'Q2': round(self.s_rated * 0.22, 2),
+                'Q3': round(self.s_rated * 0.44, 2)
+            }
+            self.param[WV][3] = {
+                'P1': round(-p, 2),
+                'P2': round(0.5 * self.p_rated_prime, 2),
+                'P3': round(1.0 * self.p_rated_prime, 2),
+                'Q1': round(0, 2),
+                'Q2': round(self.s_rated * 0.44, 2),
+                'Q3': round(self.s_rated * 0.44, 2)
+            }
+        else:
+            self.param[WV][1] = {
+                'P1': round(p, 2),
+                'P2': round(0.5 * self.p_rated, 2),
+                'P3': round(1.0 * self.p_rated, 2),
+                'Q1': round(self.s_rated * 0.0, 2),
+                'Q2': round(self.s_rated * 0.0, 2),
+                'Q3': round(self.s_rated * -0.44, 2)
+            }
+            self.param[WV][2] = {
+                'P1': round(p, 2),
+                'P2': round(0.5 * self.p_rated, 2),
+                'P3': round(1.0 * self.p_rated, 2),
+                'Q1': round(self.s_rated * -0.22, 2),
+                'Q2': round(self.s_rated * -0.22, 2),
+                'Q3': round(self.s_rated * -0.44, 2)
+            }
+            self.param[WV][3] = {
+                'P1': round(p, 2),
+                'P2': round(0.5 * self.p_rated, 2),
+                'P3': round(1.0 * self.p_rated, 2),
+                'Q1': round(self.s_rated * 0.0, 2),
+                'Q2': round(self.s_rated * -0.44, 2),
+                'Q3': round(self.s_rated * -0.44, 2)
+            }
+
+        self.ts.log_debug('WV settings: %s' % self.param[WV])
+
+    def create_wv_dict_steps(self):
+
+        p_steps_dict = collections.OrderedDict()
+        p_pairs = self.get_params(function=WV, curve=self.curve)
+        self.set_step_label(starting_label='G')
+        a_p = self.MRA['P'] * 1.5
+        p_steps_dict[self.get_step_label()] = self.p_min
+
+        p_steps_dict[self.get_step_label()] = p_pairs['P1'] - a_p
+        p_steps_dict[self.get_step_label()] = p_pairs['P1'] + a_p
+        p_steps_dict[self.get_step_label()] = (p_pairs['P1'] + p_pairs['P2']) / 2
+        p_steps_dict[self.get_step_label()] = p_pairs['P2'] - a_p
+        p_steps_dict[self.get_step_label()] = p_pairs['P2'] + a_p
+        p_steps_dict[self.get_step_label()] = (p_pairs['P2'] + p_pairs['P3']) / 2
+        p_steps_dict[self.get_step_label()] = p_pairs['P3'] - a_p
+        p_steps_dict[self.get_step_label()] = p_pairs['P3'] + a_p
+        p_steps_dict[self.get_step_label()] = self.p_rated
+
+        # Begin the return to Pmin
+        p_steps_dict[self.get_step_label()] = p_pairs['P3'] + a_p
+        p_steps_dict[self.get_step_label()] = p_pairs['P3'] - a_p
+        p_steps_dict[self.get_step_label()] = (p_pairs['P2'] + p_pairs['P3']) / 2
+        p_steps_dict[self.get_step_label()] = p_pairs['P2'] + a_p
+        p_steps_dict[self.get_step_label()] = p_pairs['P2'] - a_p
+        p_steps_dict[self.get_step_label()] = (p_pairs['P1'] + p_pairs['P2']) / 2
+        p_steps_dict[self.get_step_label()] = p_pairs['P1'] + a_p
+        p_steps_dict[self.get_step_label()] = p_pairs['P1'] - a_p
+        p_steps_dict[self.get_step_label()] = self.p_min
+
+        return p_steps_dict
 """
 This section is for the Active function
 """
 class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
-                     VoltWatt, VoltVar, ConstantReactivePower, ConstantPowerFactor):
+                     VoltWatt, VoltVar, ConstantReactivePower, ConstantPowerFactor, WattVar):
     """
     This class acts as the main function
     As multiple functions might be needed for a compliance script, this function will inherit
@@ -1416,6 +1497,10 @@ class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
             ConstantReactivePower.__init__(self, ts)
             x_criterias += ConstantReactivePower.x_criteria
             self.y_criteria.update(ConstantReactivePower.y_criteria)
+        if WV in functions:
+            WattVar.__init__(self, ts)
+            x_criterias += WattVar.x_criteria
+            self.y_criteria.update(WattVar.y_criteria)
 
         #Remove duplicates
         self.x_criteria = list(OrderedDict.fromkeys(x_criterias))
