@@ -110,22 +110,26 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         '''
         a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
         '''
+        ts.log_debug(15*"*"+"HIL initialization"+15*"*")
+
         # initialize HIL environment, if necessary
         chil = hil.hil_init(ts)
         if chil is not None:
             chil.config()
+        ts.log_debug(15*"*"+"PVSIM initialization"+15*"*")
 
         # pv simulator is initialized with test parameters and enabled
         pv = pvsim.pvsim_init(ts)
         pv.power_set(p_rated)
         pv.power_on()  # Turn on DC so the EUT can be initialized
+        ts.log_debug(15*"*"+"DAS initialization"+15*"*")
 
         # DAS soft channels
         #das_points = {'sc': ('P_TARGET', 'P_TARGET_MIN', 'P_TARGET_MAX', 'P_MEAS', 'V_TARGET','V_MEAS','event')}
         das_points = ActiveFunction.get_sc_points()
 
         # initialize data acquisition system
-        daq = das.das_init(ts, sc_points=das_points['sc'])
+        daq = das.das_init(ts, sc_points=das_points['sc'], support_interfaces={'hil': chil}) 
         if daq is not None:
             daq.sc['P_TARGET'] = p_rated
             daq.sc['P_TARGET_MIN'] = 100
@@ -138,7 +142,9 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         b) Set all voltage trip parameters to the widest range of adjustability. Disable all reactive/active power
         control functions.
         '''
-        eut = der.der_init(ts)
+        ts.log_debug(15*"*"+"EUT initialization"+15*"*")
+
+        eut = der.der_init(ts, support_interfaces={'hil': chil}) 
         if eut is not None:
             eut.config()
             #Disable all functions on EUT
@@ -162,6 +168,8 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         '''
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
         '''
+        ts.log_debug(15*"*"+"GRIDSIM initialization"+15*"*")
+
         # grid simulator is initialized with test parameters and enabled
         grid = gridsim.gridsim_init(ts, support_interfaces={'hil': chil})  # Turn on AC so the EUT can be initialized
         if grid is not None:
@@ -172,8 +180,6 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
         result_summary.write(ActiveFunction.get_rslt_sum_col_name())
-
-
 
         '''
         v) Test may be repeated for EUT's that can also absorb power using the P' values in the characteristic
@@ -207,34 +213,36 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
 
                 # Special considerations for CHIL ASGC/Typhoon startup #
                 if chil is not None:
-                    inv_power = eut.measurements().get('W')
-                    timeout = 120.
-                    if inv_power <= pv_power_setting * 0.85:
-                        pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
-                        ts.sleep(3)
-                        eut.connect(params={'Conn': True})
-                    while inv_power <= pv_power_setting * 0.85 and timeout >= 0:
-                        ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
-                               (inv_power, timeout))
-                        ts.sleep(1)
-                        timeout -= 1
+                    if  eut.measurements() is not None:
                         inv_power = eut.measurements().get('W')
-                        if timeout == 0:
-                            result = script.RESULT_FAIL
-                            raise der.DERError('Inverter did not start.')
-                    ts.log('Waiting for EUT to ramp up')
-                    ts.sleep(8)
+                        timeout = 120.
+                        if inv_power <= pv_power_setting * 0.85:
+                            pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                            ts.sleep(3)
+                            eut.connect(params={'Conn': True})
+                        while inv_power <= pv_power_setting * 0.85 and timeout >= 0:
+                            ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                                (inv_power, timeout))
+                            ts.sleep(1)
+                            timeout -= 1
+                            inv_power = eut.measurements().get('W')
+                            if timeout == 0:
+                                result = script.RESULT_FAIL
+                                raise der.DERError('Inverter did not start.')
+                        ts.log('Waiting for EUT to ramp up')
+                        ts.sleep(8)
 
                 '''
                 e) Set EUT volt-watt parameters to the values specified by Characteristic 1. All other functions should
                    be turned off.
                 '''
                 if eut is not None:
-                    vw_curve_params = {'v': [int(v_pairs['V1']*(100./v_nom)),
-                                             int(v_pairs['V2']*(100./v_nom))],
-                                       'w': [int(v_pairs['P1']*(100./p_rated)),
-                                             int(v_pairs['P2']*(100./p_rated))],
-                                       'DeptRef': 'W_MAX_PCT'}
+                    vw_curve_params = {'v': [v_pairs['V1']/v_nom,
+                                             v_pairs['V2']/v_nom],
+                                       'w': [v_pairs['P1']/p_rated,
+                                             v_pairs['P2']/p_rated],
+                                       'DeptRef': 'W_MAX_PCT',
+                                       "RmpTms":vw_response_time[vw_curve]}
 
                     vw_params = {'Ena': True, 'ActCrv': 1, 'curve': vw_curve_params}
                     ts.log_debug('Writing the following params to EUT: %s' % vw_params)
@@ -244,7 +252,9 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
                     f) Verify volt-watt mode is reported as active and that the correct characteristic is reported.
                     '''
                     ts.log_debug('Initial EUT VW settings are %s' % eut.volt_watt())
-
+                if chil is not None:
+                    ts.log('Start simulation of CHIL')
+                    chil.start_simulation()
                 '''
                 Refer to P1547 Library and IEEE1547.1 standard for steps 
                 '''
@@ -312,7 +322,6 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         if chil is not None:
             chil.close()
         if eut is not None:
-            eut.volt_watt(params={'Ena': False, 'ActCrv': 0})
             eut.close()
         if result_summary is not None:
             result_summary.close()
@@ -362,34 +371,38 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                                               functions=[VW],
                                               script_name='Volt-Watt',
                                               criteria_mode=[True, True, True])
+        ts.log_debug('1547.1 Library configured for %s' % ActiveFunction.get_script_name())
+
         ActiveFunction.set_imbalance_config(imbalance_angle_fix=imbalance_fix)
         ts.log_debug('1547.1 Library configured for %s' % ActiveFunction.get_script_name())
 
         '''
         a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
         '''
+        ts.log_debug(15*"*"+"HIL initialization"+15*"*")
+
         # initialize HIL environment, if necessary
         chil = hil.hil_init(ts)
         if chil is not None:
             chil.config()
-
+        ts.log_debug(15*"*"+"GRIDSIM initialization"+15*"*")
         # grid simulator is initialized with test parameters and enabled
         grid = gridsim.gridsim_init(ts, support_interfaces={'hil': chil})  # Turn on AC so the EUT can be initialized
         if grid is not None:
             grid.voltage(v_nom)
-
+        ts.log_debug(15*"*"+"PVSIM initialization"+15*"*")
         # pv simulator is initialized with test parameters and enabled
         pv = pvsim.pvsim_init(ts)
         if pv is not None:
             pv.power_set(p_rated)
             pv.power_on()  # Turn on DC so the EUT can be initialized
-
+        ts.log_debug(15*"*"+"DAS initialization"+15*"*")
         # DAS soft channels
         #das_points = {'sc': ('P_TARGET', 'P_TARGET_MIN', 'P_TARGET_MAX', 'P_MEAS', 'V_TARGET', 'V_MEAS', 'event')}
         das_points = ActiveFunction.get_sc_points()
 
         # initialize data acquisition system
-        daq = das.das_init(ts, sc_points=das_points['sc'])
+        daq = das.das_init(ts, sc_points=das_points['sc'], support_interfaces={'hil': chil}) 
 
         if daq is not None:
             daq.sc['P_TARGET'] = p_rated
@@ -404,7 +417,9 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
         b) Set all voltage trip parameters to the widest range of adjustability. Disable all reactive/active power
         control functions.
         '''
-        eut = der.der_init(ts)
+        ts.log_debug(15*"*"+"EUT initialization"+15*"*")
+
+        eut = der.der_init(ts, support_interfaces={'hil': chil}) 
         if eut is not None:
             eut.config()
             #Disable all functions on EUT

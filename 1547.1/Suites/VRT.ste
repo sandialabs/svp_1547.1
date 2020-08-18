@@ -7,7 +7,7 @@
   </members>
   <params>
     <param name="pvsim.terrasas.channel" type="string">1,2</param>
-    <param name="eut.startup_time" type="int">10</param>
+    <param name="eut.startup_time" type="int">5</param>
     <param name="eut.f_nom" type="float">60.0</param>
     <param name="gridsim.opal.f_nom" type="float">60.0</param>
     <param name="eut.v_low" type="float">116.0</param>
@@ -43,8 +43,8 @@
     <param name="hil.opal.target_name" type="string">RTServer</param>
     <param name="pvsim.mode" type="string">TerraSAS</param>
     <param name="eut.phases" type="string">Three phase</param>
-    <param name="das.opal.wfm_chan_list" type="string">VRT</param>
-    <param name="das.opal.data_name" type="string">VRT_Data.mat</param>
+    <param name="das.opal.wfm_chan_list" type="string">VRT_RMS</param>
+    <param name="das.opal.data_name" type="string">VRT_RMS_Data.mat</param>
     <param name="hil.opal.hil_config_open" type="string">Yes</param>
     <param name="hil.opal.hil_config_stop_sim" type="string">Yes</param>
     <param name="hil.opal.hil_config_load" type="string">Yes</param>

@@ -17,6 +17,11 @@ Please refer to the [Install section](/1547.1/doc/INSTALL.md) for detailed instr
 ### SVP Scripts
 
 Current compliance test scripts available:
+
+#### Limit Active Power
+   Limit Active Power (LAP):
+   - [x] Limit active power mode 
+
 #### Voltage regulation
    Constant power factor (CPF):
    - [x] Constant power factor mode 
@@ -52,14 +57,13 @@ Current compliance test scripts available:
 
 #### Varia
 - [ ] Interoperability test
-- [ ] Nameplate data test
 
 ### Support
 
 For any bugs/issues, please refer to the [bug tracker][bug-tracker-url] section.
 
-
 🐙 was here.
 
 [bug-tracker-url]: https://github.com/BuiMCanmet/svp_1547.1/issues
 [1547-1-url]: https://github.com/BuiMCanmet/svp_1547.1/tree/master_python37
+

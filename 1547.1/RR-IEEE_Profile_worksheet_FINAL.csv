@@ -1,0 +1,282 @@
+﻿Parameter Type,RR Label,Sample Value,Units,Transmitted Informational Notes ,IEEE Std 1547 2018  Parameter  Label (where present - appendix 9.7),IEEE Std 1547 2018  Parameter Name (where present),Description
+Testing Agency Infromation,TA_NAME,Test Lab Name,Text,Value: Any string,,N/A in 1547,Testing Agency Name 
+,TA_ADDRESS,123 Main Street,Text,Value: Any string,,N/A in 1547,Testing Agency Address 
+,TA_PHONE,111-222-3333,Text,Value: Valid phone number string,,N/A in 1547,Tesing Agency Phone
+,TA_CONTACT_NAME,Test Engineer,Text,Value: Any string,,N/A in 1547,Testing Agency Contact Person
+,TA_CONTACT_EMAIL,Engineer@testlab.com,Text,Value: Valid email address,,N/A in 1547,Testing Agency Contact Email address
+,TA_REPORT_NAME,Conformance  Report !,Text,Value: Any string,,N/A in 1547,Testing Agency Conformance Report Name
+,TA_REPORT_DATE,43831,Text,Value: Valid date,,N/A in 1547,Testing Agency Confromance Report Date 
+,TA_REPORT_LINK,Http://www.testkab.com/Link1,Text,Valid Valid URL,,N/A in 1547,Testing Agency Conformance Report Link
+,TA_RR_FILE_NAME,Results Report 1,Text,Value: Any string,,N/A in 1547,Testing Agency Result Report Name
+,TA_RR_FILE_DATE,43831,Text,Value: Valid date,,N/A in 1547,Testing Agency Resuts Report  Date
+,TA_RR_FILE_CHECKSUM,1234ABCDE567890,Text,Value: Valid checksum,,N/A in 1547,Testing Agency Results Reporting Checksum. A SHA-256 hash of the file.
+,TA_RR_FILE_LINK,http://www.testlab.com/Link2,Text,Value: Valid URL,,N/A in 1547,Testing Agency Results Report Link
+Nameplate Data,NP_P_MAX,100,kW,,NP_P_MAX,Active power rating at unity power factor,Active power rating in kilowatts at unity power factor
+,NP_P_MAX_OVER_PF,90,kW,,NP_P_MAX_OVER_PF,Active power rating at specified over-excited power factor,Active power rating in kilowatts at specified over-excited power factor
+,NP_OVER_PF,0.9,Decimal,,NP_OVER_PF,Specified over-excited power factor,Over-excited power factor as described in 5.2
+,NP_P_MAX_UNDER_PF,90,kW,,NP_P_MAX_UNDER_PF,Active power rating at specified under-excited power factor,Active power rating in kilowatts at specified under-excited power factor
+,NP_UNDER_PF,0.9,Decimal,,NP_UNDER_PF,Specified under-excited power factor,Under-excited power factor as described in 5.2
+,NP_VA_MAX,100,kVA,,NP_VA_MAX,Apparent power maximum rating,Maximum apparent power rating in kilovolt-amperes
+,NP_NORMAL_OP_CAT,CAT_A-CAT_B,Text,Value: CAT_A/CAT_B,NP_NORMAL_OP_CAT,Normal operating performance category ,"Normal performance capability (Category A/B as described in 1.4). If multiple categories are supported, separate with underscores.  Cat A_Cat B"
+,NP_ABNORMAL_OP_CAT,CAT_II-CAT_III,Text,Value: CAT_I/CAT_II/CAT_III,NP_ABNORMAL_OP_CAT,Abnormal operating performance category,"Abnormal performance Category (I_ II_ or III_ as described in 1.4).  Where multiple categories are supported, separate with underscores. Cat I_Cat II_Cat III"
+,NP_INTENTIONAL_ISLAND_CAT,UNCAT-INT_ISLAND_CAP-BLACK_START-ISOCH,Text,Value: UNCAT/INT_ISLAND_CAP/BLACK_START/ISOCH,NP_INTENTIONAL_ISLAND_CAT,Interntional Island  Category (optional) ,Intentional islanding Category (as described in 8.2.8). If mulltiple categories are supported separate with underscores.  Uncat_Int Island Cap_Black Start_Isoch
+,NP_Q_MAX_INJ,44,kVAr,,NP_Q_MAX_INJ,Reactive power injected maximum rating,Maximum injected reactive power rating in kilovolt-amperes reactive 
+,NP_Q_MAX_ABS,44,kVAr,,NP_Q_MAX_ABS,Reactive power absorbed maximum rating,Maximum absorbed reactive power rating in kilovolt-amperes reactive 
+,NP_P_MAX_CHARGE,100,kW,,NP_P_MAX_CHARGE,Active power charge maximum rating,Maximum active power charge rating in kilowatts
+,NP_APPARENT_POWER_CHARGE_MAX,100,kVA,,NP_APPARENT_POWER_CHARGE_MAX,Apparent power charge maximum rating,Maximum apparent power charge rating in kilo Volt Amperes.  May differ from the apparent power maximum rating
+,NP_AC_V_NOM,480-240-208,Vac,,NP_AC_V_NOM,AC voltage base - nominal Votlage rating(s),Voltage Base Nominal AC voltage rating in RMS Vac.  Where multiple votlages are supported separate with underscores.  208Vac_240 Vac_480Vac_600Vac
+,NP_AC_V_MAX-ER-MAX,600,Vac,,NP_AC_V_MAX,AC voltage maximum rating Maximum,AC voltage rating in RMS Volts
+,NP_AC_V_MIN-ER-MIN,208,Vac,,NP_AC_V_MIN,AC voltage minimum rating Minimum,AC voltage rating in RMS Volts
+,NP_SUPPORTED_MODES,CONST_PF-QV-QP-PV-PF,Text,Value: CONST_PF/CONST_Q/QV/QP/PV/PF,NP_SUPPORTED_MODES,Supported control mode functions,Indication of support for each control mode function separated by underscores. Const PF_P(V)_Q(V)_Q(P)_P(V)_P(f)
+,NP_REACTIVE_SUSCEPTANCE,0.1,Siemens,,NP_REACTIVE_SUSCEPTANCE,Reactive susceptance (Not specified in 1547),Reactive susceptance that remains connected to the Area EPS in the cease to energize and trip state
+,NP_REMOTE_METER_RESISTANCE,1.1,Ohms,,NP_REMOTE_METER_RESISTANCE,Not supported in 1547 ,Maximum resistance (R) between RPA and POC.  When remote voltage monitoring at RPA is supported 
+,NP_REMOTE_METER_REACTANCE,1.2,Ohms,,NP_REMOTE_METER_REACTANCE,Not supported in 1547 ,Maximum reactance (X) between RPA and POC.  When remote voltage monitoring at RPA is supported 
+,NP_MANUFACTURER,ACME DER Incorporated,Text,Value: Any string,NP_MANUFACTURER,Manufacturer Name,Manufacturer
+,NP_MODEL,DER 100 Bidirectional,Text,Value: Any string,NP_MODEL,Model nnumber,Model
+,NP_SERIAL_NUM,12345678,Text,Value: Any string,NP_SERIAL_NUM,Serial number,Serial number
+,NP_FW_VER,1234.5.6,Text,Value: Any string,NP_FW_VER,Fimrware Version Number,FW Version
+Configuration Information                   (Note: may be esatablished during Comissioning Testing and supplied by authorities conducting such testing),NP_P_MAX-AS,100,kW,,,Active power rating at unity power factor,Active power rating in kilo Watts at unity power factor
+,NP_P_MAX_OVER_PF-AS,90,kW,,,Active power rating at specified over-excited power factor,Active power rating in kilo Watts at specified over-excited power factor
+,NP_OVER_PF-AS,0.9,Decimal,,,Specified over-excited power factor,Over-excited power factor as described in 5.2
+,NP_P_MAX_UNDER_PF-AS,90,kW,,,Active power rating at specified under-excited power factor,Active power rating in kilo Watts at specified under-excited power factor
+,NP_UNDER_PF-AS,0.9,Decimal,,,Specified under-excited power factor,Under-excited power factor as described in 5.2
+,NP_VA_MAX-AS,100,kVA,,,Apparent power maximum rating,Maximum apparent power rating in kilo Volt Amperes
+,NP_INTENTIONAL_ISLAND_CAT-AS,UNCAT-INT_ISLAND_CAP-BLACK_START-ISOCH,Text,Value: UNCAT/INT_ISLAND_CAP/BLACK_START/ISOCH,,Interntional Island  Category (optional) ,"Intentional islanding Category (as described in 8.2.8). If mulltiple categories are supported, separate with underscores.  Uncat_Int Island Cap_Black Start_Isoch"
+,NP_Q_MAX_INJ-AS,44,kVAr,,,Reactive power injected maximum rating,Maximum injected reactive power rating in kilo Volt Amperes reactive 
+,NP_Q_MAX_ABS-AS,44,kVAr,,,Reactive power absorbed maximum rating,Maximum absorbed reactive power rating in kilo Volt Amperes reactive 
+,NP_P_MAX_CHARGE-AS,100,kW,,,Active power charge maximum rating,Maximum active power charge rating in kilo Watts
+,NP_APPARENT_POWER_CHARGE_MAX-AS,100,kVA,,,Apparent power charge maximum rating,Maximum apparent power charge rating in kilo Volt Amperes.  May differ from the apparent power maximum rating
+,NP_AC_V_NOM-AS,480-240-208,Vac,,,AC voltage base - nominal Votlage rating(s),Voltage Base Nominal AC voltage rating in RMS Vac.  Where multiple votlages are supported separate with underscores.  208Vac_240 Vac_480Vac_600Vac
+Permit Service Mode Select,ES_PERMIT_SERVICE-AS,ENABLED,Text,Value: ENABLED/DISABLED,ES_PERMIT_SERVICE,Permit service,This function is activated by request from the Area EPS Operator
+Enter Service Voltage,ES_V_LOW-ER-MIN,0.5,V p.u.,,,ES Voltage Low (RofA not specified in 1547),Per unit value based  on NP AC Vnom. (Voltage base). Voltage shall be equal to or greater than default value
+,ES_V_LOW-AS,0.88,V p.u.,,ES_V_LOW,ES Voltage Low Setting,Per unit value based  on NP AC Vnom. (Voltage base). Voltage shall be equal to or greater than default value
+,ES_V_LOW-ER-MAX,1,V p.u.,,,ES Voltage Low (RofA not specified in 1547),Per unit value based  on NP AC Vnom. (Voltage base). Voltage shall be equal to or greater than default value
+,ES_V_HIGH-ER-MIN,1,V p.u.,,,ES Voltage High (RofA not specified in 1547),Per unit value based  on NP AC Vnom. (Voltage base). Voltage shall be equal to or less than default value
+,ES_V_HIGH-AS,1.1,V p.u.,,ES_V_HIGH,ES Voltage High Setting,Per unit value based  on NP AC Vnom. (Voltage base). Voltage shall be equal to or less than default value
+,ES_V_HIGH-ER-MAX,1.4,V p.u.,,,ES Voltage High (RofA not specified in 1547),Per unit value based  on NP AC Vnom. (Voltage base). Voltage shall be equal to or less than default value
+Enter Service Frequency,ES_F_LOW-ER-MIN,45,Hz,,,ES Frequency Low (RofA not specified in 1547),Frequency shall be equal to or greater than default value.  Frequency values shall be reported to 3 decimal places
+,ES_F_LOW-AS,59.3,Hz,,ES_F_LOW,ES Frequency Low Setting,Frequency shall be equal to or greater than default value.  Frequency values shall be reported to 3 decimal places
+,ES_F_LOW-ER-MAX,66,Hz,,,ES Frequency Low (RofA not specified in 1547),Frequency shall be equal to or greater than default value.  Frequency values shall be reported to 3 decimal places
+,ES_F_HIGH-ER-MIN,50,Hz,,,ES Frequency Low (RofA not specified in 1547),Frequency shall be equal to or less than default value. Frequency values shall be reported to 3 decimal places
+,ES_F_HIGH-AS,63,Hz,,ES_F_HIGH,ES Frequency High Setting,Frequency shall be equal to or less than default value  Frequency values shall be reported to 3 decimal places
+,ES_F_HIGH-ER-MAX,66,Hz,,,ES Frequency Low (RofA not specified in 1547),Frequency shall be equal to or less than default value  Frequency values shall be reported to 3 decimal places.
+Soft-Start Ramp ,ES_RANDOMIZED_DELAY-AS,ENABLED,Text,Value: ENABLED/DISABLED,ES_RANDOMIZED_DELAY,ES  Randomized Delay ,"Enter Service Radomized Delay is an optional feature in IEEE Std 1547-2018.  When enabled, the delay is a random value between 1 and 1000 seconds"
+,ES_DELAY-ER-MIN,0,s,,,ES Delay (RofA not specified in 1547),Minimum Intentional delay before initiating Soft-Start
+,ES_DELAY-AS,300,s,,ES_DELAY,ES Delay Setting,Minimum Intentional delay before initiating Soft-Start
+,ES_DELAY-ER-MAX,600,s,,,ES Delay (RofA not specified in 1547),Minimum Intentional delay before initiating Soft-Start
+,ES_RAMP_RATE-ER-MIN,0,%/s,,,ES Ramp Rate Min (RofA not specified in 1547),Enter Service Soft-Start duration. Time from zero to 100% Prated
+,ES_RAMP_RATE-AS,0.33,%/s,,ES_RAMP_RATE,ES Ramp Rate Setting,Enter Service Soft-Start duration. Time from zero to 100% Prated
+,ES_RAMP_RATE-ER-MAX,0.1,%/s,,,ES Ramp Rate Min (RofA not specified in 1547),Enter Service Soft-Start duration. Time from zero to 100% Prated
+Constant Power Factor Mode Select,CONST_PF_MODE_ENABLE-AS,ENABLED,Text,Value: ENABLED/DISABLED,CONST_PF_MODE_ENABLE,Constant Power Factor Mode ,Constant Power Factor Mode Select
+Constant Power Factor Excitation,CONST_PF_EXCITATION-AS,INJ,Text,Value: INJ/ABS,CONST_PF_EXCITATION,Constant Power Factor Excitation,Under or Over Excited
+Constant Power Factor,CONST_PF_ABS-ER-MIN,0.7,VAr p.u,,,Constant Power Factor Setting (RofA not specified in 1547), Per unit based on NP Qmax Abs.  Negative signs should not be used but if present indicate absorbing VAr
+,CONST_PF_ABS-AS,0.95,VAr p.u,,CONST_PF_ABS,Constant Power Factor Absorbing Setting, Per unit based on NP Qmax Abs.  Negative signs should not be used but if present indicate absorbing VAr
+,CONST_PF_ABS-ER-MAX,1,VAr p.u,,,Constant Power Factor Setting (RofA not specified in 1547), Per unit based on NP Qmax Abs.  Negative signs should not be used but if present indicate absorbing VAr
+,CONST_PF_INJ-ER-MIN,0.7,VAr p.u,,,Constant Power Factor Setting (RofA not specified in 1547), Per unit based on NP Qmax Inj.  Positive signs should not be used but if present indicate injecting VAr
+,CONST_PF_INJ-AS,0.97,VAr p.u,,CONST_PF_INJ,Constant Power Factor Injecting Setting, Per unit based on NP Qmax Inj.  Positive signs should not be used but if present indicate injecting VAr
+,CONST_PF_INJ-ER-MAX,1,VAr p.u,,,Constant Power Factor Setting (RofA not specified in 1547), Per unit based on NP Qmax Inj.  Positive signs should not be used but if present indicate injecting VAr
+,CONST_PF_OLRT-ER-MIN,0.01,s,,,N/A - Not used in IEEE 1547,Maximum response time to maintain constant power factor.
+,CONST_PF_OLRT-AS,5,s,,,N/A - Not used in IEEE 1547,Maximum response time to maintain constant power factor
+,CONST_PF_OLRT-ER-MAX,60,s,,,N/A - Not used in IEEE 1547,Maximum Response Time to maintain constant power factor
+Constant Q Mode Select,CONST_Q_MODE_ENABLE-AS,ENABLED,Text,Value: ENABLED/DISABLED,CONST_Q_MODE_ENABLE,Constant Reactive  Power Mode Enable,Constant Reactive Power Mode Select
+Constant Q OLRT,CONST_Q_MODE_EXCITATION-AS,INJ,Text,Value: INJ/ABS,CONST_Q_MODE_EXCITATION,Constant Reactive  Power Excitation (not specified in 1547),Under or Over Excited.  This does not exist in 1547 but is needed
+,CONST_Q-AS,0.1,VAr p.u.,,CONST_Q,Constant Reactive power setting (See Table 7),Absorbing Reactive Power Setting.  Per unit value based on NP Qmax Abs. Negative signs should not be used but if present indicate absorbing VAr.
+,CONST_Q_ABS-ER-MAX,0.44,VAr p.u.,,,Constant Reactive Power (RofA not specified in 1547),Absorbing Reactive Power (maximum RofA) Per unit value based on NP Qmax Abs. Negative signs should not be used but if present indicate absorbing VAr.
+,,0,VAr p.u.,,,Constant Reactive Power (RofA not specified in 1547),Injecting Reactive Power (minimum RofA)  Per unit value based on NP Qmax Inj. Positive signs should not be used but if present indicate Injecting VAr.
+,CONST_Q_INJ-ER-MAX,0.44,VAr p.u.,,,Constant Reactive Power (RofA not specified in 1547), Injecting Reactive Power (maximum RofA)  Per unit value based on NP Qmax Inj. Positive signs should not be used but if present indicate Injecting VAr.
+,CONST_Q_OLRT-ER-MIN,0.01,s,,,N/A - Not used in IEEE 1547,Maximum Response Time to maintain constant reactive power
+,CONST_Q_OLRT-AS,5,s,,,N/A - Not used in IEEE 1547,Maximum Response Time to maintain constant reactive power
+,CONST_Q_OLRT-ER-MAX,60,s,,,N/A - Not used in IEEE 1547,Maximum Response Time to maintain constant reactive power
+Q(V) Fixed Vref Mode Select,QV_MODE_ENABLE-AS,ENABLED,Text,Value: ENABLED/DISABLED,QV_MODE-ENABLE,Voltage-Reactive Power Mode Enable,Enable_ Disable (0_ 1) Specifed by AEPSO
+Q(V) Fixed Vref,QV_VREF-ER-MIN,0.88,V p.u.,,,Vref (RofA not specified in 1547),Per unit value based  on NP AC Vnom. (Voltage base).
+,QV_VREF-AS,1,V p.u.,,QV_VREF,Vref,Per unit value based  on NP AC Vnom. (Voltage base).
+,QV_VREF-ER-MAX,1.1,V p.u.,,,Vref (RofA not specified in 1547),Per unit value based  on NP AC Vnom. (Voltage base).
+Q(V) Mode Select,QV_VREF_AUTO_MODE-AS,ENABLED,Text,Value: ENABLED/DISABLED,QV_VREF_AUTO_MODE,Autonomous Vref Adjustment Enable,Enable_ Disable (0_ 1) Specifed by AEPSO
+Q(V) Auto Vref Avg Time,QV_VREF_OLRT-ER-MIN,0.1,s,,,Vref adjustment time Constant (RofA not specified in 1547),Vref time constant in seconds as specified by the Area EPS Operator
+,QV_VREF_OLRT-AS,300,s,,QV_VREF_OLRT,Vref adjustment time Constant ,Vref time constant in seconds as specified by the Area EPS Operator
+,QV_VREF_OLRT-ER-MAX,5000,s,,,Vref adjustment time Constant (RofA not specified in 1547),Vref time constant in seconds as specified by the Area EPS Operator
+Q(V) Curve Point V2,QV_CURVE_V2-ER-MIN,0.88,V p.u.,,,(check Table 8) V/Q Curve Point V2 (RofA not specified in 1547),Undervoltage magnitude where VArs are at minimum. Per unit value based  on NP AC Vnom. (Voltage base).
+,QV_CURVE_V2-AS,1.05,V p.u.,,QV_CURVE_V2,V/Q Curve Point V2 Setting,Undervoltage magnitude where VArs are at minimum. Per unit value based  on NP AC Vnom. (Voltage base).
+,QV_CURVE_V2-ER-MAX,1.1,V p.u.,,, V/Q Curve Point V2 (RofA not specified in 1547),Undervoltage magnitude where VArs are at minimum. Per unit value based  on NP AC Vnom. (Voltage base).
+Q(V) Curve Point Q2,QV_CURVE_Q2-ER-MIN,0,VAr p.u.,,,(check Table 8) V/Q Curve Point Q2 (RofA not specified in 1547),VArs at V2. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QV_CURVE_Q2-AS,1,VAr p.u.,,QV_CURVE_Q2,V/Q Curve Point Q2 Setting,VArs at V2. Per unit value based on NP Qmax Abs or NP Qmax Inj Negative signs should not be used but if present indicate absorbing VAr.
+,QV_CURVE_Q2-ER-MAX,0.44,VAr p.u.,,, V/Q Curve Point Q2 (RofA not specified in 1547),VArs at V2. Per unit value based on NP Qmax Abs  or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+Q(V) Curve Point V3,QV_CURVE_V3-ER-MIN,0.88,V p.u.,,,(check Table 8) V/Q Curve Point V3 (RofA not specified in 1547),Overvoltage magnitude where VArs are at minimum. Per unit value based  on NP AC Vnom. (Voltage base).
+,QV_CURVE_V3-AS,1.05,V p.u.,,QV_CURVE_V3,V/Q Curve Point V3 Setting,Overvoltage magnitude where VArs are at minimum. Per unit value based  on NP AC Vnom. (Voltage base).
+,QV_CURVE_V3-ER-MAX,1.1,V p.u.,,, V/Q Curve Point V# (RofA not specified in 1547),Overvoltage magnitude where VArs are at minimum. Per unit value based  on NP AC Vnom. (Voltage base).
+Q(V) Curve Point Q3,QV_CURVE_Q3-ER-MIN,0,VAr p.u.,,,(check Table 8) V/Q Curve Point Q3 (RofA not specified in 1547),VArs at V3. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QV_CURVE_Q3-AS,1,VAr p.u.,,QV_CURVE_Q3,V/Q Curve Point Q3 Setting,VArs at V3. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QV_CURVE_Q3-ER-MAX,0.44,VAr p.u.,,, V/Q Curve Point Q3 (RofA not specified in 1547),VArs at V3. Per unit value based on NP Qmax Abs  or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+Q(V) Curve Point V1,QV_CURVE_V1-ER-MIN,0.88,V p.u.,,,(check Table 8) V/Q Curve Point V1 (RofA not specified in 1547),Undervoltage magnitude where VArs are at maximum. Per unit value based  on NP AC Vnom. (Voltage base).
+,QV_CURVE_V1-AS,1.05,V p.u.,,QV_CURVE_V1,V/Q Curve Point V1 Setting,Undervoltage magnitude where VArs are at maximum. Per unit value based  on NP AC Vnom. (Voltage base).
+,QV_CURVE_V1-ER-MAX,1.1,V p.u.,,, V/Q Curve Point V1 (RofA not specified in 1547),Undervoltage magnitude where VArs are at maximum. Per unit value based  on NP AC Vnom. (Voltage base).
+Q(V) Curve Point Q1,QV_CURVE_Q1-ER-MIN,0,VAr p.u.,,,(check Table 8) V/Q Curve Point Q1 (RofA not specified in 1547),VArs at V1. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QV_CURVE_Q1-AS,1,VAr p.u.,,QV_CURVE_Q1,V/Q Curve Point Q1 Setting,VArs at V1. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QV_CURVE_Q1-ER-MAX,0.44,VAr p.u.,,, V/Q Curve Point Q1 (RofA not specified in 1547),VArs at V1. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+Q(V) Curve Point V4,QV_CURVE_V4-ER-MIN,0.88,V p.u.,,,(check Table 8) V/Q Curve Point V4 (RofA not specified in 1547),Overvoltage magnitude where VArs are at minimum. Per unit value based  on NP AC Vnom. (Voltage base).
+,QV_CURVE_V4-AS,1.05,V p.u.,,QV_CURVE_V4,V/Q Curve Point V4 Setting,Overvoltage magnitude where VArs are at minimum. Per unit value based  on NP AC Vnom. (Voltage base).
+,QV_CURVE_V4-ER-MAX,1.1,V p.u.,,, V/Q Curve Point V4 (RofA not specified in 1547),Overvoltage magnitude where VArs are at minimum. Per unit value based  on NP AC Vnom. (Voltage base).
+Q(V) Curve Point Q4,QV_CURVE_Q4-ER-MIN,0,VAr p.u.,,,(check Table 8) V/Q Curve Point Q4 (RofA not specified in 1547),VArs at V4. Per unit value based on NP Qmax Abs  or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QV_CURVE_Q4-AS,1,VAr p.u.,,QV_CURVE_Q4,V/Q Curve Point Q4 Setting,VArs at V4. Per unit value based on NP Qmax Abs  or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QV_CURVE_Q4-ER-MAX,0.44,VAr p.u.,,, V/Q Curve Point Q4 (RofA not specified in 1547),VArs at V4. Per unit value based on NP Qmax Abs  or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+Q(V) OLRT,QV_OLRT-ER-MIN,0.1,s,,,QV Open Loop Response Time (RofA not specified in 1547),Volt VAr Open Loop Response time
+,QV_OLRT-AS,5,s,,QV_OLRT, QV Open Loop Response Time Setting ,Volt VAr Open Loop Response time
+,QV_OLRT-ER-MAX,30,s,,,QV Open Loop Response Time (RofA not specified in 1547),Volt VAr Open Loop Response time
+Q(P) Mode Enable,QP_MODE_ENABLE-AS,ENABLED,Text,Value: ENABLED/DISABLED,QP_MODE_ENABLE,Active Power Reactive  Power Mode Enable,This function is deactivated by request from the Area EPS Operator
+Q(P) Curve Point P3 (Gen),QP_CURVE_P3_GEN-ER-MIN,0,P p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Maximum Active Power_ Generating. Per unit value based on NP Pmax
+,QP_CURVE_P3_GEN-AS,0.3,P p.u.,,QP_CURVE_P3_GEN,P-Q curve P3 Setting,Maximum Active Power_ Generating. Per unit value based on NP Pmax
+,QP_CURVE_P3_GEN-ER-MAX,1,P p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Maximum Active Power_ Generating. Per unit value based on NP Pmax
+Q(P) Curve Point P2 (Gen),QP_CURVE_P2_GEN-ER-MIN,0,P p.u.,,,P-Q curve P2 (RofA not Specified in 1547),Medium Active Power_ Generating . Per unit value based on NP Pmax
+,QP_CURVE_P2_GEN-AS,0.5,P p.u.,,QP_CURVE_P2_GEN,P-Q curve P2P-Q Setting,Medium Active Power_ Generating. Per unit value based on NP Pmax
+,QP_CURVE_P2_GEN-ER-MAX,1,P p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Medium Active Power_ Generating. Per unit value based on NP Pmax
+Q(P) Curve Point P1 (gen),QP_CURVE_P1_GEN-ER-MIN,0,P p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Lower Active Power_ Generating. Per unit value based on NP Pmax
+,QP_CURVE_P1_GEN-AS,0.2,P p.u.,,QP_CURVE_P1_GEN,P-Q curve P1  Setting,Lower Active Power_ Generating. Per unit value based on NP Pmax
+,QP_CURVE_P1_GEN-ER-MAX,1,P p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Lower Active Power_ Generating. Per unit value based on NP Pmax
+Q(P) Curve Point P'1 (load) ,QP_CURVE_P1_LOAD-ER-MIN,0,P p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Lower Active Power_ Absorbing. Per unit value based on NP Pmax Charge
+,QP_CURVE_P1_LOAD-AS,0.1,P p.u.,,QP_CURVE_P1_LOAD,P-Q curve P3 Setting,Lower Active Power_ Absorbing. Per unit value based on NP Pmax Charge
+,QP_CURVE_P1_LOAD-ER-MAX,1,P p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Lower Active Power_ Absorbing. Per unit value based on NP Pmax Charge
+Q(P) Curve Point P'2 (load) ,QP_CURVE_P2_LOAD-ER-MIN,0,P p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Medium Active Power_ Absorbing. Per unit value based on NP Pmax Charge
+,QP_CURVE_P2_LOAD-AS,0.2,P p.u.,,QP_CURVE_P2_LOAD,P-Q curve P3  Setting,Medium Active Power_ Absorbing. Per unit value based on NP Pmax Charge
+,QP_CURVE_P2_LOAD-ER-MAX,1,P p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Medium Active Power_ Absorbing. Per unit value based on NP Pmax Charge
+Q(P) Curve Point P'3 (load) ,QP_CURVE_P3_LOAD-ER-MIN,0,P p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Maximum Active Power_ Absorbing. Per unit value based on NP Pmax Charge
+,QP_CURVE_P3_LOAD-AS,0.5,P p.u.,,QP_CURVE_P3_LOAD,P-Q curve P3  Setting,Maximum Active Power_ Absorbing. Per unit value based on NP Pmax Charge
+,QP_CURVE_P3_LOAD-ER-MAX,1,P p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Maximum Active Power_ Absorbing. Per unit value based on NP Pmax Charge
+Q(P) Curve Point Q3 (gen),QP_CURVE_Q3_GEN-ER-MIN,0,VAr p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Maximum Reactive Power while Generating. . Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QP_CURVE_Q3_GEN-AS,0.3,VAr p.u.,,QP_CURVE_Q3_GEN,P-Q curve P3  Setting,Maximum Reactive Power while Generating. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QP_CURVE_Q3_GEN-ER-MAX,0.44,VAr p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Maximum Reactive Power while Generating. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+Q(P) Curve Point Q2 (gen),QP_CURVE_Q2_GEN-ER-MIN,0,VAr p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Medium Reactive Power while Generating. . Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QP_CURVE_Q2_GEN-AS,0.2,VAr p.u.,,QP_CURVE_Q2_GEN,P-Q curve P3  Setting,Medium Reactive Power while Generating. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QP_CURVE_Q2_GEN-ER-MAX,0.44,VAr p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Medium Reactive Power while Generating. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+Q(P) Curve Point Q1 (gen),QP_CURVE_Q1_GEN-ER-MIN,0,VAr p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Lower Reactive Power while Generating. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QP_CURVE_Q1_GEN-AS,0.1,VAr p.u.,,QP_CURVE_Q1_GEN,P-Q curve P3  Setting,Lower Reactive Power while Generating.. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QP_CURVE_Q1_GEN-ER-MAX,0.44,VAr p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Lower Reactive Power while Generating. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+Q(P) Curve Point Q'1 (load),QP_CURVE_Q1_LOAD-ER-MIN,0,VAr p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Maximum Reactive Power while Absorbing. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QP_CURVE_Q1_LOAD-AS,0.1,VAr p.u.,,QP_CURVE_Q1_LOAD,P-Q curve P3 Setting,Maximum Reactive Power while Absorbing. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QP_CURVE_Q1_LOAD-ER-MAX,0.44,VAr p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Maximum Reactive Power while Absorbing. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+Q(P) Curve Point Q'2 (load),QP_CURVE_Q2_LOAD-ER-MIN,0,VAr p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Medium Reactive Power while Absorbing. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QP_CURVE_Q2_LOAD-AS,0.2,VAr p.u.,,QP_CURVE_Q2_LOAD,P-Q curve P3 Setting,Medium Reactive Power while Absorbing. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QP_CURVE_Q2_LOAD-ER-MAX,0.44,VAr p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Medium Reactive Power while Absorbing. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+Q(P) Curve Point Q'3 (load),QP_CURVE_Q3_LOAD-ER-MIN,0,VAr p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Lower Reactive Power while Absorbing. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QP_CURVE_Q3_LOAD-AS,0.3,VAr p.u.,,QP_CURVE_Q3_LOAD,P-Q curve P3 Setting,Lower Reactive Power while Absorbing. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+,QP_CURVE_Q3_LOAD-ER-MAX,0.44,VAr p.u.,,,P-Q curve P3 (RofA not Specified in 1547),Lower Reactive Power while Absorbing. Per unit value based on NP Qmax Abs or NP Qmax Inj. Negative signs should not be used but if present indicate absorbing VAr.
+Q(P) OLRT,QP_OLRT-ER-MIN,0.01,s,,,QP Open Loop Response Time (RofA not specified in 1547),Q(P) Response Time Min
+,QP_OLRT-AS,5,s,,QP_OLRT, QVPOpen Loop Response Time Setting ,Q(P) Response Time Setting
+,QP_OLRT-ER-MAX,60,s,,,Q OPpen Loop Response Time (RofA not specified in 1547),Q(P) Response Time Max
+P(V) Mode Enable,PV_MODE_ENABLE-AS,ENABLED,Text,Value: ENABLED/DISABLED,PV_MODE_ENABLE,Voltage-Active Power Mode Enable,This function is activated by request from the Area EPS Operator
+P(V) Curve Point V1,PV_CURVE_V1-ER-MIN,0.88,V p.u.,,,(check Table 10) PV  Curve Point V1 (RofA not specified in 1547),Upper start voltage for power reduction. Per unit value based  on NP AC Vnom. (Voltage base).
+,PV_CURVE_V1-AS,1.05,V p.u.,,PV_CURVE_V1,PV Curve Point V1 Setting,Upper start voltage for power reduction. Per unit value based  on NP AC Vnom. (Voltage base).
+,PV_CURVE_V1-ER-MAX,1.2,V p.u.,,,PV Curve Point V1 (RofA not specified in 1547),Upper start voltage for power reduction. Per unit value based  on NP AC Vnom. (Voltage base).
+P(V) Curve Point P1,PV_CURVE_P1-ER-MIN,0.88,P p.u.,,,(check Table 10) PV  Curve Point P1 (RofA not specified in 1547),Active power level at V1. Per unit value based  on NP AC Vnom. (Voltage base).
+,PV_CURVE_P1-AS,1.05,P p.u.,,PV_CURVE_P1,PV Curve Point P1 Setting,Active power level at V1. Per unit Value based on NP Pmax Charge.
+,PV_CURVE_P1-ER-MAX,1.2,P p.u.,,,PV Curve Point P1 (RofA not specified in 1547),Active power level at V1. Per unit value based  on NP AC Vnom. (Voltage base).
+P(V) Curve Point V2,PV_CURVE_V2-ER-MIN,0.88,V p.u.,,,(check Table 10) PV  Curve Point V2 (RofA not specified in 1547),Upper voltager for maximum power reduction. Per unit value based  on NP AC Vnom. (Voltage base).
+,PV_CURVE_V2-AS,1.05,V p.u.,,PV_CURVE_V2,PV Curve Point V2 Setting,Upper voltager for maximum power reduction. Per unit value based  on NP AC Vnom. (Voltage base).
+,PV_CURVE_V2-ER-MAX,1.2,V p.u.,,,PV Curve Point V2 (RofA not specified in 1547),Upper voltager for maximum power reduction. Per unit value based  on NP AC Vnom. (Voltage base).
+P(V) Curve Point P2 (gen),PV_CURVE_P2_GEN-ER-MIN,0,P p.u.,,,(check Table 10) PV  Curve Point P2 gen (RofA not specified in 1547),Minimum active power generating at V2_ the lesser of 0.2*Prated or Pmin. Per unit value based on NP Pmax
+,PV_CURVE_P2_GEN-AS,0.5,P p.u.,,PV_CURVE_P2_GEN,PV Curve Point P2 gen Setting,Minimum active power generating at V2_ the lesser of 0.2*Prated or Pmin. Per unit value based on NP Pmax
+,PV_CURVE_P2_GEN-ER-MAX,1,P p.u.,,,PV Curve Point P2 gen (RofA not specified in 1547),Minimum active power generating at V2_ the lesser of 0.2*Prated or Pmin. Per unit value based on NP Pmax
+P(V) Curve Point P'2 (load),PV_CURVE_P2_LOAD-ER-MIN,0,P p.u.,,,(check Table 10) PV  Curve Point P'2 load (RofA not specified in 1547),Applicable to DER which can generate and absorb active power. Per unit Value based on NP Pmax Charge.  Negative values indicate active power load. P'2 indicates maximum active power absorption
+,PV_CURVE_P2_LOAD-AS,0.5,P p.u.,,PV_CURVE_P2_LOAD,PV Curve Point P'2 load Setting,Applicable to DER which can generate and absorb active power. Per unit Value based on NP Pmax Charge. Negative values indicate active power load. P'2 indicates maximum active power absorption
+,PV_CURVE_P2_LOAD-ER-MAX,1,P p.u.,,,PV Curve Point P'2 load (RofA not specified in 1547),Applicable to DER which can generate and absorb active power. Per unit Value based on NP Pmax Charge. Negative values indicate active power load. P'2 indicates maximum active power absorption
+P(V) OLRT,PV_OLRT-ER-MIN,0.01,s,,,P(V) Open Loop Response time min (RofA not specified in 1547),P(V) Open Loop Response Time Min
+,PV_OLRT-AS,5,s,,PV_OLRT, P(V) Open Loop Response time Setting,P(V) Open Loop Response Time Setting
+,PV_OLRT-ER-MAX,30,s,,,P(V) Open Loop Response time max (RofA not specified in 1547),P(V) Open Loop Response Respone Time Max
+OV3,OV3_TRIP_V-ER-MIN,1,V p.u.,,,HV Trip Curve Point OV3 (see Tables 11_ 13) (RofA not specified in 1547),Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,OV3_TRIP_V-AS,1.2,V p.u.,,OV3_TRIP_V,HV Trip Curve Point OV3 Setting,Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,OV3_TRIP_V-ER-MAX,1.2,V p.u.,,,HV Trip Curve Point OV3 (RofA not specified in 1547),Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,OV3_TRIP_T-ER-MIN,0,s,,,HV Trip Curve Point OV3 (see Tables 11_ 13) (RofA not specified in 1547),Must Trip Duration
+,OV3_TRIP_T-AS,0.16,s,,OV3_TRIP_T,HV Trip Curve Point OV3 Setting,Must Trip Duration
+,OV3_TRIP_T-ER-MAX,2,s,,,HV Trip Curve Point OV3 (RofA not specified in 1547),Must Trip Duration
+OV2,OV2_TRIP_V-ER-MIN,1,V p.u.,,,HV Trip Curve Point OV2 (see Tables 11_ 13) (RofA not specified in 1547),Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,OV2_TRIP_V-AS,1.2,V p.u.,,OV2_TRIP_V,HV Trip Curve Point OV2  Setting,Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,OV2_TRIP_V-ER-MAX,1.2,V p.u.,,,HV Trip Curve Point OV2 (RofA not specified in 1547),Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,OV2_TRIP_T-ER-MIN,0,s,,,HV Trip Curve Point OV2 (see Tables 11_ 13) (RofA not specified in 1547),Must Trip Duration
+,OV2_TRIP_T-AS,5,s,,OV2_TRIP_T,HV Trip Curve Point OV2  Setting,Must Trip Duration
+,OV2_TRIP_T-ER-MAX,10,s,,,HV Trip Curve Point OV2 (RofA not specified in 1547),Must Trip Duration
+OV1,OV1_TRIP_V-ER-MIN,1,V p.u.,,,HV Trip Curve Point OV1 (see Tables 11_ 13) (RofA not specified in 1547),Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,OV1_TRIP_V-AS,1.2,V p.u.,,OV1_TRIP_V,HV Trip Curve Point OV1 Setting,Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,OV1_TRIP_V-ER-MAX,1.1,V p.u.,,,HV Trip Curve Point OV1 (RofA not specified in 1547),Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,OV1_TRIP_T-ER-MIN,0,s,,,HV Trip Curve Point OV1 (see Tables 11_ 13) (RofA not specified in 1547),Must Trip Duration
+,OV1_TRIP_T-AS,0.16,s,,OV1_TRIP_T,HV Trip Curve Point OV1 Setting,Must Trip Duration
+,OV1_TRIP_T-ER-MAX,2,s,,,HV Trip Curve Point OV1 (RofA not specified in 1547),Must Trip Duration
+UV1,UV1_TRIP_V-ER-MIN,0,V p.u.,,,LV Curve Trip Point UV1 (see Table 11_ 13) ,Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,UV1_TRIP_V-AS,0.88,V p.u.,,UV1_TRIP_V,LV Curve Trip Point UV1 (see Table 11_ 13) Setting,Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,UV1_TRIP_V-ER-MAX,1,V p.u.,,,LV Curve Trip Point UV1 (see Table 11_ 13) ,Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,UV1_TRIP_T-ER-MIN,0,s,,,LV Curve Trip Point UV1 (see Table 11_ 13) ,Must Trip Duration
+,UV1_TRIP_T-AS,20,s,,UV1_TRIP_T,LV Curve Trip Point UV1 (see Table 11_ 13) Setting,Must Trip Duration
+,UV1_TRIP_T-ER-MAX,600,s,,,LV Curve Trip Point UV1 (see Table 11_ 13) ,Must Trip Duration
+UV2,UV2_TRIP_V-ER-MIN,0,V p.u.,,,LV Curve Trip Point UV2 (see Table 11_ 13) ,Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,UV2_TRIP_V-AS,0.7,V p.u.,,UV2_TRIP_V,LV Curve Trip Point UV2 (see Table 11_ 13) Setting,Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,UV2_TRIP_V-ER-MAX,1,V p.u.,,,LV Curve Trip Point UV2 (see Table 11_ 13) ,Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,UV2_TRIP_T-ER-MIN,0,s,,,LV Curve Trip Point UV2 (see Table 11_ 13) ,Must Trip Duration
+,UV2_TRIP_T-AS,10,s,,UV2_TRIP_T,LV Curve Trip Point UV2 (see Table 11_ 13) Setting,Must Trip Duration
+,UV2_TRIP_T-ER-MAX,600,s,,,LV Curve Trip Point UV2 (see Table 11_ 13) ,Must Trip Duration
+UV3,UV3_TRIP_V-ER-MIN,0,V p.u.,,,"LV Curve Trip Point UV3 (see IEEE Std 1547 2018,Table 11_ 13) ",Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,UV3_TRIP_V-AS,0.5,V p.u.,,UV3_TRIP_V,LV Curve Trip Point UV3 (see Table 11_ 13) Setting,Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,UV3_TRIP_V-ER-MAX,1,V p.u.,,,LV Curve Trip Point UV3 (see Table 11_ 13) ,Must Trip Magnitude. Per unit value based  on NP AC Vnom. (Voltage base).
+,UV3_TRIP_T-ER-MIN,0,s,,,LV Curve Trip Point UV3 (see Table 11_ 13) ,Must Trip Duration
+,UV3_TRIP_T-AS,1.5,s,,UV3_TRIP_T,LV Curve Trip Point UV3 (see Table 11_ 13) Setting,Must Trip Duration
+,UV3_TRIP_T-ER-MAX,600,s,,,LV Curve Trip Point UV3 (see Table 11_ 13) ,Must Trip Duration
+OF2,OF2_TRIP_F-ER-MIN,50,Hz,,,OF Curve Trip Point OF2 (see Table 19) ,Must Trip frequency Magnitude.  Frequency values shall be reported to 3 decimal places
+,OF2_TRIP_F-AS,61.8,Hz,,OF2_TRIP_F,OF Curve Trip Point OF2 (see Table 19) Setting,Must Trip frequency Magnitude.  Frequency values shall be reported to 3 decimal places
+,OF2_TRIP_F-ER-MAX,65,Hz,,,OF Curve Trip Point OF2 (see Table 19) ,Must Trip frequency Magnitude.  Frequency values shall be reported to 3 decimal places
+,OF2_TRIP_T-ER-MIN,0.01,s,,,OF Curve Trip Point OF2 (see Table 19) ,Must Trip Duration
+,OF2_TRIP_T-AS,299,s,,OF2_TRIP_T,OF Curve Trip Point OF2 (see Table 19) Setting,Must Trip Duration
+,OF2_TRIP_T-ER-MAX,1000,s,,,OF Curve Trip Point OF2 (see Table 19) ,Must Trip Duration
+OF1,OF1_TRIP_F-ER-MIN,50,Hz,,,OF Curve Trip Point OF1 (see Table 19) ,Must Trip frequency Magnitude.  Frequency values shall be reported to 3 decimal places
+,OF1_TRIP_F-AS,61.8,Hz,,OF1_TRIP_F,OF Curve Trip Point OF1 (see Table 19) Setting,Must Trip frequency Magnitude.  Frequency values shall be reported to 3 decimal places
+,OF1_TRIP_F-ER-MAX,65,Hz,,,OF Curve Trip Point OF1 (see Table 19) ,Must Trip frequency Magnitude.  Frequency values shall be reported to 3 decimal places
+,OF1_TRIP_T-ER-MIN,0.01,s,,,OF Curve Trip Point OF1 (see Table 19) ,Must Trip Duration
+,OF1_TRIP_T-AS,299,s,,OF1_TRIP_T,OF Curve Trip Point OF1 (see Table 19) Setting,Must Trip Duration
+,OF1_TRIP_T-ER-MAX,1000,s,,,OF Curve Trip Point OF1 (see Table 19) ,Must Trip Duration
+UF1,UF1_TRIP_F-ER-MIN,50,Hz,,,UF Curve Trip Point UF1 (see Table 19) ,Must Trip frequency Magnitude.  Frequency values shall be reported to 3 decimal places
+,UF1_TRIP_F-AS,61.8,Hz,,UF1_TRIP_F,UF Curve Trip Point UF1 (see Table 19) Setting,Must Trip frequency Magnitude.  Frequency values shall be reported to 3 decimal places
+,UF1_TRIP_F-ER-MAX,65,Hz,,,UF Curve Trip Point UF1 (see Table 19) ,Must Trip frequency Magnitude.  Frequency values shall be reported to 3 decimal places
+,UF1_TRIP_T-ER-MIN,0.01,s,,,UF Curve Trip Point UF1 (see Table 19) ,Must Trip Duration
+,UF1_TRIP_T-AS,299,s,,UF1_TRIP_T,UF Curve Trip Point UF1 (see Table 19) Setting,Must Trip Duration
+,UF1_TRIP_T-ER-MAX,1000,s,,,UF Curve Trip Point UF1 (see Table 19) ,Must Trip Duration
+UF2,UF2_TRIP_F-ER-MIN,50,Hz,,,UF Curve Trip Point UF2 (see Table 19) ,Must Trip frequency Magnitude.  Frequency values shall be reported to 3 decimal places
+,UF2_TRIP_F-AS,61.8,Hz,,UF2_TRIP_F,UF Curve Trip Point UF2 (see Table 19) Setting,Must Trip frequency Magnitude.  Frequency values shall be reported to 3 decimal places
+,UF2_TRIP_F-ER-MAX,65,Hz,,,UF Curve Trip Point UF2 (see Table 19) ,Must Trip frequency Magnitude.  Frequency values shall be reported to 3 decimal places
+,UF2_TRIP_T-ER-MIN,0.01,s,,,UF Curve Trip Point UF2 (see Table 19) ,Must Trip Duration
+,UF2_TRIP_T-AS,299,s,,UF2_TRIP_T,UF Curve Trip Point UF2 (see Table 19) Setting,Must Trip Duration
+,UF2_TRIP_T-ER-MAX,1000,s,,,UF Curve Trip Point UF2 (see Table 19) ,Must Trip Duration
+P(f) Mode Select,PF_MODE_ENABLE-AS,ENABLED,Text,Value: ENABLED/DISABLED,PF_MODE_ENABLE,frequency-Active Power Mode Enable,May be disabled only with aproval of Regional Balancing Authority
+P(f )Deadband,PF_DBOF-ER-MIN,0.01,Hz,,,Overfrequency Droop dbOF RofA min,Over Frequency deadband offset from nominal frequency in Hz  Frequency values shall be reported to 3 decimal places
+,PF_DBOF-AS,0.036,Hz,,PF_DBOF,Overfrequency Droop dbOF Setting,Over Frequency deadband offset from nominal frequency in Hz  Frequency values shall be reported to 3 decimal places
+,PF_DBOF-ER-MAX,0.5,Hz,,,Overfrequency Droop dbOF RofA max,Over Frequency deadband offset from nominal frequency in Hz  Frequency values shall be reported to 3 decimal places
+,PF_DBUF-ER-MIN,0.01,Hz,,,Underfrequency Droop dbUF RofA min,Under Frequency deadband offset from nominal frequency in Hz  Frequency values shall be reported to 3 decimal places
+,PF_DBUF-AS,0.036,Hz,,PF_DBUF,Underfrequency Droop dbUF Setting,Under Frequency deadband offset from nominal frequency in Hz  Frequency values shall be reported to 3 decimal places
+,PF_DBUF-ER-MAX,0.5,Hz,,,Underfrequency Droop dbUF RofA max,Under Frequency deadband offset from nominal frequency in Hz  Frequency values shall be reported to 3 decimal places
+P(f) Droop Coefficient,PF_KOF-ER-MIN,0,unitless,,,Overfrequency Droop kOF RofA min,Over frequency per unit frequency change corresponding to a 1 per unit power change (frequency droop)
+,PF_KOF-AS,0.05,unitless,,PF_KOF,Overfrequency Droop kOF  Setting,Over frequency per unit frequency change corresponding to a 1 per unit power change (frequency droop)
+,PF_KOF-ER-MAX,1,unitless,,,Overfrequency Droop kOF RofA max,Over frequency per unit frequency change corresponding to a 1 per unit power change (frequency droop)
+,PF_KUF-ER-MIN,0,unitless,,,Underfrequency Droop kUF RofA Min,Under frequency per unit frequency change corresponding to a 1 per unit power change (frequency droop)
+,PF_KUF-AS,0.05,unitless,,PF_KUF,Underfrequency Droop kUF Setting,Under frequency per unit frequency change corresponding to a 1 per unit power change (frequency droop)
+,PF_KUF-ER-MAX,1,unitless,,,Underfrequency Droop kUF RofA Max,Under frequency per unit frequency change corresponding to a 1 per unit power change (frequency droop)
+P(f) Open Loop Response Time,PF_OLRT-ER-MIN,0.01,s,,,P(f) Open Loop Response Time RofA min,Open Loop Response time 
+,PF_OLRT-AS,5,s,,PF_OLRT,P(f) Open Loop Response Time Setting,Open Loop Response time 
+,PF_OLRT-ER-MAX,30,s,,,P(f) Open Loop Response Time RofA max,Open Loop Response time 
+UI Mode Select ,UI_MODE_ENABLE-AS,ENABLED,Text,Value: ENABLED/DISABLED,UI_MODE_ENABLE,N/A - AI is always on in 1547 BUT dot 1 test says turn it off for some testing,"Unintentional Islanding Mode (enabled/disabled). This function is  enabled by default, and disabled only by request from the Area EPS Operator."
+UI Methods Evaluated,UI_CAPABILITY-ER,UI_BLRC-UI_PCPST-UI_PHIT-UI_RMIP,Text,Value: UI_BLRC/UI_PCPST/UI_PHIT/UI_RMIP,,Not  supported  in 1547,"Unintential Islanding methods supported Where multiple modes are supported separate with underscores.  UI BLRC = Balanced RLC, UI PCPST = Powerline conducted, UI PHIT = Permissive Hardware-input, UI RMIP = Reverse/min relay. Methods other than UI BRLC may require supplemental comissioning tests."
+Surge Protection  / EMC,SURGE_LOC_CAT_EXPOSE-LEVEL,A-B-C_HIGH-C _LOW,Text,Value: A/B/C_HIGH/C_LOW,,Surge Location Categories / Exposure Level not specified in 1547 ,"Surge Location Category / Exposure Level from IEEE Std C62.41.2,  C62.45 and IEC 61000-4-5 (as applicable).  DER requiring external surge devices to meet a specific rating may require supplementary review during commissioning testing"
+,EMC_IMMUN_LEVEL,PASS,Text,Value: PASS/FAIL,EMC_IMMUN_LEVEL,See IEEE Std 1547 2018 4.11.1,EMC Immunity Level from IEEE Std C37.90.1. and C37.90.2. 
+Communication Protocols Evaluated,IEEE_2030_5-EVAL,TRUE,Boolean,Value: TRUE/FALSE,,N/A in 1547,"""True"" indicates IEEE 2030.5 functionality was evaluated."
+,IEEE_1815-EVAL,FALSE,Boolean,Value: TRUE/FALSE,,N/A in 1547,"""True"" indicates IEEE 1815 functionality was evaluated."
+,SUNSPEC_MODBUS_TCP-EVAL,TRUE,Boolean,Value: TRUE/FALSE,,N/A in 1547,"""True"" indicates SunSpec Modbus TCP functionality was evaluated."
+,SUNSPEC_MODBUS_SERIAL-EVAL,FALSE,Boolean,Value: TRUE/FALSE,,N/A in 1547,"""True"" indicates SunSpec Modbus serial (RS-485) functionality was evaluated."
+,,,,,,,
+,,,,,,,
+,,,,,,,
+,,,,,,,
+,,,,,,,
+,,,,,,,
+,,,,,,,
+,,,,,,,
+,,,,,,,
+,,,,,,,
+,,,,,,,
+,,,,,,,
+,,,,,,,
+,,,,,,,
+,,,,,,,
