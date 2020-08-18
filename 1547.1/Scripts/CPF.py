@@ -546,7 +546,7 @@ info.param('cpf.v_in_nom', label='Test V_in_nom', default='Enabled', values=['Di
 info.param('cpf.v_in_min', label='Test V_in_min', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('cpf.v_in_max', label='Test V_in_max', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('cpf.imbalance_fix', label='Use minimum fix requirements from table 24 ?', \
-           default='No', values=['Yes', 'No'])
+           default='not_fix', values=['not_fix', 'fix_ang', 'fix_mag', 'std'])
 
 
 # EUT general parameters
