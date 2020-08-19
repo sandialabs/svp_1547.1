@@ -244,6 +244,7 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
             cc) Repeat test steps d) through cc) at EUT power set at 20% and 66% of rated power.
             '''
             for power in pwr_lvls:
+                ActiveFunction.reset_pwr(pwr=power)
                 if pv is not None:
                     pv_power_setting = (p_rated * power)
                     pv.iv_curve_config(pmp=pv_power_setting, vmp=v_in_nom)
