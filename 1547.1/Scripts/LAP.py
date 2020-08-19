@@ -64,7 +64,8 @@ def test_run():
     dataset_filename = None
     fw_curves = []
     fw_response_time = [0, 0, 0]
-
+    filename = None
+    result_params = None
 
     try:
         cat = ts.param_value('eut.cat')
@@ -115,10 +116,6 @@ def test_run():
         absorb = {}
         absorb['ena'] = ts.param_value('eut_vw.sink_power')
 
-
-        # Pass/fail accuracies
-        pf_msa = ts.param_value('eut.pf_msa')
-
         """
         A separate module has been create for the 1547.1 Standard
         """
@@ -143,12 +140,11 @@ def test_run():
         else:
             act_pwrs_limits = [0.66, 0.33, 0.0]
         # 5.13.2 Procedure asks for three repetitions
-        n_iters = list(range(1,int(ts.param_value('lap.iter'))+1))
+        n_iters = list(range(1, int(ts.param_value('lap.iter'))+1))
 
         # Take the highest value for the steady state wait time
         tr_min = min(ts.param_value('fw.test_1_tr'),ts.param_value('vw.test_1_tr'))
         tr_vw = ts.param_value('vw.test_1_tr')
-
 
         """
         a) - Connect the EUT according to the instructions and specifications provided by the manufacturer.
@@ -165,7 +161,7 @@ def test_run():
             chil.config()
 
         # grid simulator is initialized with test parameters and enabled
-        grid = gridsim.gridsim_init(ts)  # Turn on AC so the EUT can be initialized
+        grid = gridsim.gridsim_init(ts, support_interfaces={'hil': chil})  # Turn on AC so the EUT can be initialized
         if grid is not None:
             grid.voltage(v_nom)
 
@@ -176,44 +172,22 @@ def test_run():
             pv.power_on()  # Turn on DC so the EUT can be initialized
 
         # DAS soft channels
-        #das_points = {'sc': ('V_MEAS', 'P_MEAS', 'Q_MEAS', 'Q_TARGET_MIN', 'Q_TARGET_MAX', 'PF_TARGET', 'event')}
         das_points = lib_1547.get_sc_points()
         ts.log(das_points)
         # initialize data acquisition
-        daq = das.das_init(ts, sc_points=das_points['sc'])
+        daq = das.das_init(ts, sc_points=das_points['sc'], support_interfaces={'pvsim': pv, 'hil': chil})
 
         if daq is not None:
             ts.log('DAS device: %s' % daq.info())
 
         eut = der.der_init(ts)
-
         if eut is not None:
             eut.config()
             # Enable volt/watt curve and configure default settings
-            eut.volt_watt(params={'Ena': True,
-                                  #'NCrv': 1,
-                                  #'NPt': 3,
-                                  #'WinTms': 0,
-                                  #'RvrtTms': 0,
-                                  'curve': {
-                                      #'ActPt': 3,
-                                      'v': [106, 110],
-                                      'w': [100, 0],
-                                      'DeptRef': 'W_MAX_PCT',
-                                      #'RmpPt1Tms': 10,
-                                      'RmpPtTms': 10,
-                                      'RmpDecTmm': 0,
-                                      'RmpIncTmm': 0}
-                                  })
-            eut.freq_watt(
-                params={
-                    'Ena': True,
-                    'curve': 1,
-                    'dbf': 0.036,
-                    'kof': 0.05,
-                    'RspTms': 5
-                }
-            )
+            eut.volt_watt(params={'Ena': True, 'curve': {'ActPt': 2,
+                                      'v': [106, 110], 'w': [100, 0], 'DeptRef': 'W_MAX_PCT',
+                                      'RmpPtTms': 10, 'RmpDecTmm': 0, 'RmpIncTmm': 0}})
+            eut.freq_watt(params={'Ena': True, 'curve': 1, 'dbf': 0.036, 'kof': 0.05, 'RspTms': 5})
             try:
                 eut.vrt_stay_connected_high(params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000,
                                                     'V1': v_max, 'Tms2': 0.16, 'V2': v_max})
@@ -234,28 +208,29 @@ def test_run():
                                                     'Hz1': f_min, 'Tms2': 160, 'Hz2': f_min})
             except Exception as e:
                 ts.log_error('Could not set FRT Stay Connected Low curve. %s' % e)
-            #eut.config()
-                ts.log_debug('If not done already, set L/HVRT and trip parameters to the widest range of adjustability.')
+
+            ts.log_debug('If not done already, set L/HVRT and trip parameters to the widest range of adjustability.')
 
         # Special considerations for CHIL ASGC/Typhoon startup #
         if chil is not None:
-            inv_power = eut.measurements().get('W')
-            timeout = 120.
-            if inv_power <= p_rated * 0.85:
-                pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
-                ts.sleep(3)
-                eut.connect(params={'Conn': True})
-            while inv_power <= p_rated * 0.85 and timeout >= 0:
-                ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
-                       (inv_power, timeout))
-                ts.sleep(1)
-                timeout -= 1
+            if chil.hil_info()['mode'] == 'Typhoon':
                 inv_power = eut.measurements().get('W')
-                if timeout == 0:
-                    result = script.RESULT_FAIL
-                    raise der.DERError('Inverter did not start.')
-            ts.log('Waiting for EUT to ramp up')
-            ts.sleep(8)
+                timeout = 120.
+                if inv_power <= p_rated * 0.85:
+                    pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                    ts.sleep(3)
+                    eut.connect(params={'Conn': True})
+                while inv_power <= p_rated * 0.85 and timeout >= 0:
+                    ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                           (inv_power, timeout))
+                    ts.sleep(1)
+                    timeout -= 1
+                    inv_power = eut.measurements().get('W')
+                    if timeout == 0:
+                        result = script.RESULT_FAIL
+                        raise der.DERError('Inverter did not start.')
+                ts.log('Waiting for EUT to ramp up')
+                ts.sleep(8)
 
         # Configure Grid simulator
         if grid is not None:
@@ -267,19 +242,17 @@ def test_run():
         ts.result_file(result_summary_filename)
         result_summary.write(lib_1547.get_rslt_sum_col_name())
 
-
-
         """
         g) Repeat steps b) through f using active power limits of 33% and zero
 
         h) Repeat steps b) through g) twice for a total of three repetitions
         """
 
-
-        for n_iter in n_iters :
+        for n_iter in n_iters:
             for act_pwrs_limit in act_pwrs_limits:
                 """
-                 b) - Establish nominal operating conditions as specified by the manufacturer at the terminals of the EUT.
+                 b) - Establish nominal operating conditions as specified by the manufacturer at the terminals 
+                      of the EUT.
                     - Make available sufficient input power for the EUT to reach its rated active power.
                     - Allow (or command) the EUT to reach steady-state output at its rated active power
                     - Begin recording EUT active power
@@ -290,6 +263,7 @@ def test_run():
                 if pv is not None:
                     pv.iv_curve_config(pmp=p_rated, vmp=v_nom_in)
                     pv.irradiance_set(1000.)
+
                 ts.log('EUT Config: setting Active Power Limit to 100%')
                 if eut is not None:
                     # limit maximum power
@@ -338,7 +312,6 @@ def test_run():
                     filename=filename
                 )
 
-
                 """
                 d)  - Reduce the frequency of the AC test to 59 Hz and hold until EUT active power reaches a new steady 
                       state
@@ -366,7 +339,6 @@ def test_run():
                             filename=filename
                         )
 
-
                 """
                 e)  - Increase the frequency of the AC test to 61 Hz and hold until EUT active power reaches a new steady 
                       state
@@ -389,7 +361,7 @@ def test_run():
                             initial_value=initial_values,
                             pwr_lvl=act_pwrs_limit,
                             x_target=step_dict,
-                            y_target=None, #Calculated directly in P1547 lib
+                            y_target=None,  # Calculated directly in P1547 lib
                             result_summary=result_summary,
                             filename=filename
                         )
@@ -414,7 +386,7 @@ def test_run():
                             initial_value=initial_values,
                             pwr_lvl=act_pwrs_limit,
                             x_target=v_step,
-                            y_target=None, #Calculated directly in P1547 lib
+                            y_target=None,  # Calculated directly in P1547 lib
                             result_summary=result_summary,
                             filename=filename
                         )
@@ -445,9 +417,7 @@ def test_run():
             ts.result_file(dataset_filename, params=result_params)
         ts.log_error('Test script exception: %s' % traceback.format_exc())
 
-
     finally:
-
         if grid is not None:
             grid.close()
         if pv is not None:

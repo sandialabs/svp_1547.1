@@ -252,6 +252,7 @@ def test_run():
                 f_steps_dict = ActiveFunction.create_fw_dict_steps(mode=mode)
                 ts.log_debug(f'f_step={f_steps_dict}')
 
+
                 '''
                 p) Repeat test steps b) through o) with the EUT power set at 20% and 66% of rated power. 
                 '''
@@ -277,7 +278,7 @@ def test_run():
                             'RspTms': fw_param['tr']
                         }
                         ts.log_debug(params)
-                        settings=eut.freq_watt(params)
+                        settings = eut.freq_watt(params)
                         '''
                         f) Verify freq-watt mode is reported as active and that 
                             the correct characteristic is reported. 

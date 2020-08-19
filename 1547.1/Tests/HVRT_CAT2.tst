@@ -1,6 +1,7 @@
 <scriptConfig name="HVRT_CAT2" script="VRT">
   <params>
     <param name="vrt.high_pwr_value" type="float">0.91</param>
+    <param name="vrt.phase_comb" type="string">1</param>
     <param name="pvsim.terrasas.channel" type="string">1,2</param>
     <param name="eut.startup_time" type="int">5</param>
     <param name="eut.f_nom" type="float">60.0</param>
@@ -41,6 +42,7 @@
     <param name="das.mode" type="string">Opal</param>
     <param name="hil.mode" type="string">Opal-RT</param>
     <param name="das.opal.map" type="string">Opal_Fast_1547</param>
+    <param name="vrt.dataset_type" type="string">RMS</param>
     <param name="hil.opal.target_name" type="string">RTServer</param>
     <param name="pvsim.mode" type="string">TerraSAS</param>
     <param name="eut.phases" type="string">Three phase</param>
