@@ -1,6 +1,6 @@
 <scriptConfig name="LAP" script="LAP">
   <params>
-    <param name="lap.iter" type="int">1</param>
+    <param name="lap.iter" type="int">3</param>
     <param name="fw.test_1_tr" type="float">5.0</param>
     <param name="vw.test_1_tr" type="float">10.0</param>
     <param name="eut.f_min" type="float">56.0</param>
@@ -16,11 +16,11 @@
     <param name="eut.s_rated" type="float">10000.0</param>
     <param name="lap.act_pwr" type="string">All</param>
     <param name="der.mode" type="string">Disabled</param>
-    <param name="pvsim.mode" type="string">Disabled</param>
-    <param name="hil.mode" type="string">Disabled</param>
     <param name="gridsim.mode" type="string">Disabled</param>
     <param name="gridsim.auto_config" type="string">Disabled</param>
+    <param name="pvsim.mode" type="string">Disabled</param>
     <param name="das.mode" type="string">Disabled</param>
+    <param name="hil.mode" type="string">Disabled</param>
     <param name="eut.imbalance_resp" type="string">EUT response to the average of the three-phase effective (RMS)</param>
     <param name="eut.phases" type="string">Single phase</param>
   </params>
