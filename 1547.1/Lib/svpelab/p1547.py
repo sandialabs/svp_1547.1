@@ -242,7 +242,7 @@ class UtilParameters:
 
         return meas_label
 
-    def get_measurement_total(self, data, type_meas, log=False):
+    def get_measurement_total(self, type_meas, log=False):
         """
         Sum or average the EUT values from all phases
 
@@ -256,15 +256,15 @@ class UtilParameters:
 
         try:
             if self.phases == 'Single phase':
-                value = data.get(self.get_measurement_label(type_meas)[0])
+                value = self.data.get(self.get_measurement_label(type_meas)[0])
                 if log:
                     self.ts.log_debug('        %s are: %s'
                                       % (self.get_measurement_label(type_meas), value))
                 nb_phases = 1
 
             elif self.phases == 'Split phase':
-                value1 = data.get(self.get_measurement_label(type_meas)[0])
-                value2 = data.get(self.get_measurement_label(type_meas)[1])
+                value1 = self.data.get(self.get_measurement_label(type_meas)[0])
+                value2 = self.data.get(self.get_measurement_label(type_meas)[1])
                 if log:
                     self.ts.log_debug('        %s are: %s, %s'
                                       % (self.get_measurement_label(type_meas), value1, value2))
@@ -273,9 +273,9 @@ class UtilParameters:
 
             elif self.phases == 'Three phase':
                 self.ts.log_debug(f'type_meas={type_meas}')
-                value1 = data.get(self.get_measurement_label(type_meas)[0])
-                value2 = data.get(self.get_measurement_label(type_meas)[1])
-                value3 = data.get(self.get_measurement_label(type_meas)[2])
+                value1 = self.data.get(self.get_measurement_label(type_meas)[0])
+                value2 = self.data.get(self.get_measurement_label(type_meas)[1])
+                value3 = self.data.get(self.get_measurement_label(type_meas)[2])
                 if log:
                     self.ts.log_debug('        %s are: %s, %s, %s'
                                       % (self.get_measurement_label(type_meas), value1, value2, value3))
@@ -293,7 +293,7 @@ class UtilParameters:
             value = value / nb_phases
         elif type_meas == 'F':
             # No need to do data average for frequency
-            value = data.get(self.get_measurement_label(type_meas)[0])
+            value = self.data.get(self.get_measurement_label(type_meas)[0])
 
         return round(value, 3)
 
@@ -524,22 +524,22 @@ class DataLogging:
         self.initial_value['timestamp'] = datetime.now()
         self.current_step_label = step_label
         daq.data_sample()
-        data = daq.data_capture_read()
+        self.data = daq.data_capture_read()
         daq.sc['event'] = self.current_step_label
         if isinstance(self.x_criteria, list):
             for xs in self.x_criteria:
-                self.initial_value[xs] = {'x_value': self.get_measurement_total(data=data, type_meas=xs, log=False)}
+                self.initial_value[xs] = {'x_value': self.get_measurement_total(type_meas=xs, log=False)}
                 daq.sc['%s_MEAS' % xs] = self.initial_value[xs]['x_value']
         else:
-            self.initial_value[self.x_criteria] = {'x_value': self.get_measurement_total(data=data, type_meas=self.x_criteria, log=False)}
+            self.initial_value[self.x_criteria] = {'x_value': self.get_measurement_total(type_meas=self.x_criteria, log=False)}
             daq.sc['%s_MEAS' % self.x_criteria] = self.initial_value[self.x_criteria]['x_value']
 
         if isinstance(self.y_criteria, dict):
             for ys in list(self.y_criteria.keys()):
-                self.initial_value[ys] = {'y_value': self.get_measurement_total(data=data, type_meas=ys, log=False)}
+                self.initial_value[ys] = {'y_value': self.get_measurement_total(type_meas=ys, log=False)}
                 daq.sc['%s_MEAS' % ys] = self.initial_value[ys]["y_value"]
         else:
-            self.initial_value[self.y_criteria] = {'y_value': self.get_measurement_total(data=data, type_meas=self.y_criteria, log=False)}
+            self.initial_value[self.y_criteria] = {'y_value': self.get_measurement_total(type_meas=self.y_criteria, log=False)}
             daq.sc['%s_MEAS' % self.y_criteria] = self.initial_value[self.y_criteria]['y_value']
 
         """
@@ -572,7 +572,7 @@ class DataLogging:
         first_tr = self.initial_value['timestamp'] + timedelta(seconds=self.tr)
         tr_list = [first_tr]
 
-        for i in range(self.n_tr - 1):
+        for i in range(self.n_tr):
             tr_list.append(tr_list[i] + timedelta(seconds=self.tr))
             for meas_value in self.meas_values:
                 self.tr_value['%s_TR_%s' % (meas_value, i)] = None
@@ -583,7 +583,10 @@ class DataLogging:
                     self.tr_value['%s_TR_%s_MIN' % (meas_value, i)] = None
                     self.tr_value['%s_TR_%s_MAX' % (meas_value, i)] = None
         tr_iter = 1
+        self.ts.log_debug(f'tr_list={tr_list}')
+
         for tr_ in tr_list:
+            self.ts.log_debug(f'tr_iter_record_tr={tr_iter}')
             now = datetime.now()
             if now <= tr_:
                 time_to_sleep = tr_ - datetime.now()
@@ -602,50 +605,18 @@ class DataLogging:
                     self.tr_value['%s_TR_%s' % (meas_value, tr_iter)] = daq.sc['%s_MEAS' % meas_value]
 
                     self.ts.log('Value %s: %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
-                    """
-                    if meas_value in x:
-                        if step_dict is not None and meas_value in list(step_dict.keys()):
-                            daq.sc['%s_TARGET' % meas_value] = step_dict[meas_value]
-                            self.tr_value['%s_TR_TARG_%s' % (meas_value, tr_iter)] = step_dict[meas_value]
-                            self.ts.log('X Value (%s) = %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
-                        else:
-                            daq.sc['%s_TARGET' % meas_value] = step_value
-                            self.tr_value['%s_TR_TARG_%s' % (meas_value, tr_iter)] = step_value
-                            self.ts.log('X Value (%s) = %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
-                    
-                    elif meas_value in y:
-                        if step_dict is not None:
-                            #self.ts.log_debug(f'meas={meas_value} et step_dict={step_dict}')
-                            daq.sc['%s_TARGET' % meas_value] = self.update_target_value(step_dict=step_dict,
-                                                                                        function=self.y_criteria[meas_value])
-                            daq.sc['%s_TARGET_MIN' % meas_value], daq.sc['%s_TARGET_MAX' % meas_value] = \
-                                self.calculate_min_max_values(data=data,
-                                                              function=self.y_criteria[meas_value],
-                                                              step_dict=step_dict)
-                        else:
-                            daq.sc['%s_TARGET' % meas_value] = self.update_target_value(value=step_value,
-                                                                                        function=self.y_criteria[meas_value])
-                            daq.sc['%s_TARGET_MIN' % meas_value], daq.sc[
-                                '%s_TARGET_MAX' % meas_value] = self.calculate_min_max_values(data=data,
-                                                                                              function=self.y_criteria[meas_value])
-                        self.tr_value[f'{meas_value}_TR_TARG_{tr_iter}'] = daq.sc['%s_TARGET' % meas_value]
-                        self.tr_value[f'{meas_value}_TR_{tr_iter}_MIN'] = daq.sc['%s_TARGET_MIN' % meas_value]
-                        self.tr_value[f'{meas_value}_TR_{tr_iter}_MAX'] = daq.sc['%s_TARGET_MAX' % meas_value]
 
-                        self.ts.log('Y Value (%s) = %s. Pass/fail bounds = [%s, %s]' %
-                                     (meas_value, daq.sc['%s_MEAS' % meas_value],
-                                      daq.sc['%s_TARGET_MIN' % meas_value], daq.sc['%s_TARGET_MAX' % meas_value]))
-                    """
                 except Exception as e:
                     self.ts.log_error('Test script exception: %s' % traceback.format_exc())
                     self.ts.log_debug('Measured value (%s) not recorded: %s' % (meas_value, e))
 
             #self.tr_value[tr_iter]["timestamp"] = tr_
             self.tr_value[f'timestamp_{tr_iter}'] = tr_
-            self.tr_value['LAST_ITER'] = tr_iter
+            self.tr_value['LAST_ITER'] = tr_iter-1
             tr_iter = tr_iter + 1
 
         self.tr_value['FIRST_ITER'] = 1
+        self.ts.log_debug(f'LAST_ITER={self.tr_value["LAST_ITER"]}')
 
         return self.tr_value
 
@@ -657,7 +628,7 @@ class CriteriaValidation:
     def __init__(self, criteria_mode):
         self.criteria_mode = criteria_mode
 
-    def define_target(self, daq, step_dict=None):
+    def define_target(self, daq, step_dict=None, y_criterias_mod=None):
         """
         Get the data from a specific time response (tr) corresponding to x and y values returns a dictionary
         but also writes in the soft channels of the DAQ system
@@ -673,10 +644,16 @@ class CriteriaValidation:
         """
 
         x = self.x_criteria
-        y = list(self.y_criteria.keys())
+        y_criteria = self.y_criteria
+
+        if isinstance(y_criterias_mod, dict):
+            y_criteria.update(y_criterias_mod)
+
+        y = list(y_criteria.keys())
         # self.tr = tr
         self.ts.log_debug(f'daq={daq.sc}')
-        for tr_iter in range(self.n_tr - 1):
+        for tr_iter in range(self.n_tr+1):
+            self.ts.log_debug(f'tr_iter={tr_iter}')
             # store the daq.sc['Y_TARGET'], daq.sc['Y_TARGET_MIN'], and daq.sc['Y_TARGET_MAX'] in tr_value
             for meas_value in self.meas_values:
                 try:
@@ -684,41 +661,40 @@ class CriteriaValidation:
 
                     #self.ts.log('Value %s: %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
                     if meas_value in x:
-                        self.ts.log_debug(f'meas_value={meas_value}')
-                        self.ts.log_debug(f'step_dictkeys={self.step_dict.keys()}')
-                        self.ts.log_debug(f'step_dictkeys={self.step_dict is not None}&{}')
+                        #self.ts.log_debug(f'meas_value={meas_value}')
+                        #self.ts.log_debug(f'step_dictkeys={self.step_dict.keys()}')
+                        #self.ts.log_debug(f'step_dictkeys={self.step_dict is not None}&{meas_value in list(self.step_dict.keys())}')
 
-                        if self.step_dict is not None and meas_value in list(self.step_dict.keys()):
+                        if (self.step_dict is not None) and (meas_value in list(self.step_dict.keys())):
+                            self.ts.log_debug(f'step_dict')
                             daq.sc['%s_TARGET' % meas_value] = self.step_dict[meas_value]
                             self.tr_value['%s_TR_TARG_%s' % (meas_value, tr_iter)] = self.step_dict[meas_value]
+                            self.ts.log_debug(f'tr_targ={self.tr_value["%s_TR_TARG_%s" % (meas_value, tr_iter)]}')
                             self.ts.log('X Value (%s) = %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
                         else:
                             daq.sc['%s_TARGET' % meas_value] = step_value
                             self.tr_value['%s_TR_TARG_%s' % (meas_value, tr_iter)] = step_value
                             self.ts.log('X Value (%s) = %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
                     elif meas_value in y:
-                        if step_dict is not None:
-                            # self.ts.log_debug(f'meas={meas_value} et step_dict={step_dict}')
-                            daq.sc['%s_TARGET' % meas_value] = self.update_target_value(step_dict=step_dict,
-                                                                                        function=self.y_criteria[
-                                                                                            meas_value])
+                        if self.step_dict is not None:
+                            #self.ts.log_debug(f'meas={meas_value} et step_dict={self.step_dict}')
+                            self.ts.log_debug(f'function={y_criteria[meas_value]}')
+
+                            daq.sc['%s_TARGET' % meas_value] = self.update_target_value(function=y_criteria[meas_value])
                             daq.sc['%s_TARGET_MIN' % meas_value], daq.sc['%s_TARGET_MAX' % meas_value] = \
-                                self.calculate_min_max_values(data=data,
-                                                              function=self.y_criteria[meas_value],
-                                                              step_dict=step_dict)
+                                self.calculate_min_max_values(function=y_criteria[meas_value])
+
                         else:
                             daq.sc['%s_TARGET' % meas_value] = self.update_target_value(value=step_value,
                                                                                         function=self.y_criteria[
                                                                                             meas_value])
-                            daq.sc['%s_TARGET_MIN' % meas_value], daq.sc[
-                                '%s_TARGET_MAX' % meas_value] = self.calculate_min_max_values(data=data,
-                                                                                              function=
-                                                                                              self.y_criteria[
-                                                                                                  meas_value])
+                            daq.sc['%s_TARGET_MIN' % meas_value], daq.sc['%s_TARGET_MAX' % meas_value] = \
+                                self.calculate_min_max_values(function=y_criteria[meas_value], step_dict=step_dict)
                         self.tr_value[f'{meas_value}_TR_TARG_{tr_iter}'] = daq.sc['%s_TARGET' % meas_value]
                         self.tr_value[f'{meas_value}_TR_{tr_iter}_MIN'] = daq.sc['%s_TARGET_MIN' % meas_value]
                         self.tr_value[f'{meas_value}_TR_{tr_iter}_MAX'] = daq.sc['%s_TARGET_MAX' % meas_value]
-
+                        self.ts.log_debug(f"{meas_value}_TR_TARG_{tr_iter}")
+                        self.ts.log_debug(f'tr_target={self.tr_value[f"{meas_value}_TR_TARG_{tr_iter}"]}')
                         self.ts.log('Y Value (%s) = %s. Pass/fail bounds = [%s, %s]' %
                                     (meas_value, daq.sc['%s_MEAS' % meas_value],
                                      daq.sc['%s_TARGET_MIN' % meas_value], daq.sc['%s_TARGET_MAX' % meas_value]))
@@ -729,6 +705,7 @@ class CriteriaValidation:
 
     def update_target_value(self, function, value=None, step_dict=None):
 
+        step_dict = self.step_dict
         if function == VV:
             vv_pairs = self.get_params(function=VV, curve=self.curve)
             x = [vv_pairs['V1'], vv_pairs['V2'],
@@ -740,11 +717,17 @@ class CriteriaValidation:
             return round(q_value, 1)
 
         if function == VW:
+            self.ts.log_debug(f'VW target calculation')
             vw_pairs = self.get_params(function=VW, curve=self.curve)
+            self.ts.log_debug(f'vw_pairs={vw_pairs}')
             x = [vw_pairs['V1'], vw_pairs['V2']]
             y = [vw_pairs['P1'], vw_pairs['P2']]
-            p_value = float(np.interp(value, x, y))
+            if isinstance(step_dict, dict):
+                p_value = float(np.interp(step_dict['V'], x, y))
+            else:
+                p_value = float(np.interp(value, x, y))
             p_value *= self.pwr
+            self.ts.log_debug(f'p_value={p_value}')
             return round(p_value, 1)
 
         if function == CPF:
@@ -787,20 +770,28 @@ class CriteriaValidation:
             p_targ *= self.pwr
             return round(p_targ, 2)
 
-    def calculate_min_max_values(self, data, function, step_dict=None):
+        if function == LAP:
+            self.ts.log_debug(f'LAP_target={ step_dict["P"]}')
+            p_targ = (step_dict['P']*self.p_rated)+self.MRA['P']
+            return p_targ
+
+
+    def calculate_min_max_values(self, function):
+
+        step_dict = self.step_dict
 
         if function == VV:
-            v_meas = self.get_measurement_total(data=data, type_meas='V', log=False)
+            v_meas = self.get_measurement_total(type_meas='V', log=False)
             target_min = self.update_target_value(value=v_meas + self.MRA['V'] * 1.5, function=VV) - (self.MRA['Q'] * 1.5)
             target_max = self.update_target_value(value=v_meas - self.MRA['V'] * 1.5, function=VV) + (self.MRA['Q'] * 1.5)
 
         elif function == VW:
-            v_meas = self.get_measurement_total(data=data, type_meas='V', log=False)
+            v_meas = self.get_measurement_total(type_meas='V', log=False)
             target_min = self.update_target_value(value=v_meas + self.MRA['V'] * 1.5, function=VW) - (self.MRA['P'] * 1.5)
             target_max = self.update_target_value(value=v_meas - self.MRA['V'] * 1.5, function=VW) + (self.MRA['P'] * 1.5)
 
         elif function == CPF:
-            p_meas = self.get_measurement_total(data=data, type_meas='P', log=False)
+            p_meas = self.get_measurement_total(type_meas='P', log=False)
             target_min = \
                 self.update_target_value(value=p_meas + self.MRA['P'] * 1.5, function=CPF, step_dict=step_dict) - 1.5 * self.MRA['Q']
             target_max = \
@@ -811,7 +802,7 @@ class CriteriaValidation:
             target_max = step_dict['Q']+self.MRA['Q']
 
         elif function == WV:
-            p_meas = self.get_measurement_total(data=data, type_meas='P', log=False)
+            p_meas = self.get_measurement_total(type_meas='P', log=False)
             #q_meas = self.get_measurement_total(data=data, type_meas='Q', log=False)
             step_min = {'P': p_meas + self.MRA['P']*1.5}
             step_max = {'P': p_meas - self.MRA['P']*1.5}
@@ -819,17 +810,21 @@ class CriteriaValidation:
             target_max = self.update_target_value(step_dict=step_max, function=WV) + (self.MRA['Q'] * 1.5)
 
         elif function == FW:
-            f_meas = self.get_measurement_total(data=data, type_meas='F', log=False)
+            f_meas = self.get_measurement_total(type_meas='F', log=False)
             self.ts.log_debug(f'p_meas={f_meas}')
             target_min = self.update_target_value(value=f_meas + self.MRA['F'] * 1.5, function=FW) - (self.MRA['P'] * 1.5)
             target_max = self.update_target_value(value=f_meas - self.MRA['F'] * 1.5, function=FW) + (self.MRA['P'] * 1.5)
             self.ts.log_debug(f'min_max={target_min} & {target_max}')
-
+        elif function == LAP:
+            self.ts.log_debug(f'step_dict={step_dict}')
+            target_min = self.update_target_value(function=LAP) - (self.MRA['P'] * 1.5)
+            target_max = self.update_target_value(function=LAP) + (self.MRA['P'] * 1.5)
         return target_min, target_max
 
-    def evaluate_criterias(self, daq, step_dict=None, value=None):
+    def evaluate_criterias(self, daq, step_dict=None, y_criterias_mod=None):
         self.step_dict = step_dict
-        self.define_target(daq=daq)
+
+        self.define_target(daq=daq, y_criterias_mod=y_criterias_mod)
         if self.criteria_mode[0] is True:
             self.open_loop_resp_criteria()
         if self.criteria_mode[1] is True or self.criteria_mode[2] is True:
@@ -889,7 +884,7 @@ class CriteriaValidation:
             y_start = self.initial_value[y]['y_value']
             #y_start = tr_value['%s_INITIAL' % y]
             mra_t = self.MRA['T'] * duration  # MRA(X) = MRA(time) = 0.01*duration
-
+        self.ts.log_debug(f'tr_value={self.tr_value}')
         y_ss = self.tr_value[f'{y}_TR_TARG_{tr}']
         y_target = self.calculate_open_loop_value(y0=y_start, y_ss=y_ss, duration=duration, tr=tr)  # 90%
         y_meas = self.tr_value[f'{y}_TR_{tr}']
@@ -945,12 +940,19 @@ class CriteriaValidation:
     def result_accuracy_criteria(self):
 
         # Note: Note sure where criteria_mode[1] (SS accuracy after 1 Tr) is used in IEEE 1547.1
+        self.ts.log_debug(f'RESULT_ACCURACY')
         for y in self.y_criteria:
+            self.ts.log_debug(f'y={y}')
+
             for tr_iter in range(self.tr_value['FIRST_ITER'], self.tr_value['LAST_ITER']+1):
+                self.ts.log_debug(f'tr_iter={tr_iter}')
+                self.ts.log_debug(f'First={self.tr_value["FIRST_ITER"]}')
+                self.ts.log_debug(f'Last={self.tr_value["LAST_ITER"]}')
 
                 if (self.tr_value['FIRST_ITER'] == tr_iter and self.criteria_mode[1]) or \
                         (self.tr_value['LAST_ITER'] == tr_iter and self.criteria_mode[2]):
 
+                    self.ts.log_debug(f'----')
 
                     # pass/fail assessment for the steady-state values
                     #self.ts.log_debug(f'current iter={tr_iter}')
