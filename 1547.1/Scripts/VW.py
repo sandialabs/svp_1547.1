@@ -201,6 +201,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
             t) Repeat steps d) through t) at EUT power set at 20% and 66% of rated power.
             '''
             for power in pwr_lvls:
+                ActiveFunction.reset_pwr(pwr=power)
 
                 '''
                 d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input

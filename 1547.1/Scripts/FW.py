@@ -44,6 +44,8 @@ import script
 import numpy as np
 import collections
 
+FW = 'FW'  # Frequency-Watt
+
 def test_run():
 
     result = script.RESULT_FAIL
@@ -70,10 +72,17 @@ def test_run():
         eut_absorb = ts.param_value("eut_fw.absorb")
 
         """
+        Version validation
+        """
+        p1547.VersionValidation(script_version=ts.info.version)
+        """
         A separate module has been create for the 1547.1 Standard
         """
-        lib_1547 = p1547.module_1547(ts=ts, aif='FW')
-        ts.log_debug("1547.1 Library configured for %s" % lib_1547.get_test_name())
+        ActiveFunction = p1547.ActiveFunction(ts=ts,
+                                              functions=[FW],
+                                              script_name='Frequency-Watt',
+                                              criteria_mode=[True, True, True])
+        ts.log_debug("1547.1 Library configured for %s" % ActiveFunction.get_script_name())
 
 
         if eut_absorb == "Yes":
@@ -126,7 +135,7 @@ def test_run():
         # DAS soft channels
         # TODO : add to library 1547
         #das_points = {'sc': ('P_TARGET', 'P_TARGET_MIN', 'P_TARGET_MAX', 'P_MEAS', 'F_TARGET', 'F_MEAS', 'event')}
-        das_points = lib_1547.get_sc_points()
+        das_points = ActiveFunction.get_sc_points()
         # initialize data acquisition system
         daq = das.das_init(ts, sc_points=das_points['sc'])
         if daq is not None:
@@ -165,7 +174,7 @@ def test_run():
         '''
         c) Set all AC test source parameters to the nominal operating voltage and frequency 
         '''
-        grid = gridsim.gridsim_init(ts)
+        grid = gridsim.gridsim_init(ts, support_interfaces={'hil': chil})  # Turn on AC so the EUT can be initialized
         if grid is not None:
             grid.freq(f_nom)
             if mode == 'Below':
@@ -178,13 +187,13 @@ def test_run():
 
 
         # result params
-        result_params = lib_1547.get_rslt_param_plot()
+        result_params = ActiveFunction.get_rslt_param_plot()
 
         # open result summary file
         result_summary_filename = 'result_summary.csv'
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
-        result_summary.write(lib_1547.get_rslt_sum_col_name())
+        result_summary.write(ActiveFunction.get_rslt_sum_col_name())
 
         '''
         above_d) Adjust the EUT's available active power to Prated .
@@ -236,49 +245,20 @@ def test_run():
             '''
             for fw_curve in fw_curves:
                 ts.log('Starting test with characteristic curve %s' % (fw_curve))
-                fw_param = lib_1547.get_params(curve=fw_curve)
-                a_f = lib_1547.MRA_F * 1.5
+                ActiveFunction.reset_curve(curve=fw_curve)
+                ActiveFunction.reset_time_settings(tr=fw_response_time[fw_curve])
+                fw_param = ActiveFunction.get_params(function=FW, curve=fw_curve)
 
-                lib_1547.set_step_label(starting_label='G')
-                f_steps_dic[mode] = collections.OrderedDict()
-                if mode == 'Above':  # 1547.1 (5.15.2.2):
-                    f_steps_dic[mode][lib_1547.get_step_label()] = (f_nom + fw_param['dbf']) + a_f
-                    f_steps_dic[mode][lib_1547.get_step_label()] = (f_nom + fw_param['dbf']) - a_f
-                    f_steps_dic[mode][lib_1547.get_step_label()] = (f_nom + fw_param['dbf']) + a_f
-                    f_steps_dic[mode][lib_1547.get_step_label()] = fw_param['f_small'] + f_nom + fw_param['dbf']
-                    # STD_CHANGE : step k) should consider the accuracy
-                    f_steps_dic[mode][lib_1547.get_step_label()] = f_max - a_f
-                    f_steps_dic[mode][lib_1547.get_step_label()] = f_max - fw_param['f_small']
-                    f_steps_dic[mode][lib_1547.get_step_label()] = (f_nom + fw_param['dbf']) + a_f
-                    f_steps_dic[mode][lib_1547.get_step_label()] = (f_nom + fw_param['dbf']) - a_f
-                    f_steps_dic[mode][lib_1547.get_step_label()] = f_nom
+                f_steps_dict = ActiveFunction.create_fw_dict_steps(mode=mode)
+                ts.log_debug(f'f_step={f_steps_dict}')
 
-                    for step, frequency in f_steps_dic[mode].items():
-                        f_steps_dic[mode].update({step: np.around(frequency, 3)})
-                        if frequency > f_max:
-                            ts.log("{0} frequency step (value : {1}) changed to fH (f_max)".format(step, frequency))
-                            f_steps_dic[mode].update({step: f_max})
 
-                elif mode == 'Below':  # 1547.1 (5.15.3.2):
-                    f_steps_dic[mode][lib_1547.get_step_label()] = (f_nom + fw_param['dbf']) - a_f
-                    f_steps_dic[mode][lib_1547.get_step_label()] = (f_nom - fw_param['dbf']) - a_f
-                    f_steps_dic[mode][lib_1547.get_step_label()] = f_nom - fw_param['f_small'] - fw_param['dbf']
-                    # STD_CHANGE : step j) should consider the accuracy
-                    f_steps_dic[mode][lib_1547.get_step_label()] = f_min + a_f
-                    f_steps_dic[mode][lib_1547.get_step_label()] = f_min + fw_param['f_small']
-                    f_steps_dic[mode][lib_1547.get_step_label()] = (f_nom - fw_param['dbf']) - a_f
-                    f_steps_dic[mode][lib_1547.get_step_label()] = (f_nom - fw_param['dbf']) + a_f
-                    f_steps_dic[mode][lib_1547.get_step_label()] = f_nom
-
-                    for step, frequency in f_steps_dic[mode].items():
-                        f_steps_dic[mode].update({step: np.around(frequency, 3)})
-                        if frequency < f_min:
-                            ts.log("{0} frequency step (value : {1}) changed to fL (f_min)".format(step, frequency))
-                            f_steps_dic[mode].update({step: f_min})
                 '''
                 p) Repeat test steps b) through o) with the EUT power set at 20% and 66% of rated power. 
                 '''
                 for power in pwr_lvls:
+                    ActiveFunction.reset_pwr(pwr=power)
+
                     if pv is not None:
                         pv_power_setting = (p_rated * power)
                         pv.iv_curve_config(pmp=pv_power_setting, vmp=v_nom_in)
@@ -311,8 +291,9 @@ def test_run():
                     dataset_filename = 'FW_{0}_PWR_{1}_{2}'.format(fw_curve, power, mode)
                     if absorb_power:
                         dataset_filename = 'FW_{0}_PWR_{1}_{2}_ABSORB'.format(fw_curve, power, mode)
-
+                    ActiveFunction.reset_filename(filename=dataset_filename)
                     ts.log('------------{}------------'.format(dataset_filename))
+
                     '''
                     g) Once steady state is reached, read and record the EUT's 
                     active power, reactive power, voltage,frequency, and current measurements. 
@@ -322,27 +303,18 @@ def test_run():
                     daq.sc['event'] = step
                     daq.data_sample()
                     ts.log('Wait for steady state to be reached')
-                    ts.sleep(4 * fw_param['tr'])
+                    ts.sleep(2 * fw_response_time[fw_curve])
                     daq.data_capture(True)
 
-                    for step_label, f_step in f_steps_dic[mode].items():
-                        p_initial = lib_1547.get_initial_value(daq=daq, step=step_label)
+                    for step_label, f_step in f_steps_dict.items():
+                        ActiveFunction.start(daq=daq, step_label=step_label)
                         ts.log('Frequency step: setting Grid simulator frequency to %s (%s)' % (f_step, step_label))
                         step_dict = {'F': f_step}
                         if grid is not None:
                             grid.freq(f_step)
-                        lib_1547.process_data(
-                            daq=daq,
-                            tr=fw_param['tr'],
-                            step=step_label,
-                            initial_value=p_initial,
-                            x_target=step_dict,
-                            #y_target=None, #automatically calculated in p1547
-                            curve=fw_curve,
-                            pwr_lvl=power,
-                            result_summary=result_summary,
-                            filename=dataset_filename
-                        )
+                        ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
+                        ActiveFunction.evaluate_criterias()
+                        result_summary.write(ActiveFunction.write_rslt_sum())
 
                     dataset_filename = dataset_filename + ".csv"
                     daq.data_capture(False)
@@ -425,7 +397,7 @@ def run(test_script):
 
     sys.exit(rc)
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.3.0')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.4.2')
 
 # FW test parameters
 info.param_group('fw', label='Test Parameters')

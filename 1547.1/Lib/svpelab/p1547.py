@@ -130,6 +130,16 @@ class EutParameters(object):
                 self.f_nom = ts.param_value('eut.f_nom')
             else:
                 self.f_nom = None
+
+            if ts.param_value('eut.f_max'):
+                self.f_max = ts.param_value('eut.f_max')
+            else:
+                self.f_max = None
+            if ts.param_value('eut.f_min'):
+                self.f_min = ts.param_value('eut.f_min')
+            else:
+                self.f_min = None
+
             if ts.param_value('eut.phases') is not None:
                 self.phases = ts.param_value('eut.phases')
             else:
@@ -676,12 +686,35 @@ class DataLogging:
             self.ts.log_debug('Power value: %s --> q_target: %s' % (value, q_value))
             return q_value
 
+        if function == FW:
+            p_targ = None
+            fw_pairs = self.get_params(function=FW, curve=self.curve)
+            f_dob = self.f_nom + fw_pairs['dbf']
+            f_dub = self.f_nom - fw_pairs['dbf']
+            p_db = self.p_rated * self.pwr
+            p_avl = self.p_rated * (1.0 - self.pwr)
+            if isinstance(step_dict, dict):
+                value=step_dict['F']
+            self.ts.log_debug(f'value={value}')
+            if f_dub <= value <= f_dob:
+                p_targ = p_db
+            elif value > f_dob:
+                p_targ = p_db - ((value - f_dob) / (self.f_nom * self.param[FW][self.curve]['kof'])) * p_db
+                if p_targ < self.p_min:
+                    p_targ = self.p_min
+            elif value < f_dub:
+                p_targ = ((f_dub - value) / (self.f_nom * self.param[FW][self.curve]['kof'])) * p_avl + p_db
+                if p_targ > self.p_rated:
+                    p_targ = self.p_rated
+            p_targ *= self.pwr
+            return round(p_targ, 2)
+
     def calculate_min_max_values(self, data, function, step_dict=None):
 
         if function == VV:
             v_meas = self.get_measurement_total(data=data, type_meas='V', log=False)
-            target_min = self.update_target_value(v_meas + self.MRA['V'] * 1.5, function=VV) - (self.MRA['Q'] * 1.5)
-            target_max = self.update_target_value(v_meas - self.MRA['V'] * 1.5, function=VV) + (self.MRA['Q'] * 1.5)
+            target_min = self.update_target_value(value=v_meas + self.MRA['V'] * 1.5, function=VV) - (self.MRA['Q'] * 1.5)
+            target_max = self.update_target_value(value=v_meas - self.MRA['V'] * 1.5, function=VV) + (self.MRA['Q'] * 1.5)
 
         elif function == VW:
             v_meas = self.get_measurement_total(data=data, type_meas='V', log=False)
@@ -706,6 +739,13 @@ class DataLogging:
             step_max = {'P': p_meas - self.MRA['P']*1.5}
             target_min = self.update_target_value(step_dict=step_min, function=WV) - (self.MRA['Q'] * 1.5)
             target_max = self.update_target_value(step_dict=step_max, function=WV) + (self.MRA['Q'] * 1.5)
+
+        elif function == FW:
+            f_meas = self.get_measurement_total(data=data, type_meas='F', log=False)
+            self.ts.log_debug(f'p_meas={f_meas}')
+            target_min = self.update_target_value(value=f_meas + self.MRA['F'] * 1.5, function=FW) - (self.MRA['P'] * 1.5)
+            target_max = self.update_target_value(value=f_meas - self.MRA['F'] * 1.5, function=FW) + (self.MRA['P'] * 1.5)
+            self.ts.log_debug(f'min_max={target_min} & {target_max}')
 
         return target_min, target_max
 
@@ -1244,7 +1284,6 @@ class ConstantPowerFactor(EutParameters, UtilParameters):
         EutParameters.__init__(self, ts)
         UtilParameters.__init__(self)
 
-
 class ConstantReactivePower(EutParameters, UtilParameters):
     meas_values = ['V', 'Q', 'P']
     x_criteria = ['V']
@@ -1263,48 +1302,83 @@ This section is for
 """
 
 class FrequencyWatt(EutParameters, UtilParameters):
-    def __init__(self, ts, curve=1):
-        EutParameters.__init__(self, ts)
-        self.curve = curve
-        self.pairs = {}
-        self.param = [0, 0, 0, 0]
-        self.target_dict = []
-        self.script_name = VW
-        self.script_complete_name = 'Volt-Watt'
-        self.rslt_sum_col_name = 'P_TR_ACC_REQ, TR_REQ, P_FINAL_ACC_REQ, F_MEAS, P_MEAS, P_TARGET, P_TARGET_MIN,' \
-                                 'P_TARGET_MAX, STEP, FILENAME\n'
-        self.criteria_mode = [True, True, True]
-        # Values to be recorded
-        self.meas_values = ['F', 'P']
-        # Values defined as target/step values which will be controlled as step
-        self.x_criteria = ['F']
-        # Values defined as values which will be controlled as step
-        self.y_criteria = ['P']
-        self._config()
+    meas_values = ['F', 'P']
+    x_criteria = ['F']
+    y_criteria = {'P': FW}
+    script_complete_name = 'Frequency-Watt'
 
-    def _config(self):
-        self.set_params()
-        # Create the pairs need
-        # self.set_imbalance_config()
+    def __init__(self, ts):
+        EutParameters.__init__(self, ts)
+        UtilParameters.__init__(self)
+        FrequencyWatt.set_params(self)
 
     def set_params(self):
+
         p_small = self.ts.param_value('eut_fw.p_small')
         if p_small is None:
             p_small = 0.05
 
-        self.param[1] = {
+        self.param[FW] = {}
+
+        self.param[FW][1] = {
             'dbf': 0.036,
             'kof': 0.05,
             'tr': self.ts.param_value('fw.test_1_tr'),
             'f_small': p_small * self.f_nom * 0.05
         }
-        self.param[2] = {
+        self.param[FW][2] = {
             'dbf': 0.017,
             'kof': 0.03,
             'tr': self.ts.param_value('fw.test_2_tr'),
             'f_small': p_small * self.f_nom * 0.02
         }
 
+    def create_fw_dict_steps(self, mode):
+        a_f = self.MRA['F'] * 1.5
+        f_nom = self.f_nom
+        f_steps_dict = collections.OrderedDict()
+        fw_param = self.get_params(curve=self.curve, function=FW)
+
+        self.set_step_label(starting_label='G')
+        if mode == 'Above':  # 1547.1 (5.15.2.2):
+            f_steps_dict[mode] = {}
+            f_steps_dict[mode][self.get_step_label()] = (f_nom + fw_param['dbf']) + a_f
+            f_steps_dict[mode][self.get_step_label()] = (f_nom + fw_param['dbf']) - a_f
+            f_steps_dict[mode][self.get_step_label()] = (f_nom + fw_param['dbf']) + a_f
+            f_steps_dict[mode][self.get_step_label()] = fw_param['f_small'] + f_nom + fw_param['dbf']
+            # STD_CHANGE : step k) should consider the accuracy
+            f_steps_dict[mode][self.get_step_label()] = self.f_max - a_f
+            f_steps_dict[mode][self.get_step_label()] = self.f_max - fw_param['f_small']
+            f_steps_dict[mode][self.get_step_label()] = (f_nom + fw_param['dbf']) + a_f
+            f_steps_dict[mode][self.get_step_label()] = (f_nom + fw_param['dbf']) - a_f
+            f_steps_dict[mode][self.get_step_label()] = f_nom
+
+            for step, frequency in f_steps_dict[mode].items():
+                f_steps_dict[mode].update({step: np.around(frequency, 3)})
+                if frequency > self.f_max:
+                    self.ts.log("{0} frequency step (value : {1}) changed to fH (f_max)".format(step, frequency))
+                    f_steps_dict[mode].update({step: self.f_max})
+
+
+        elif mode == 'Below':  # 1547.1 (5.15.3.2):
+            f_steps_dict[mode] = {}
+            f_steps_dict[mode][self.get_step_label()] = (f_nom + fw_param['dbf']) - a_f
+            f_steps_dict[mode][self.get_step_label()] = (f_nom - fw_param['dbf']) - a_f
+            f_steps_dict[mode][self.get_step_label()] = f_nom - fw_param['f_small'] - fw_param['dbf']
+            # STD_CHANGE : step j) should consider the accuracy
+            f_steps_dict[mode][self.get_step_label()] = self.f_min + a_f
+            f_steps_dict[mode][self.get_step_label()] = self.f_min + fw_param['f_small']
+            f_steps_dict[mode][self.get_step_label()] = (f_nom - fw_param['dbf']) - a_f
+            f_steps_dict[mode][self.get_step_label()] = (f_nom - fw_param['dbf']) + a_f
+            f_steps_dict[mode][self.get_step_label()] = f_nom
+
+            for step, frequency in f_steps_dict[mode].items():
+                f_steps_dict[mode].update({step: np.around(frequency, 3)})
+                if frequency < self.f_min:
+                    self.ts.log("{0} frequency step (value : {1}) changed to fL (f_min)".format(step, frequency))
+                    f_steps_dict[mode].update({step: self.f_min})
+
+        return f_steps_dict[mode]
 class Interoperability(EutParameters, UtilParameters):
     def __init__(self, ts, curve=1):
         EutParameters.__init__(self, ts)
@@ -1456,7 +1530,7 @@ class WattVar(EutParameters, UtilParameters):
 This section is for the Active function
 """
 class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
-                     VoltWatt, VoltVar, ConstantReactivePower, ConstantPowerFactor, WattVar):
+                     VoltWatt, VoltVar, ConstantReactivePower, ConstantPowerFactor, WattVar, FrequencyWatt):
     """
     This class acts as the main function
     As multiple functions might be needed for a compliance script, this function will inherit
@@ -1501,7 +1575,10 @@ class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
             WattVar.__init__(self, ts)
             x_criterias += WattVar.x_criteria
             self.y_criteria.update(WattVar.y_criteria)
-
+        if FW in functions:
+            FrequencyWatt.__init__(self, ts)
+            x_criterias += FrequencyWatt.x_criteria
+            self.y_criteria.update(FrequencyWatt.y_criteria)
         #Remove duplicates
         self.x_criteria = list(OrderedDict.fromkeys(x_criterias))
         #self.y_criteria=list(OrderedDict.fromkeys(y_criterias))
