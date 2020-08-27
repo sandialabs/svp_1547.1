@@ -306,8 +306,8 @@ def test_run():
                         p_target = p_rated * 0.2
                     step_dict = {'V': v_nom, 'P': round(p_target,2), 'Q': q_target}
                     pv.power_set(step_dict['P'])
-                    ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
-                    ActiveFunction.evaluate_criterias()
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
                 """
@@ -323,8 +323,8 @@ def test_run():
                         p_target = p_rated * 0.05
                     step_dict = {'V': v_nom, 'P': round(p_target,2), 'Q': q_target}
                     pv.power_set(step_dict['P'])
-                    ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
-                    ActiveFunction.evaluate_criterias()
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
                 """
@@ -336,8 +336,8 @@ def test_run():
                     ActiveFunction.start(daq=daq, step_label=step_label)
                     step_dict = {'V': v_nom, 'P': p_rated, 'Q': q_target}
                     pv.power_set(step_dict['P'])
-                    ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
-                    ActiveFunction.evaluate_criterias()
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
                 if grid is not None:
@@ -347,8 +347,8 @@ def test_run():
                     ActiveFunction.start(daq=daq, step_label=step_label)
                     step_dict = {'V': v_min + a_v, 'P': p_rated, 'Q': q_target}
                     grid.voltage(step_dict['V'])
-                    ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
-                    ActiveFunction.evaluate_criterias()
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
 
@@ -358,8 +358,8 @@ def test_run():
                     ActiveFunction.start(daq=daq, step_label=step_label)
                     step_dict = {'V': v_max - a_v, 'P': p_rated, 'Q': q_target}
                     grid.voltage(step_dict['V'])
-                    ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
-                    ActiveFunction.evaluate_criterias()
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
                     #   l) Step the AC test source voltage to (VL + av)
@@ -368,8 +368,8 @@ def test_run():
                     ActiveFunction.start(daq=daq, step_label=step_label)
                     step_dict = {'V': v_min + a_v, 'P': p_rated, 'Q': q_target}
                     grid.voltage(step_dict['V'])
-                    ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
-                    ActiveFunction.evaluate_criterias()
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
                     if phases == 'Three phase':
@@ -379,8 +379,8 @@ def test_run():
                         ActiveFunction.start(daq=daq, step_label=step_label)
                         step_dict = {'V': v_nom, 'P': p_rated, 'Q': q_target}
                         grid.voltage(step_dict['V'])
-                        ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
-                        ActiveFunction.evaluate_criterias()
+                        ActiveFunction.record_timeresponse(daq=daq)
+                        ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                         result_summary.write(ActiveFunction.write_rslt_sum())
 
                     '''
@@ -393,8 +393,8 @@ def test_run():
                         ActiveFunction.start(daq=daq, step_label=step_label)
                         v_target = ActiveFunction.set_grid_asymmetric(grid=grid, case='case_a')
                         step_dict = {'V': v_target, 'P': p_rated, 'Q': q_target}
-                        ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
-                        ActiveFunction.evaluate_criterias()
+                        ActiveFunction.record_timeresponse(daq=daq)
+                        ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                         result_summary.write(ActiveFunction.write_rslt_sum())
 
                     """
@@ -407,8 +407,8 @@ def test_run():
                         ActiveFunction.start(daq=daq, step_label=step_label)
                         step_dict = {'V': v_nom, 'P': p_rated, 'Q': q_target}
                         grid.voltage(step_dict['V'])
-                        ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
-                        ActiveFunction.evaluate_criterias()
+                        ActiveFunction.record_timeresponse(daq=daq)
+                        ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                         result_summary.write(ActiveFunction.write_rslt_sum())
 
                     """
@@ -420,8 +420,8 @@ def test_run():
                         ActiveFunction.start(daq=daq, step_label=step_label)
                         v_target = ActiveFunction.set_grid_asymmetric(grid=grid, case='case_b')
                         step_dict = {'V': v_target, 'P': p_rated, 'Q': q_target}
-                        ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
-                        ActiveFunction.evaluate_criterias()
+                        ActiveFunction.record_timeresponse(daq=daq)
+                        ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                         result_summary.write(ActiveFunction.write_rslt_sum())
 
                     """
@@ -433,8 +433,8 @@ def test_run():
                         ActiveFunction.start(daq=daq, step_label=step_label)
                         step_dict = {'V': v_nom, 'P': p_rated, 'Q': q_target}
                         grid.voltage(step_dict['V'])
-                        ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
-                        ActiveFunction.evaluate_criterias()
+                        ActiveFunction.record_timeresponse(daq=daq)
+                        ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                         result_summary.write(ActiveFunction.write_rslt_sum())
 
                 """

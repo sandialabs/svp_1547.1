@@ -312,8 +312,8 @@ def test_run():
                         step_dict = {'F': f_step}
                         if grid is not None:
                             grid.freq(f_step)
-                        ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
-                        ActiveFunction.evaluate_criterias()
+                        ActiveFunction.record_timeresponse(daq=daq)
+                        ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                         result_summary.write(ActiveFunction.write_rslt_sum())
 
                     dataset_filename = dataset_filename + ".csv"

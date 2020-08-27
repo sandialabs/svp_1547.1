@@ -272,7 +272,7 @@ class UtilParameters:
                 nb_phases = 2
 
             elif self.phases == 'Three phase':
-                self.ts.log_debug(f'type_meas={type_meas}')
+                #self.ts.log_debug(f'type_meas={type_meas}')
                 value1 = self.data.get(self.get_measurement_label(type_meas)[0])
                 value2 = self.data.get(self.get_measurement_label(type_meas)[1])
                 value3 = self.data.get(self.get_measurement_label(type_meas)[2])
@@ -383,11 +383,8 @@ class DataLogging:
         for meas_value in self.meas_values:
             row_data.append('%s_MEAS' % meas_value)
 
-            self.ts.log(f'xs={xs} and meas={meas_value}')
             if meas_value in xs:
-                self.ts.log(f'v')
                 row_data.append('%s_TARGET' % meas_value)
-                self.ts.log(f'v')
 
             elif meas_value in ys:
                 row_data.append('%s_TARGET' % meas_value)
@@ -550,7 +547,7 @@ class DataLogging:
         """
         daq.data_sample()
 
-    def record_timeresponse(self, daq, step_value=None, step_dict=None):
+    def record_timeresponse(self, daq):
         """
         Get the data from a specific time response (tr) corresponding to x and y values returns a dictionary
         but also writes in the soft channels of the DAQ system
@@ -583,10 +580,8 @@ class DataLogging:
                     self.tr_value['%s_TR_%s_MIN' % (meas_value, i)] = None
                     self.tr_value['%s_TR_%s_MAX' % (meas_value, i)] = None
         tr_iter = 1
-        self.ts.log_debug(f'tr_list={tr_list}')
 
         for tr_ in tr_list:
-            self.ts.log_debug(f'tr_iter_record_tr={tr_iter}')
             now = datetime.now()
             if now <= tr_:
                 time_to_sleep = tr_ - datetime.now()
@@ -616,7 +611,6 @@ class DataLogging:
             tr_iter = tr_iter + 1
 
         self.tr_value['FIRST_ITER'] = 1
-        self.ts.log_debug(f'LAST_ITER={self.tr_value["LAST_ITER"]}')
 
         return self.tr_value
 
@@ -657,13 +651,7 @@ class CriteriaValidation:
             # store the daq.sc['Y_TARGET'], daq.sc['Y_TARGET_MIN'], and daq.sc['Y_TARGET_MAX'] in tr_value
             for meas_value in self.meas_values:
                 try:
-                    #self.tr_value['%s_TR_%s' % (meas_value, tr_iter)] = daq.sc['%s_MEAS' % meas_value]
-
-                    #self.ts.log('Value %s: %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
                     if meas_value in x:
-                        #self.ts.log_debug(f'meas_value={meas_value}')
-                        #self.ts.log_debug(f'step_dictkeys={self.step_dict.keys()}')
-                        #self.ts.log_debug(f'step_dictkeys={self.step_dict is not None}&{meas_value in list(self.step_dict.keys())}')
 
                         if (self.step_dict is not None) and (meas_value in list(self.step_dict.keys())):
                             self.ts.log_debug(f'step_dict')
@@ -671,10 +659,7 @@ class CriteriaValidation:
                             self.tr_value['%s_TR_TARG_%s' % (meas_value, tr_iter)] = self.step_dict[meas_value]
                             self.ts.log_debug(f'tr_targ={self.tr_value["%s_TR_TARG_%s" % (meas_value, tr_iter)]}')
                             self.ts.log('X Value (%s) = %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
-                        else:
-                            daq.sc['%s_TARGET' % meas_value] = step_value
-                            self.tr_value['%s_TR_TARG_%s' % (meas_value, tr_iter)] = step_value
-                            self.ts.log('X Value (%s) = %s' % (meas_value, daq.sc['%s_MEAS' % meas_value]))
+
                     elif meas_value in y:
                         if self.step_dict is not None:
                             #self.ts.log_debug(f'meas={meas_value} et step_dict={self.step_dict}')
@@ -707,17 +692,21 @@ class CriteriaValidation:
 
         step_dict = self.step_dict
         if function == VV:
+            #self.ts.log_debug(f'VV target calculation')
             vv_pairs = self.get_params(function=VV, curve=self.curve)
             x = [vv_pairs['V1'], vv_pairs['V2'],
                  vv_pairs['V3'], vv_pairs['V4']]
             y = [vv_pairs['Q1'], vv_pairs['Q2'],
                  vv_pairs['Q3'], vv_pairs['Q4']]
-            q_value = float(np.interp(value, x, y))
+            if isinstance(step_dict, dict):
+                q_value = float(np.interp(step_dict['V'], x, y))
+            else:
+                q_value = float(np.interp(value, x, y))
             q_value *= self.pwr
             return round(q_value, 1)
 
         if function == VW:
-            self.ts.log_debug(f'VW target calculation')
+            #self.ts.log_debug(f'VW target calculation')
             vw_pairs = self.get_params(function=VW, curve=self.curve)
             self.ts.log_debug(f'vw_pairs={vw_pairs}')
             x = [vw_pairs['V1'], vw_pairs['V2']]
@@ -731,23 +720,26 @@ class CriteriaValidation:
             return round(p_value, 1)
 
         if function == CPF:
+            #self.ts.log_debug(f'CPF target calculation')
             q_value = math.sqrt(pow(step_dict['P'], 2) * ((1 / pow(step_dict['PF'], 2)) - 1))
             return q_value
 
         if function == CRP:
+            #self.ts.log_debug(f'CRP target calculation')
             q_value = step_dict['Q']
             return round(q_value, 1)
 
         if function == WV:
+            #self.ts.log_debug(f'WV target calculation')
             x = [self.param[WV][self.curve]['P1'], self.param[WV][self.curve]['P2'], self.param[WV][self.curve]['P3']]
             y = [self.param[WV][self.curve]['Q1'], self.param[WV][self.curve]['Q2'], self.param[WV][self.curve]['Q3']]
-            self.ts.log_debug(f'x={x} y={y}')
             q_value = float(np.interp(step_dict['P'], x, y))
             q_value *= self.pwr
             self.ts.log_debug('Power value: %s --> q_target: %s' % (value, q_value))
             return q_value
 
         if function == FW:
+            #self.ts.log_debug(f'FW target calculation')
             p_targ = None
             fw_pairs = self.get_params(function=FW, curve=self.curve)
             f_dob = self.f_nom + fw_pairs['dbf']
@@ -771,14 +763,31 @@ class CriteriaValidation:
             return round(p_targ, 2)
 
         if function == LAP:
-            self.ts.log_debug(f'LAP_target={ step_dict["P"]}')
+            self.ts.log_debug(f'LAP target calculation')
             p_targ = (step_dict['P']*self.p_rated)+self.MRA['P']
             return p_targ
 
 
-    def calculate_min_max_values(self, function):
+    def calculate_min_max_values(self, function, meas_value=None):
 
         step_dict = self.step_dict
+        if PRI == function:
+            v_meas = self.get_measurement_total(type_meas='V', log=False)
+            f_meas = self.get_measurement_total(type_meas='F', log=False)
+
+            target_min_vw = self.update_target_value(value=v_meas + self.MRA['V'] * 1.5, function=VW) - (
+                        self.MRA['P'] * 1.5)
+            target_max_vw = self.update_target_value(value=v_meas - self.MRA['V'] * 1.5, function=VW) + (
+                        self.MRA['P'] * 1.5)
+            target_min_fw = self.update_target_value(value=f_meas + self.MRA['F'] * 1.5, function=FW) - (
+                        self.MRA['P'] * 1.5)
+            target_max_fw = self.update_target_value(value=f_meas - self.MRA['F'] * 1.5, function=FW)
+            if (target_max_vw - target_min_vw) > (target_max_fw - target_min_fw):
+                target_min = target_min_vw
+                target_max = target_max_vw
+            else:
+                target_min = target_min_fw
+                target_max = target_max_fw
 
         if function == VV:
             v_meas = self.get_measurement_total(type_meas='V', log=False)
@@ -811,23 +820,23 @@ class CriteriaValidation:
 
         elif function == FW:
             f_meas = self.get_measurement_total(type_meas='F', log=False)
-            self.ts.log_debug(f'p_meas={f_meas}')
             target_min = self.update_target_value(value=f_meas + self.MRA['F'] * 1.5, function=FW) - (self.MRA['P'] * 1.5)
             target_max = self.update_target_value(value=f_meas - self.MRA['F'] * 1.5, function=FW) + (self.MRA['P'] * 1.5)
-            self.ts.log_debug(f'min_max={target_min} & {target_max}')
+
         elif function == LAP:
-            self.ts.log_debug(f'step_dict={step_dict}')
             target_min = self.update_target_value(function=LAP) - (self.MRA['P'] * 1.5)
             target_max = self.update_target_value(function=LAP) + (self.MRA['P'] * 1.5)
+
+
         return target_min, target_max
 
     def evaluate_criterias(self, daq, step_dict=None, y_criterias_mod=None):
         self.step_dict = step_dict
 
         self.define_target(daq=daq, y_criterias_mod=y_criterias_mod)
-        if self.criteria_mode[0] is True:
+        if self.criteria_mode[0]:
             self.open_loop_resp_criteria()
-        if self.criteria_mode[1] is True or self.criteria_mode[2] is True:
+        if self.criteria_mode[1] or self.criteria_mode[2]:
             self.result_accuracy_criteria()
 
     def calculate_open_loop_value(self, y0, y_ss, duration, tr):
@@ -884,7 +893,7 @@ class CriteriaValidation:
             y_start = self.initial_value[y]['y_value']
             #y_start = tr_value['%s_INITIAL' % y]
             mra_t = self.MRA['T'] * duration  # MRA(X) = MRA(time) = 0.01*duration
-        self.ts.log_debug(f'tr_value={self.tr_value}')
+        #self.ts.log_debug(f'tr_value={self.tr_value}')
         y_ss = self.tr_value[f'{y}_TR_TARG_{tr}']
         y_target = self.calculate_open_loop_value(y0=y_start, y_ss=y_ss, duration=duration, tr=tr)  # 90%
         y_meas = self.tr_value[f'{y}_TR_{tr}']
@@ -942,12 +951,9 @@ class CriteriaValidation:
         # Note: Note sure where criteria_mode[1] (SS accuracy after 1 Tr) is used in IEEE 1547.1
         self.ts.log_debug(f'RESULT_ACCURACY')
         for y in self.y_criteria:
-            self.ts.log_debug(f'y={y}')
+            #self.ts.log_debug(f'y={y}')
 
             for tr_iter in range(self.tr_value['FIRST_ITER'], self.tr_value['LAST_ITER']+1):
-                self.ts.log_debug(f'tr_iter={tr_iter}')
-                self.ts.log_debug(f'First={self.tr_value["FIRST_ITER"]}')
-                self.ts.log_debug(f'Last={self.tr_value["LAST_ITER"]}')
 
                 if (self.tr_value['FIRST_ITER'] == tr_iter and self.criteria_mode[1]) or \
                         (self.tr_value['LAST_ITER'] == tr_iter and self.criteria_mode[2]):
@@ -1032,7 +1038,7 @@ class ImbalanceComponent:
                 self.ang['case_a'] = [0., 120, -120]
                 # Case B
                 self.mag['case_b'] = [0.9 * self.v_nom, 1.08 * self.v_nom, 1.08 * self.v_nom]
-                self.ang['case_a'] = [0., 120, -120]
+                self.ang['case_b'] = [0., 120, -120]
                 self.ts.log("Setting test with imbalanced test with NOT FIXED angles/values")
             elif imbalance_angle_fix == 'not_fix':
                 # Case A
@@ -1056,6 +1062,7 @@ class ImbalanceComponent:
         :return: nothing
         """
         self.ts.log_debug(f'mag={self.mag}')
+        self.ts.log_debug(f'mag={self.ang}')
         self.ts.log_debug(f'grid={grid}')
         self.ts.log_debug(f'imbalance_resp={imbalance_resp}')
 
@@ -1129,7 +1136,7 @@ class VoltVar(EutParameters, UtilParameters):
     script_complete_name = 'Volt-Var'
 
     def __init__(self, ts):
-        self.criteria_mode = [True, True, True]
+        #self.criteria_mode = [True, True, True]
         EutParameters.__init__(self, ts)
         UtilParameters.__init__(self)
         VoltVar.set_params(self)
@@ -1257,7 +1264,7 @@ class VoltWatt(EutParameters, UtilParameters):
     """
     def __init__(self, ts):
         self.ts = ts
-        self.criteria_mode = [True, True, True]
+        #self.criteria_mode = [True, True, True]
         EutParameters.__init__(self, ts)
         UtilParameters.__init__(self)
         VoltWatt.set_params(self)
@@ -1457,6 +1464,7 @@ class FrequencyWatt(EutParameters, UtilParameters):
                     f_steps_dict[mode].update({step: self.f_min})
 
         return f_steps_dict[mode]
+"""
 class Interoperability(EutParameters, UtilParameters):
     def __init__(self, ts, curve=1):
         EutParameters.__init__(self, ts)
@@ -1498,7 +1506,7 @@ class Interoperability(EutParameters, UtilParameters):
             'V2': round(1.10 * self.v_nom, 2),
             'P1': round(self.p_rated, 2)
         }
-
+"""
 class WattVar(EutParameters, UtilParameters):
     meas_values = ['P', 'Q']
     x_criteria = ['P']
@@ -1611,15 +1619,74 @@ class LimitActivePower(EutParameters, UtilParameters):
     y_criteria = {'Q': LAP}
     script_complete_name = 'Limit Active Power'
 
-    def __init__(self, ts, curve=1):
+    def __init__(self, ts):
         EutParameters.__init__(self, ts)
         UtilParameters.__init__(self)
         #LimitActivePower.set_params(self)
+
+class Prioritization(EutParameters, UtilParameters):
+    meas_values = ['F', 'V', 'P', 'Q']
+    x_criteria = ['V', 'F']
+    y_criteria = {'Q': PRI, 'P': PRI}
+    script_complete_name = 'Prioritization'
+
+    def __init__(self, ts):
+        EutParameters.__init__(self, ts)
+        UtilParameters.__init__(self)
+
+    def create_pri_dict_steps(self, function):
+        p_rated = self.p_rated
+        q_rated = self.var_rated
+        v_nom = self.v_nom
+        i = 0
+
+        step_dicts = [{'V': 1.00*v_nom, 'F': 60.00, 'P': 0.5*p_rated},
+                       {'V': 1.09*v_nom, 'F': 60.00, 'P': 0.4*p_rated},
+                       {'V': 1.09*v_nom, 'F': 60.33, 'P': 0.3*p_rated},
+                       {'V': 1.09*v_nom, 'F': 60.00, 'P': 0.4*p_rated},
+                       {'V': 1.09*v_nom, 'F': 59.36, 'P': 0.4*p_rated},
+                       {'V': 1.00*v_nom, 'F': 59.36, 'P': 0.6*p_rated},
+                       {'V': 1.00*v_nom, 'F': 60.00, 'P': 0.5*p_rated},
+                       {'V': 1.00*v_nom, 'F': 59.36, 'P': 0.7*p_rated}]
+
+        if function == VV:
+            self.ts.log_debug(f'adding VV in dict step')
+            for step_dict in step_dicts:
+                self.ts.log_debug(f'step_dict_before={step_dict}')
+
+                if i > 0 or i < 5:
+                    step_dict.update({'Q': -0.44*q_rated})
+                    self.ts.log_debug(f'i={i} and step_dict={step_dict}')
+
+                else:
+                    step_dict.update({'Q': 0})
+                    self.ts.log_debug(f'i={i} and step_dict={step_dict}')
+
+                i += 1
+                self.ts.log_debug(f'step_dict={step_dict}')
+        elif function == CPF:
+            for step_dict in step_dicts:
+                step_dict.update({'PF': 0.9})
+
+        elif function == CRP:
+            for step_dict in step_dicts:
+                step_dict.update({'Q': 0.44 * q_rated})
+
+        elif function == WV:
+            for step_dict in step_dicts:
+                if i == 5 or i < 7:
+                    step_dict.update({'Q': 0.05 * q_rated})
+                else:
+                    step_dict.update({'Q': 0})
+                i += 1
+
+        return step_dicts
 """
 This section is for the Active function
 """
 class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
-                     VoltWatt, VoltVar, ConstantReactivePower, ConstantPowerFactor, WattVar, FrequencyWatt):
+                     VoltWatt, VoltVar, ConstantReactivePower, ConstantPowerFactor,
+                     WattVar, FrequencyWatt, Prioritization):
     """
     This class acts as the main function
     As multiple functions might be needed for a compliance script, this function will inherit
@@ -1672,6 +1739,11 @@ class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent,
             LimitActivePower.__init__(self, ts)
             x_criterias += FrequencyWatt.x_criteria
             self.y_criteria.update(FrequencyWatt.y_criteria)
+        if PRI in functions:
+            Prioritization.__init__(self, ts)
+            x_criterias = Prioritization.x_criteria
+            self.y_criteria.update(Prioritization.y_criteria)
+            self.ts.log_debug('PRI initialized in library')
         #Remove duplicates
         self.x_criteria = list(OrderedDict.fromkeys(x_criterias))
         #self.y_criteria=list(OrderedDict.fromkeys(y_criterias))
@@ -1859,8 +1931,6 @@ class VoltageRideThrough(HilModel, EutParameters, DataLogging):
     """
     Getter functions
     """
-    
-
 
     def get_model_parameters(self,current_mode):
         self.ts.log(f"Getting HIL parameters for mode '{current_mode}''")
