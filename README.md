@@ -58,6 +58,46 @@ Current compliance test scripts available:
 #### Varia
 - [ ] Interoperability test
 
+### P1547 Library
+#### Functions Classes
+
+P1547 Library now has one main class named ActiveFunction and it inherit all the slow advanced inverter function (AIF) class needed (Volt-Var, Volt-Watt, Frequency-Watt, Constant Reactive Power, Constant Power Factor, Watt-Var, Limit Active and Prioritization).
+
+Each of the function has a class consisting of the following parameters:
+
+meas_values: Include all necessary measured values to be recorded.
+
+The following terminology used has been taken from IEEE 1547.1 Annex C.
+
+x_criterias: The X parameter(s) are all values that will be used to create a disturbance during the test. Most common type of values are voltage, frequency, power and power factor.
+
+y_criterias: The Y parameter(s) are all the observed values post-disturbance. These values are usually evaluated following the method shown in IEEE 1547.1 Annex C. From these values, we can have lower and upper target and see if the EUT does pass/fail at each disturbance steps within the test. 
+
+#### Additional Classes
+
+Any steps dictionary and parameters settings will be created through its respective class.
+Additional Classes have been created to create a better distinction of their tasks:
+
+EutParameters: Class representing taking
+
+DataLogging: Class taking care of all tasks related to data acquisition and measuring data.
+
+CriteriasValidation: Class taking care of defining all the targets necessary either for steps value or the evaluated criteria for pass-fail. Next, it verifies the measured value are within the evaluated targets to validate if the EUT complies.
+
+UtilParameters: Class that contains useful functions but does not fit with any of the other classes. As an example, most functions related to plot creation and column name are included in this class.
+
+HilModel: Class containing all HIL aspect related function for mostly fast functions for now.
+
+#### Active Function Class
+
+The proposed workflow is to use the library with the ActiveFunction class. From that class, it will initialize all the needed function depending on the script and merge all the meas_values, x_criterias and y_criterias from all the function while removing duplicates. 
+ActiveFunction = p1547.ActiveFunction(ts=ts,
+                                      functions=[PRI, VW, FW, VV, CPF, CRP, WV],
+                                      script_name='Prioritization',
+                                      criteria_mode=[False, False, True])
+
+
+
 ### Support
 
 For any bugs/issues, please refer to the [bug tracker][bug-tracker-url] section.
