@@ -163,7 +163,6 @@ def test_run():
         s_rated = ts.param_value('eut.s_rated')
         phases = ts.param_value('eut.phases')
 
-
         '''
         a) Test circuit configuration:
         

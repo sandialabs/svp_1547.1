@@ -43,6 +43,72 @@ from svpelab import gridsim
 from svpelab import hil
 from svpelab import p1547
 import script
+import math
+
+# todo
+PARAM_MAP = {'np_p_max': 'Active power rating at unity power factor (nameplate active power rating',
+             'np_p_max_over_pf': 'Active power rating at specified over-excited power factor',
+             'np_over_pf': 'Specified over-excited power factor',
+             'np_under_pf': 'Specified under-excited power factor',
+             'np_va_max': 'Apparent power maximum rating',
+             'np_normal_op_cat': 'Normal operating performance category', 
+             'np_abnormal_op_cat': 'Abnormal operating performance category', 
+             'np_q_max_inj': 'Reactive power injected maximum rating',
+             'np_q_max_abs': 'Reactive power absorbed maximum rating',
+             'np_apparent_power_charge_max': 'Apparent power charge maximum rating',
+             'np_ac_v_nom': 'AC voltage nominal rating',
+             'np_ac_v_max_er_max': 'AC voltage maximum rating',
+             'np_ac_v_min_er_min': 'AC voltage minimum rating',
+             'np_supported_modes': 'Supported control mode functions',
+             'UV': 'Supports Low Voltage Ride-Through Mode',
+             'OV': 'Supports High Voltage Ride-Through Mode',
+             'UF': 'Supports Low Freq Ride-Through Mode',
+             'OF': 'Supports High Freq Ride-Through Mode',
+             'P_LIM': 'Supports Active Power Limit Mode',
+             'PV': 'Supports Volt-Watt Mode',
+             'PF': 'Supports Frequency-Watt Curve Mode',
+             'CONST_Q': 'Supports Constant VArs Mode',
+             'CONST_PF': 'Supports Fixed Power Factor Mode',
+             'QV': 'Supports Volt-VAr Control Mode',
+             'QP': 'Supports Watt-VAr Mode',
+             'np_reactive_susceptance': 'Reactive susceptance that remains connected to the Area EPS in the cease to ' \
+                                        'energize and trip state',
+             'np_manufacturer': 'Manufacturer',
+             'np_model': 'Model',
+             'np_serial_num': 'Serial Number',
+             'np_fw_ver': 'Version',
+             'mn_w': 'Active Power (kW)',
+             'mn_var': 'Reactive Power (kVAr)',
+             'mn_v': 'Voltage (list) (V)',
+             'mn_hz': 'Frequency (Hz)',
+             'mn_st': 'Operational State (dict of bools)',
+             'mn_conn': 'Connection State (bool)',
+             'mn_alrm': 'Alarm Status (str)',
+             'mn_soc_pct': 'Operational State of Charge (%)',
+             }
+
+
+def print_params(param_dict, indent=1):
+    """
+    Pretty print of parameters from dictionary of parameters returned from der1547
+
+    :param param_dict: dict from a getter function, e.g., der1547.get_nameplate()
+    :param indent: number of spaces in the print
+    :return: None
+    """
+    # ts.log('DER Parameter Dictionary: %s' % param_dict)
+    for key, value in param_dict.items():
+        if not isinstance(value, dict):
+            if key in PARAM_MAP:
+                ts.log('\t' * indent + PARAM_MAP[key] + ' [' + key + '] : ' + str(value))
+            else:
+                ts.log('\t' * indent + str(key) + ': ' + str(value))
+        else:
+            if key in PARAM_MAP:
+                ts.log('\t' * indent + PARAM_MAP[key] + ' [' + key + '] : ')
+            else:
+                ts.log('\t' * indent + str(key) + ': ')
+            print_params(value, indent+1)
 
 
 def test_run():
@@ -59,24 +125,21 @@ def test_run():
 
     try:
 
-        settings_test = ts.param_value('iop.settings_test')
-        monitoring_test = ts.param_value('iop.monitoring_test')
+        settings_test = ts.param_value('iop_params.settings_test') == 'Yes'
+        monitoring_test = ts.param_value('iop_params.monitoring_test') == 'Yes'
 
-        # v_nom = float(ts.param_value('eut.v_nom'))
-        # MSA_V = 0.01 * v_nom
+        v_nom = float(ts.param_value('eut.v_nom'))
         # va_max = float(ts.param_value('eut.s_rated'))
         # va_crg_max = va_max
-        # MSA_Q = 0.05 * float(ts.param_value('eut.s_rated'))
-        # MSA_P = 0.05 * float(ts.param_value('eut.s_rated'))
-        # MSA_F = 0.01
         # f_nom = float(ts.param_value('eut.f_nom'))
-        # phases = ts.param_value('eut.phases')
-        # p_rated = float(ts.param_value('eut.p_rated'))
-        # w_max = p_rated
-        # p_min = p_rated
-        # w_crg_max = p_rated
-        # var_rated = float(ts.param_value('eut.var_rated'))
-        # var_max = float(ts.param_value('eut.var_rated'))
+        phases = ts.param_value('eut.phases')
+        p_rated = float(ts.param_value('eut.p_rated'))
+        w_max = p_rated
+        va_max = p_rated
+        p_min = p_rated
+        w_crg_max = p_rated
+        var_rated = float(ts.param_value('eut.var_rated'))
+        var_max = var_rated
 
         # initialize DER configuration
         eut = der1547.der1547_init(ts)
@@ -101,119 +164,27 @@ def test_run():
         if grid is not None:
             grid.voltage(v_nom)
 
-        lib_1547 = p1547.module_1547(ts=ts, aif='IOP')
-        ts.log_debug("1547.1 Library configured for %s" % lib_1547.get_test_name())
+        iop = p1547.ActiveFunction(ts=ts, functions=['IOP'], script_name='Interoperability',
+                                   criteria_mode=[False, False, False])
+        ts.log_debug("1547.1 Library configured for %s" % iop.get_script_name())
+        iop.set_params()
 
         '''
         6.4 Nameplate data test
         a) Read from the DER each nameplate data item listed in Table 28 in IEEE Std 1547-2018.
         b) Compare each value received to the expected values from the manufacturer-provided expected values.
-
-        Table 28 - Nameplate information
-        ________________________________________________________________________________________________________________
-        Parameter                                               Description
-        ________________________________________________________________________________________________________________
-        1. Active power rating at unity power factor            Active power rating in watts at unity power factor
-           (nameplate active power rating)
-        2. Active power rating at specified over-excited        Active power rating in watts at specified over-excited
-           power factor                                         power factor
-        3. Specified over-excited power factor                  Over-excited power factor as described in 5.2
-        4. Active power rating at specified under-excited       Active power rating in watts at specified under-excited
-           power factor                                         power factor
-        5. Specified under-excited power factor                 Under-excited power factor as described in 5.2
-        6. Apparent power maximum rating                        Maximum apparent power rating in voltamperes
-        7. Normal operating performance category                Indication of reactive power and voltage/power control
-                                                                capability. (Category A/B as described in 1.4)
-        8. Abnormal operating performance category              Indication of voltage and frequency ride-through
-                                                                capability Category I, II, or III, as described in 1.4
-        9. Reactive power injected maximum rating               Maximum injected reactive power rating in vars
-        10. Reactive power absorbed maximum rating              Maximum absorbed reactive power rating in vars
-        11. Active power charge maximum rating                  Maximum active power charge rating in watts
-        12. Apparent power charge maximum rating                Maximum apparent power charge rating in voltamperes. May
-                                                                differ from the apparent power maximum rating
-        13. AC voltage nominal rating                           Nominal AC voltage rating in RMS volts
-        14. AC voltage maximum rating                           Maximum AC voltage rating in RMS volts
-        15. AC voltage minimum rating                           Minimum AC voltage rating in RMS volts
-        16. Supported control mode functions                    Indication of support for each control mode function
-        17. Reactive susceptance that remains connected to      Reactive susceptance that remains connected to the Area
-            the Area EPS in the cease to energize and trip      EPS in the cease to energize and trip state
-            state
-        18. Manufacturer                                        Manufacturer
-        19. Model                                               Model
-        20. Serial number                                       Serial number
-        21. Version                                             Version
         '''
 
         ts.log('---')
-        der_info = eut.info()
         nameplate = eut.get_nameplate()
-
-        ts.log('DER Nameplate Information:')
         if nameplate is not None:
-            ts.log('nameplate: %s' % nameplate)
-            ts.log('  Active power rating at unity power factor (nameplate active power rating) [WRtg]: %s' %
-                   nameplate.get('WRtg'))
-            ts.log('  Active power rating at specified over-excited power factor: %s' % 'Unknown')
-            ts.log('  Specified over-excited power factor [PFRtgQ1]: %s' % nameplate.get('PFRtgQ1'))
-            ts.log('  Specified under-excited power factor [PFRtgQ2]: %s' % nameplate.get('PFRtgQ2'))
-            ts.log('  Apparent power maximum rating: %s' % nameplate.get('VARtg'))
-            ts.log('  Normal operating performance category: %s' % 'Unknown')
-            ts.log('  Abnormal operating performance category: %s' % 'Unknown')
-            ts.log('  Reactive power injected maximum rating [VArRtgQ1]: %s' % nameplate.get('VArRtgQ1'))
-            ts.log('  Reactive power absorbed maximum rating [VArRtgQ4]: %s' % nameplate.get('VArRtgQ4'))
-            ts.log('  Apparent power charge maximum rating: %s' % nameplate.get('MaxChrRte'))
-            ts.log('  AC voltage nominal rating: %s' % 'Unknown')
-            ts.log('  AC voltage maximum rating: %s' % 'Unknown')
-            ts.log('  AC voltage minimum rating: %s' % 'Unknown')
-        if der_info is not None:
-            ts.log('  Supported control mode functions: %s' % der_info.get('Options'))
+            ts.log('DER Nameplate Information:')
+            print_params(nameplate)
+            ts.log('---')
         else:
-            ts.log_warning('DER info not supported')
-        if nameplate is not None:
-            ts.log('  Reactive susceptance that remains connected to the Area EPS in the cease to '
-                   'energize and trip state: %s' % 'Unknown')
-        else:
-            ts.log_warning('DER nameplate not supported')
-        if der_info is not None:
-            ts.log('  Manufacturer: %s' % (der_info.get('Manufacturer')))
-            ts.log('  Model: %s' % (der_info.get('Model')))
-            ts.log('  Serial Number: %s' % (der_info.get('SerialNumber')))
-            ts.log('  Version: %s' % (der_info.get('Version')))
-        else:
-            ts.log_warning('DER info not supported')
+            ts.log_warning('DER Nameplate Information not supported')
 
-        """
-        ______________________________________________________________________________________________
-        1. Active power rating at unity power factor            np_active_power_rtg
-           (nameplate active power rating)
-        2. Active power rating at specified over-excited        np_active_power_rtg_over_excited
-           power factor
-        3. Specified over-excited power factor                  np_over_excited_pf
-        4. Active power rating at specified under-excited       np_active_power_rtg_under_excited
-           power factor
-        5. Specified under-excited power factor                 np_under_excited_pf
-        6. Apparent power maximum rating                        np_apparent_power_max_rtg
-        7. Normal operating performance category                np_normal_op_category
-        8. Abnormal operating performance category              np_abnormal_op_category
-        9. Reactive power injected maximum rating               np_reactive_power_inj_max_rtg
-        10. Reactive power absorbed maximum rating              np_reactive_power_abs_max_rtg
-        11. Active power charge maximum rating                  np_active_power_chg_max_rtg
-        12. Apparent power charge maximum rating                np_apparent_power_chg_max_rtg
-        13. AC voltage nominal rating                           np_ac_volt_nom_rtg
-        14. AC voltage maximum rating                           np_ac_volt_max_rtg
-        15. AC voltage minimum rating                           np_ac_volt_min_rtg
-        16. Supported control mode functions                    np_supported_ctrl_mode_func (dict)
-        17. Reactive susceptance that remains connected to      np_reactive_susceptance
-            the Area EPS in the cease to energize and trip
-            state
-        18. Manufacturer                                        np_manufacturer
-        19. Model                                               np_model
-        20. Serial number                                       np_serial_number
-        21. Version                                             np_version
-        """
-
-        if settings_test:
-
+        if settings_test:  # Not supported by DNP3 App Note
             '''
             6.5 Basic settings information test
 
@@ -243,125 +214,61 @@ def test_run():
                                                                                 include energy storage.
             Mode Enable Interval                Set to 5 s, set to 300 s
             '''
-
-            # Special considerations for CHIL ASGC/Typhoon startup
-            if chil is not None:
-                inv_power = eut.measurements().get('W')
-                timeout = 120.
-                if inv_power <= p_rated * 0.85:
-                    pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
-                    ts.sleep(3)
-                    eut.connect(params={'Conn': True})
-                while inv_power <= p_rated * 0.85 and timeout >= 0:
-                    ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
-                           (inv_power, timeout))
-                    ts.sleep(1)
-                    timeout -= 1
-                    inv_power = eut.measurements().get('W')
-                    if timeout == 0:
-                        result = script.RESULT_FAIL
-                        raise der1547.DERError('Inverter did not start.')
-                ts.log('Waiting for EUT to ramp up')
-                ts.sleep(8)
-                # ts.log_debug('DAS data_read(): %s' % daq.data_read())
-
-            settings = eut.settings()
+            ts.log('---')
+            settings = eut.get_settings()
             if settings is not None:
-                # Active Power Maximum
-                ts.log('  Active Power Maximum [WMax]: %s' % (settings.get('WMax')))
-                ts.log('  Setting WMax to %f.' % (0.8*w_max))
-                eut.settings(params={'WMax': 0.8*w_max})
-                ts.sleep(2)
-                power = lib_1547.get_measurement_total(data=daq.data_capture_read(), type_meas='P', log=True)
-                ts.log('  Power was recorded to be: %f.' % power)
-                ts.log('  Returning WMax to %f.' % w_max)
-                eut.settings(params={'WMax': w_max})
+                ts.log('DER Settings Information:')
+                print_params(settings)
+                ts.log('---')
+                basic_settings = []
+                if settings.get('np_p_max') is not None:
+                    basic_settings.append(('np_p_max', 0.8 * settings['np_p_max'], 'P', settings['np_p_max']))
+                else:
+                    ts.log_warning('DER Settings does not include np_p_max')
+                if settings.get('np_va_max') is not None:
+                    basic_settings.append(('np_va_max', 0.8 * settings['np_va_max'], 'VA', settings['np_va_max']))
+                else:
+                    ts.log_warning('DER Settings does not include np_va_max')
+                if settings.get('np_q_max_inj') is not None:
+                    basic_settings.append(('np_q_max_inj', 0.8 * settings['np_q_max_inj'], 'Q',
+                                           settings['np_q_max_inj']))
+                else:
+                    ts.log_warning('DER Settings does not include np_q_max_inj')
+                if settings.get('np_q_max_abs') is not None:
+                    basic_settings.append(('np_q_max_abs', 0.8 * settings['np_q_max_abs'], 'Q',
+                                           settings['np_q_max_abs']))
+                else:
+                    ts.log_warning('DER Settings does not include np_q_max_abs')
+                if settings.get('np_ac_v_max_er_max') is not None:
+                    basic_settings.append(('np_ac_v_max_er_max', 0.8 * settings['np_ac_v_max_er_max'], 'V',
+                                           settings['np_ac_v_max_er_max']))  # assume this is a typo for AC Current
+                else:
+                    ts.log_warning('DER Settings does not include np_ac_v_max_er_max')
+                if settings.get('np_p_max_charge') is not None:
+                    basic_settings.append(('np_p_max_charge', 0.8 * settings['np_p_max_charge'], 'P',
+                                           settings['np_p_max_charge']))
+                else:
+                    ts.log_warning('DER Settings does not include np_p_max_charge')
+                basic_settings.append(('set_t_mod_ena', 5.0, 'P', 300.0))
 
-                # Apparent Power Maximum
-                ts.log('  Apparent Power Maximum [VAMax]: %s' % (settings.get('VAMax')))
-                ts.log('  Setting VAMax to %f.' % (0.8*va_max))
-                eut.settings(params={'VAMax': 0.8*va_max})
-                ts.sleep(2)
-                va = lib_1547.get_measurement_total(data=daq.data_capture_read(), type_meas='VA', log=True)
-                ts.log('  Apparent Power was recorded to be: %f.' % va)
-                ts.log('  Returning VAMax to %f.' % va_max)
-                eut.settings(params={'VAMax': va_max})
-
-                # Reactive Power Injected Maximum
-                # TODO check on sign convention here
-                ts.log('  Reactive Power Injected Maximum [VArMaxQ1]: %s' % (settings.get('VArMaxQ1')))
-                ts.log('  Setting VArMaxQ1 to %f.' % (0.8*var_max))
-                eut.settings(params={'VArMaxQ1': 0.8*var_max})
-                eut.reactive_power(params={'Ena': True, 'VArPct_Mod': 'VArMax', 'VArMaxPct': 100})
-                ts.sleep(2)
-                q = lib_1547.get_measurement_total(data=daq.data_capture_read(), type_meas='Q', log=True)
-                ts.log('  Reactive Power Injected was recorded to be: %f.' % q)
-                ts.log('  Returning VArMaxQ1 to %f.' % var_max)
-                eut.settings(params={'VArMaxQ1': var_max})
-                eut.reactive_power(params={'Ena': False})
-
-                # Reactive Power Absorbed Maximum
-                ts.log('  Reactive Power Absorbed Maximum [VArMaxQ4]: %s' % (settings.get('VArMaxQ4')))
-                ts.log('  Setting VArMaxQ4 to %f.' % (0.8*var_max))
-                eut.settings(params={'VArMaxQ4': 0.8*var_max})
-                eut.reactive_power(params={'Ena': True, 'VArPct_Mod': 'VArMax', 'VArMaxPct': -100})
-                ts.sleep(2)
-                q = lib_1547.get_measurement_total(data=daq.data_capture_read(), type_meas='Q', log=True)
-                ts.log('  Reactive Power Absorbed was recorded to be: %f.' % q)
-                ts.log('  Returning VArMaxQ4 to %f.' % var_max)
-                eut.settings(params={'VArMaxQ4': var_max})
-                eut.reactive_power(params={'Ena': False})
-
-                # AC Current Maximum
-                ts.log('  Apparent Power Maximum [VAMax]: %s' % (settings.get('VAMax')))
-                ts.log('  Setting VAMax to %f.' % (0.8*va_max))
-                eut.settings(params={'VAMax': 0.8*va_max})
-                ts.sleep(2)
-                va = lib_1547.get_measurement_total(data=daq.data_capture_read(), type_meas='VA', log=True)
-                ts.log('  Apparent Power was recorded to be: %f.' % va)
-                ts.log('  Returning VAMax to %f.' % va_max)
-                eut.settings(params={'VAMax': va_max})
-
-                # Mode Enable Interval
-                # TODO add this assessment  {'ModeInterval': [5, 300]}
-
+                for s in range(len(basic_settings)):
+                    param = basic_settings[s][0]
+                    val = basic_settings[s][1]
+                    meas = basic_settings[s][2]
+                    final_val = basic_settings[s][3]
+                    ts.log('  Currently %s = %s' % (param, eut.get_settings()[param]))
+                    ts.log('  Setting %s to %0.1f.' % (param, val))
+                    eut.set_settings(params={param: val})
+                    ts.sleep(2)
+                    verify_val = iop.util.get_measurement_total(data=daq.data_capture_read(), type_meas=meas, log=True)
+                    ts.log('  Verification value is: %f.' % verify_val)
+                    ts.log('  Returning %s to %f.' % (param, final_val))
+                    eut.set_settings(params={param: val})
+                    ts.sleep(2)
             else:
                 ts.log_warning('DER settings not supported')
-
-            storage = eut.storage()
-            if storage is not None:
-                # Active Power Charge Maximum
-                ts.log('  Active Power Charge Maximum [WChaMax]: %s' % (storage.get('WChaMax')))
-                ts.log('  Setting WChaMax to %f.' % (0.8*w_crg_max))
-                eut.storage(params={'WChaMax': 0.8*w_crg_max})
-                ts.log('  Setting InWRte to %f %% of max charging rate.' % 100.)  # Percent of max charging rate.
-                eut.storage(params={'InWRte': 100.})
-                ts.sleep(2)
-                power = lib_1547.get_measurement_total(data=daq.data_capture_read(), type_meas='P', log=True)
-                ts.log('  Apparent Power was recorded to be: %f.' % power)
-                ts.log('  Returning WChaMax to %f.' % w_crg_max)
-                eut.storage(params={'WChaMax': w_crg_max})
-                eut.storage(params={'InWRte': 0.})
-
-                # Apparent Power Charge Maximum
-                ts.log('  Apparent Power Charge Maximum [VAChaMax]: %s' % (storage.get('VAChaMax')))
-                ts.log('  Setting WChaMax to %f.' % (0.8*va_crg_max))
-                eut.storage(params={'VAChaMax': 0.8*va_crg_max})
-                ts.log('  Setting InWRte to %f %% of max charging rate.' % 100.)  # Percent of max charging rate.
-                eut.storage(params={'InWRte': 100.})
-                ts.sleep(2)
-                power = lib_1547.get_measurement_total(data=daq.data_capture_read(), type_meas='VA', log=True)
-                ts.log('  Apparent Power was recorded to be: %f.' % power)
-                ts.log('  Returning VAChaMax to %f.' % va_crg_max)
-                eut.storage(params={'VAChaMax': va_crg_max})
-                eut.storage(params={'InWRte': 0.})
-
-                # Stated Energy Storage Capacity
-                # StorAval = State of charge (ChaState) minus storage reserve (MinRsvPct) times capacity rating (AhrRtg)
-                # TODO add this assessment
-
-            else:
-                ts.log_warning('DER storage not supported')
+        else:
+            ts.log('Skipping DER settings test')
 
         if monitoring_test:
             '''
@@ -373,151 +280,412 @@ def test_run():
                reported values match the operating conditions as identified.
             c) Change the operating conditions of the DER as specified in the "Operating Point B" column 16 in Table 43.
             d) Repeat step b).
+            
+            Table 43 — Monitoring information test levels
+            ____________________________________________________________________________________________________________
+            Monitoring          Operating               Operating               Criteria
+            information         Point A                 Point B
+            parameter                                
+            ____________________________________________________________________________________________________________
+            Active Power        20% to 30% of           90% to 100% of          Reported values match test operating
+                                DER “active power       DER “active power       conditions within the accuracy 
+                                rating at unity power   rating at unity power   requirements specified in Table 3 in 
+                                factor.”                factor.”                IEEE Std 1547-2018.
+
+            Reactive Power      20% to 30% of           90% to 100% of          Reported values match test operating
+            (Injected)          DER “reactive power     DER “reactive power     conditions within the accuracy 
+                                injected maximum        injected maximum        requirements specified in Table 3 in
+                                rating.”                rating.”                IEEE Std 1547-2018.
+
+            Reactive Power      20% to 30% of           90% to 100% of          Reported values match test operating
+            (Absorbed)          DER “reactive power     DER “reactive power     conditions within the accuracy 
+                                injected maximum        injected maximum        requirements specified in Table 3 in
+                                rating.”                rating.”                IEEE Std 1547-2018.
+
+            Voltage(s)          At or below             At or above 1.08 × (ac  Reported values match test operating
+                                0.90 × (ac voltage      voltage nominal         conditions within the accuracy 
+                                nominal rating).        rating).                requirements specified in Table 3 in
+                                                                                IEEE Std 1547-2018.
+                                                                                
+            Frequency           At or below 57.2 Hz.    At or above 61.6 Hz.    Reported values match test operating
+                                                                                conditions within the accuracy 
+                                                                                requirements specified in Table 3 in 
+                                                                                IEEE Std 1547-2018.
+            
+            Operational State   On: Conduct this test   Off: If supported by    Reported Operational State matches the
+                                while the DER is        the DER, conduct this   device present condition for on and off 
+                                generating.             test while capable of   states.
+                                                        communicating but not
+                                                        capable of generating.
+            
+            Connection Status   Connected: Conduct      Disconnected:           Reported Connection Status matches the
+                                this test while the     Conduct this test while device present connection condition.
+                                DER is generating.      permit service is
+                                                        disabled.
+
+            Alarm Status        Has alarms set.         No alarms set.          Reported Alarm Status matches the device
+                                                                                present alarm condition for alarm and no
+                                                                                alarm conditions. For test purposes 
+                                                                                only, the DER manufacturer shall specify 
+                                                                                at least one way an alarm condition that
+                                                                                is supported in the protocol being 
+                                                                                tested can be set and cleared.
             '''
 
-            # Monitoring information parameter: Active Power
-            # Operating Point A: 0 to 10% of DER "active power rating at unity power factor"
-            # Operating Point B: 90 to 100% of DER "active power rating at unity power factor"
-            # Pass/Fail Criteria: Reported values match test operating conditions within the accuracy requirements
-            # specified in Table 3 in IEEE Std 1547-2018. (+/- 5% Srated)
-            m = eut.measurements()
+            # for p in [0.25, 0.59, 0.87, 0.45]:
+            #     ts.log_debug('Test Read: %s' % eut.get_p_lim())
+            #     ts.log_debug('Test Write: %s' % eut.set_p_lim(params={"p_lim_mode_enable_as": True, "p_lim_w_as": p}))
+            #     ts.sleep(10)
+            #     mn_w = eut.get_monitoring().get("mn_w")
+            #     ts.log_debug('mn_w: %s' % mn_w)
+            #     ts.log_debug('w_max: %s' % w_max)
+            #     ts.log_debug('eval: %s' % (1e5 * (mn_w / w_max)))
+            # eut.set_p_lim(params={"p_lim_mode_enable_as": False, "p_lim_w_as": 1.})
+
+            m = eut.get_monitoring()
             if m is not None:
-                ts.log('  Active Power reported from the EUT is: %s W' % (m.get('W')))
-                for setpoint in [5, 100]:
-                    eut.limit_max_power(params={'Ena': True, 'WMaxPct': setpoint})  # curtial to 5% of power
+                print_params(m)
+                '''
+                ________________________________________________________________________________________________________
+                Monitoring          Operating               Operating               Criteria
+                information         Point A                 Point B
+                parameter                                
+                ________________________________________________________________________________________________________
+                Active Power        20% to 30% of           90% to 100% of          Reported values match test operating
+                                    DER “active power       DER “active power       conditions within the accuracy 
+                                    rating at unity power   rating at unity power   requirements specified in Table 3 in 
+                                    factor.”                factor.”                IEEE Std 1547-2018.
+                '''
+
+                accuracy = 5.
+                ts.log('Starting Monitoring Assessment. Active Power reported from the EUT is: %s' % m.get('mn_w'))
+                for setpoint in [0.25, 0.95]:  # test_pts (pu)
+                    setpoint_pct = setpoint * 100.
+                    ts.log_debug('    ****Configuring Experiment. Executing: p_lim = %s' % setpoint)
+                    eut.set_p_lim(params={"p_lim_mode_enable_as": True, "p_lim_w_as": setpoint})
+                    ts.sleep(2)
                     inaccurate_measurement = True
-                    while inaccurate_measurement:
-                        power_pct = 100*(eut.measurements().get('W')/w_max)
-                        ts.log('    EUT power is currently %f%% Prated' % power_pct)
-                        if setpoint - 5. <= power_pct <= setpoint + 5.:  # +/- 5% Srated
-                            ts.log('EUT has recorded power +/- 5%% Srated, as required by IEEE 1547-2018.')
-                            ts.log('Returning EUT to rated power.')
+                    timeout = 5
+                    test_pass_fail = 'FAIL'
+                    while inaccurate_measurement and timeout > 0:
+                        timeout -= 1
+                        value = 1e5*(eut.get_monitoring().get("mn_w")/var_max)
+                        # ts.log_debug('    ****Returned Value: %s' % value)
+                        ts.log('    EUT Active Power is currently %0.1f%% Prated, waiting another %0.1f sec' %
+                               (value, timeout))
+                        if setpoint_pct - accuracy <= value <= setpoint_pct + accuracy:  # +/- accuracy in pct
+                            ts.log('    EUT has recorded power +/- %s%% as required by IEEE 1547-2018.' % accuracy)
+                            ts.log('    Returning EUT to rated power.')
+                            test_pass_fail = 'PASS'
                             inaccurate_measurement = False
-                        ts.sleep(1)
-                    eut.limit_max_power(params={'Ena': False})
-            else:
-                ts.log_warning('DER measurements not supported')
-            ts.log('---')
-
-            # Monitoring information parameter: Reactive Power
-            # Operating Point A: 90 to 100% of DER "reactive power injected maximum rating"
-            # Operating Point B: 90 to 100% of DER "reactive power absorbed maximum rating"
-            # Pass/Fail Criteria: Reported values match test operating conditions within the accuracy requirements
-            # specified in Table 3 in IEEE Std 1547-2018. (+/- 5% Srated)
-            m = eut.measurements()
-            if m is not None:
-                ts.log('  Reactive Power reported from the EUT is: %f VAr' % (m.get('VAr')))
-                for setpoint in [5, 100]:
-                    eut.reactive_power(params={'Ena': True, 'VArPct_Mod': 'VArMax', 'VArMaxPct': 100})
-                    inaccurate_measurement = True
-                    while inaccurate_measurement:
-                        q_pct = 100*(eut.measurements().get('VAr')/var_max)
-                        ts.log('    EUT reactive power is currently %f%% Qrated' % q_pct)
-                        if setpoint - 5. <= q_pct <= setpoint + 5.:  # +/- 5% Srated
-                            ts.log('EUT has recorded reactive power +/- 5%% Srated, as required by IEEE 1547-2018.')
-                            ts.log('Returning EUT to rated power.')
-                            inaccurate_measurement = False
-                        ts.sleep(1)
-                    eut.reactive_power(params={'Ena': False})
-            else:
-                ts.log_warning('DER measurements not supported')
-            ts.log('---')
-
-            # Monitoring information parameter: Voltage
-            # Operating Point A: At or below 0.90x(AC voltage nominal rating)
-            # Operating Point B: At or above 1.08x(AC voltage nominal rating)
-            # Pass/Fail Criteria: Reported values match test operating conditions within the accuracy requirements
-            # specified in Table 3 in IEEE Std 1547-2018. (+/-1% Vnom)
-
-            for setpoint in [90, 108]:
-                grid.voltage(setpoint)
-
-                inaccurate_measurement = True
-                while inaccurate_measurement:
-
-                    voltages = []
-                    if self.phases == 'Single phase':
-                        voltages.append(eut.measurements()['PhVphA'])
-                    elif self.phases == 'Split phase':
-                        voltages.append(eut.measurements()['PhVphA'])
-                        voltages.append(eut.measurements()['PhVphB'])
-                    elif self.phases == 'Three phase':
-                        voltages.append(eut.measurements()['PhVphB']/v_nom)
-                        voltages.append(eut.measurements()['PhVphB']/v_nom)
-                        voltages.append(eut.measurements()['PhVphC']/v_nom)
-                        # TODO: also check phase to phase voltages
-                        voltages.append(eut.measurements()['PPVphAB']/(v_nom*math.sqrt(3)))
-                        voltages.append(eut.measurements()['PPVphBC']/(v_nom*math.sqrt(3)))
-                        voltages.append(eut.measurements()['PPVphCA']/(v_nom*math.sqrt(3)))
-
-                    ts.log('    EUT voltages are currently %s pu' % voltages)
-                    pass_criteria = []
-                    for voltage in voltages:
-                        if setpoint/100. - 0.01 <= voltage <= setpoint/100. + 0.01:  # +/- 1% Vnom
-                            pass_criteria.append(True)
                         else:
-                            pass_criteria.append(True)
+                            ts.log('    EUT outside the IEEE 1547-2018 requirements. Bounds = [%0.1f, %0.1f], '
+                                   'Value = %0.1f' % (setpoint_pct - accuracy, setpoint_pct + accuracy, value))
+                            ts.sleep(1)
+                    ts.log('RESULT = %s' % test_pass_fail)
 
-                    if all(pass_criteria):
-                        ts.log('EUT has recorded voltage +/- 1%% Vnom, as required by IEEE 1547-2018.')
-                        ts.log('Returning EUT to rated power.')
-                        inaccurate_measurement = False
-                    ts.sleep(1)
+                ts.log_debug('    ****Resetting Function p_lim')
+                eut.set_p_lim(params={"p_lim_mode_enable_as": False, "p_lim_w_as": 1.})
 
-            grid.voltage(v_nom)
+                # for q in [0.25, 0.59, 0.87, 0.45]:
+                #     ts.log_debug('Test Read: %s' % eut.get_const_q())
+                #     ts.log_debug('Test Write: %s' % eut.set_const_q(params={"const_q_mode_enable_as": True,
+                #                                                             "const_q_as": q}))
+                #     ts.sleep(10)
+                #     mn_var = eut.get_monitoring().get("mn_var")
+                #     ts.log_debug('mn_var: %s' % mn_var)
+                #     ts.log_debug('var_max: %s' % var_max)
+                #     ts.log_debug('eval: %s' % (1e5 * (mn_var / var_max)))
+                # eut.set_const_q(params={"const_q_mode_enable_as": False})
 
-            # Monitoring information parameter: Frequency
-            # Operating Point A: At or below 57.2Hz
-            # Operating Point B: At or above 61.6Hz
-            # Pass/Fail Criteria: Reported values match test operating conditions within the accuracy requirements
-            # specified in Table 3 in IEEE Std 1547-2018. (10 mHz)
+                # for pf in [(0.10, 'inj'), (-0.10, 'abs'), (0.85, 'inj')]:
+                #     ts.log_debug('Test Read: %s' % eut.get_const_pf())
+                #     ts.log_debug('Test Write: %s' % eut.set_const_pf(params={"const_pf_mode_enable_as": True,
+                #                                                              "const_pf_abs_as": pf[0],
+                #                                                              "const_pf_excitation_as": pf[1]}))
+                #     ts.sleep(20)
+                #     mn_var = eut.get_monitoring().get("mn_var")
+                #     ts.log_debug('mn_var: %s' % mn_var)
+                #     # ts.log_debug('var_max: %s' % var_max)
+                #     ts.log_debug('eval: %s' % (1e5 * (mn_var / var_max)))
+                # eut.set_const_q(params={"const_q_mode_enable_as": False})
 
-            # Monitoring information parameter: Operational State
-            # Operating Point A: On
-            # Operating Point B: Off
-            # Pass/Fail Criteria: Reported Operational State matches the device present condition for on and off states.
+                '''
+                ________________________________________________________________________________________________________
+                Monitoring          Operating               Operating               Criteria
+                information         Point A                 Point B
+                parameter                                
+                ________________________________________________________________________________________________________
+                Reactive Power      20% to 30% of           90% to 100% of          Reported values match test operating
+                (Injected)          DER “reactive power     DER “reactive power     conditions within the accuracy 
+                                    injected maximum        injected maximum        requirements specified in Table 3 in
+                                    rating.”                rating.”                IEEE Std 1547-2018.
+    
+                Reactive Power      20% to 30% of           90% to 100% of          Reported values match test operating
+                (Absorbed)          DER “reactive power     DER “reactive power     conditions within the accuracy 
+                                    injected maximum        injected maximum        requirements specified in Table 3 in
+                                    rating.”                rating.”                IEEE Std 1547-2018.
+                '''
 
-            # Monitoring information parameter: Connection Status
-            # Operating Point A: Connected: Enable Permit and AC conditions have been met to enter service as specified
-            # in Table 39 of IEEE Std 1547-2018
-            # Operating Point B: Disconnected: Permit service is disabled
-            # Pass/Fail Criteria: Reported Connection Status matches the device present connection condition.
-            status = eut.controls_status()
-            if status is not None:
-                ts.log('    Is Fixed_W enabled?: %s' % (status.get('Fixed_W')))
-                ts.log('    Is Fixed_Var enabled?: %s' % (status.get('Fixed_Var')))
-                ts.log('    Is Fixed_PF enabled?: %s' % (status.get('Fixed_PF')))
-                ts.log('    Is Volt_Var enabled?: %s' % (status.get('Volt_Var')))
-                ts.log('    Is Freq_Watt_Param enabled?: %s' % (status.get('Freq_Watt_Param')))
-                ts.log('    Is Freq_Watt_Curve enabled?: %s' % (status.get('Freq_Watt_Curve')))
-                ts.log('    Is Dyn_Reactive_Power enabled?: %s' % (status.get('Dyn_Reactive_Power')))
-                ts.log('    Is LVRT enabled?: %s' % (status.get('LVRT')))
-                ts.log('    Is HVRT enabled?: %s' % (status.get('HVRT')))
-                ts.log('    Is Watt_PF enabled?: %s' % (status.get('Watt_PF')))
-                ts.log('    Is Volt_Watt enabled?: %s' % (status.get('Volt_Watt')))
-                ts.log('    Is Scheduled enabled?: %s' % (status.get('Scheduled')))
-                ts.log('    Is LFRT enabled?: %s' % (status.get('LFRT')))
-                ts.log('    Is HFRT enabled?: %s' % (status.get('HFRT')))
+                accuracy = 5.
+                ts.log('Starting Monitoring Assessment. Reactive Power reported from the EUT is: %s' %
+                       eut.get_monitoring().get('mn_var'))
+                for setpoint in [0.25, 0.95]:
+                    setpoint_pct = setpoint * 100.
+                    pf = math.sqrt(1. - (setpoint ** 2))
+                    ts.log_debug('     ****Configuring Experiment. Executing: Const PF = %s' % setpoint)
+                    eut.set_const_pf(params={"const_pf_mode_enable_as": True, "const_pf_abs_as": pf,
+                                             "const_pf_excitation_as": "inj"})
+                    ts.sleep(2)
+                    inaccurate_measurement = True
+                    timeout = 5
+                    test_pass_fail = 'FAIL'
+                    while inaccurate_measurement and timeout > 0:
+                        timeout -= 1
+                        value = 1e5*(eut.get_monitoring().get("mn_var")/var_max)
+                        # ts.log_debug('    ****Returned Value: %s' % value)
+                        ts.log('    EUT Reactive Power is currently %0.1f%%, waiting another %0.1f sec' %
+                               (value, timeout))
+                        if setpoint_pct - accuracy <= value <= setpoint_pct + accuracy:  # +/- accuracy in pct
+                            ts.log('    EUT has recorded value of +/- %s%% as required by IEEE 1547-2018.' % accuracy)
+                            test_pass_fail = 'PASS'
+                            inaccurate_measurement = False
+                        else:
+                            ts.log('    EUT outside the IEEE 1547-2018 requirements. Bounds = [%0.1f, %0.1f], '
+                                   'Value = %0.1f' % (setpoint_pct - accuracy, setpoint_pct + accuracy, value))
+                            ts.sleep(1)
+                    ts.log('RESULT = %s' % test_pass_fail)
 
-                ts.log('---')
-                status = eut.conn_status()
-                ts.log('    Is PV_Connected?: %s' % (status.get('PV_Connected')))
-                ts.log('    Is PV_Available?: %s' % (status.get('PV_Available')))
-                ts.log('    Is PV_Operating?: %s' % (status.get('PV_Operating')))
-                ts.log('    Is PV_Test?: %s' % (status.get('PV_Test')))
-                ts.log('    Is Storage_Connected?: %s' % (status.get('Storage_Connected')))
-                ts.log('    Is Storage_Available?: %s' % (status.get('Storage_Available')))
-                ts.log('    Is Storage_Operating?: %s' % (status.get('Storage_Operating')))
-                ts.log('    Is Storage_Test?: %s' % (status.get('Storage_Test')))
-                ts.log('    Is EPC_Connected?: %s' % (status.get('EPC_Connected')))
-                ts.log('---')
+                ts.log_debug('    ****Resetting Function Executing: Const PF')
+                eut.set_const_pf(params={"const_pf_mode_enable_as": False})
 
-            # Monitoring information parameter: Alarm Status
-            # Operating Point A: Has alarms set
-            # Operating Point B: No alarms set
-            # Pass/Fail Criteria: Reported Alarm Status matches the device present alarm condition for alarm and no
-            # alarm conditions. The DER manufacturer shall specify at least one way an alarm condition which is
-            # supported in the protocol being tested can be set and cleared.
+                # Absorbed Reactive Power
+                for setpoint in [-0.25, -0.95]:
+                    setpoint_pct = setpoint * 100.
+                    pf = math.sqrt(1. - (setpoint ** 2))
+                    ts.log_debug('****Configuring Experiment. Executing: Const PF')
+                    eut.set_const_pf(params={"const_pf_mode_enable_as": True, "const_pf_abs_as": pf,
+                                             "const_pf_excitation_as": "abs"})
+                    ts.sleep(2)
+                    inaccurate_measurement = True
+                    timeout = 5
+                    test_pass_fail = 'FAIL'
+                    while inaccurate_measurement and timeout > 0:
+                        timeout -= 1
+                        value = 1e5*(eut.get_monitoring().get("mn_var")/var_max)
+                        # ts.log_debug('    ****Returned Value: %s' % value)
+                        ts.log('    EUT Reactive Power is currently %0.1f%%, waiting another %0.1f sec' %
+                               (value, timeout))
+                        if setpoint_pct - accuracy <= value <= setpoint_pct + accuracy:  # +/- accuracy in pct
+                            ts.log('    EUT has recorded value of +/- %s%% as required by IEEE 1547-2018.' % accuracy)
+                            test_pass_fail = 'PASS'
+                            inaccurate_measurement = False
+                        else:
+                            ts.log('    EUT outside the IEEE 1547-2018 requirements. Bounds = [%0.1f, %0.1f], '
+                                   'Value = %0.1f' % (setpoint_pct - accuracy, setpoint_pct + accuracy, value))
+                            ts.sleep(1)
+                    ts.log('RESULT = %s' % test_pass_fail)
+
+                ts.log_debug('    ****Resetting Function Executing: Const PF')
+                eut.set_const_pf(params={"const_pf_mode_enable_as": False})
+
+                '''
+                ________________________________________________________________________________________________________
+                Monitoring          Operating               Operating               Criteria
+                information         Point A                 Point B
+                parameter                                
+                ________________________________________________________________________________________________________
+                Voltage(s)          At or below             At or above 1.08 × (ac  Reported values match test operating
+                                    0.90 × (ac voltage      voltage nominal         conditions within the accuracy 
+                                    nominal rating).        rating).                requirements specified in Table 3 in
+                                                                                    IEEE Std 1547-2018. (+/-1% Vnom)
+                '''
+
+                accuracy = 1.
+                ts.log('Starting Monitoring Assessment. Voltage reported from the EUT is: %s' %
+                       eut.get_monitoring().get('mn_v'))
+                for setpoint in [89, 109]:
+                    v_grid = setpoint * 0.01 * v_nom
+                    if grid is not None:
+                        grid.voltage(v_grid)
+                    ts.log_debug('****Configuring Experiment. Setting grid voltage to %s V' % v_grid)
+                    ts.sleep(2)
+                    inaccurate_measurement = True
+                    timeout = 5
+                    test_pass_fail = 'FAIL'
+                    while inaccurate_measurement and timeout > 0:
+                        timeout -= 1
+                        # voltages = grid.meas_voltage()
+                        voltages = [v_grid, v_grid, v_grid]
+                        meas_volt_mean_pct = (sum(voltages)/len(voltages)/v_nom)*100.
+                        eut_volt = [eut.get_monitoring().get("mn_v")]
+                        eut_volt_mean_pct = (sum(eut_volt)/len(eut_volt)/v_nom)*100.
+                        ts.log('    EUT-reported voltage is currently %0.1f%%, real voltage = %s%%, '
+                               'waiting another %0.1f sec' % (eut_volt_mean_pct, meas_volt_mean_pct, timeout))
+                        if meas_volt_mean_pct - accuracy <= eut_volt_mean_pct <= meas_volt_mean_pct + accuracy:
+                            ts.log('    EUT has recorded value of +/- %s%% as required by IEEE 1547-2018.' % accuracy)
+                            test_pass_fail = 'PASS'
+                            inaccurate_measurement = False
+                        else:
+                            ts.log('    EUT outside the IEEE 1547-2018 requirements. Bounds = [%0.1f, %0.1f], '
+                                   'Value = %0.1f' % (meas_volt_mean_pct - accuracy, meas_volt_mean_pct + accuracy,
+                                                      eut_volt_mean_pct))
+                            ts.sleep(1)
+                    ts.log('RESULT = %s' % test_pass_fail)
+                if grid is not None:
+                    grid.voltage(v_nom)
+
+                '''
+                ________________________________________________________________________________________________________
+                Monitoring          Operating               Operating               Criteria
+                information         Point A                 Point B
+                parameter                                
+                ________________________________________________________________________________________________________
+                Frequency           At or below 57.2 Hz.    At or above 61.6 Hz.    Reported values match test operating
+                                                                                    conditions within the accuracy 
+                                                                                    requirements specified in Table 3 in 
+                                                                                    IEEE Std 1547-2018. (10 mHz)
+                '''
+
+                accuracy = (0.010/60.)*100.  # 10 mHz
+                ts.log('Starting Monitoring Assessment. Frequency reported from the EUT is: %s' %
+                       eut.get_monitoring().get('mn_hz'))
+                for setpoint in [57., 61.8]:
+                    if grid is not None:
+                        grid.freq(setpoint)
+                    ts.log_debug('****Configuring Experiment. Setting grid frequency to %s Hz' % setpoint)
+                    ts.sleep(2)
+                    inaccurate_measurement = True
+                    timeout = 5
+                    test_pass_fail = 'FAIL'
+                    while inaccurate_measurement and timeout > 0:
+                        timeout -= 1
+                        eut_freq = eut.get_monitoring().get("mn_hz")
+                        ts.log('    EUT-reported freq is currently %0.1f, real freq = %s%%, '
+                               'waiting another %0.1f sec' % (eut_freq, setpoint, timeout))
+                        if eut_freq - accuracy <= setpoint <= eut_freq + accuracy:
+                            ts.log('    EUT has recorded value of +/- %s%% as required by IEEE 1547-2018.' % accuracy)
+                            test_pass_fail = 'PASS'
+                            inaccurate_measurement = False
+                        else:
+                            ts.log('    EUT outside the IEEE 1547-2018 requirements. Bounds = [%0.1f, %0.1f], '
+                                   'Value = %0.1f' % (eut_freq - accuracy, setpoint + accuracy, eut_freq))
+                            ts.sleep(1)
+                    ts.log('RESULT = %s' % test_pass_fail)
+                if grid is not None:
+                    grid.freq(60.)
+
+                '''
+                ________________________________________________________________________________________________________
+                Monitoring          Operating               Operating               Criteria
+                information         Point A                 Point B
+                parameter                                
+                ________________________________________________________________________________________________________
+            
+                Operational State   On: Conduct this test   Off: If supported by    Reported Operational State matches 
+                                    while the DER is        the DER, conduct this   the device present condition for on 
+                                    generating.             test while capable of   and off states.
+                                                            communicating but not
+                                                            capable of generating.
+                '''
+                ts.log('Starting Monitoring Assessment. State reported from the EUT is: %s' %
+                       eut.get_monitoring().get('mn_st'))
+                for state in [True, False]:
+                    eut.set_conn(params={'conn_as': state})
+                    ts.log_debug('****Configuring Experiment. Setting EUT Operational State to %s' % setpoint)
+                    ts.sleep(2)
+                    inaccurate_measurement = True
+                    timeout = 5
+                    test_pass_fail = 'FAIL'
+                    while inaccurate_measurement and timeout > 0:
+                        timeout -= 1
+                        eut_conn = eut.get_monitoring().get('mn_conn').get('mn_op_started')
+                        ts.log('    EUT-reported connection = %s, State setting = %s, waiting another %0.1f sec' %
+                               (eut_conn, state, timeout))
+                        if eut_conn == state:
+                            test_pass_fail = 'PASS'
+                            inaccurate_measurement = False
+                        else:
+                            ts.log('    EUT outside IEEE 1547-2018 requirements.')
+                            ts.sleep(1)
+                    ts.log('RESULT = %s' % test_pass_fail)
+                eut.set_conn(params={'conn_as': True})
+
+                '''
+                ________________________________________________________________________________________________________
+                Monitoring          Operating               Operating               Criteria
+                information         Point A                 Point B
+                parameter                                
+                ________________________________________________________________________________________________________
+                Connection Status   Connected: Conduct      Disconnected:           Reported Connection Status matches 
+                                    this test while the     Conduct this test while the device present connection 
+                                    DER is generating.      permit service is       condition.
+                                                            disabled.
+                '''
+                ts.log('Starting Monitoring Assessment. Connection Status reported from the EUT is: %s' %
+                       eut.get_monitoring().get('mn_conn'))
+                for conn in [True, False]:
+                    eut.set_conn(params={'conn_as': conn})
+                    ts.log_debug('****Configuring Experiment. Setting EUT connection status to %s' % setpoint)
+                    ts.sleep(2)
+                    inaccurate_measurement = True
+                    timeout = 5
+                    test_pass_fail = 'FAIL'
+                    while inaccurate_measurement and timeout > 0:
+                        timeout -= 1
+                        eut_conn = eut.get_monitoring().get('mn_st').get('mn_conn_connected_generating')
+                        ts.log('    EUT-reported Status = %s, Connection Status = %s, waiting another %0.1f sec' %
+                               (eut_conn, conn, timeout))
+                        if eut_conn == conn:
+                            test_pass_fail = 'PASS'
+                            inaccurate_measurement = False
+                        else:
+                            ts.log('    EUT outside IEEE 1547-2018 requirements.')
+                            ts.sleep(1)
+                    ts.log('RESULT = %s' % test_pass_fail)
+                eut.set_conn(params={'conn_as': True})
+
+                '''
+                ________________________________________________________________________________________________________
+                Monitoring          Operating               Operating               Criteria
+                information         Point A                 Point B
+                parameter                                
+                ________________________________________________________________________________________________________
+                Alarm Status        Has alarms set.         No alarms set.          Reported Alarm Status matches the 
+                                                                                    device present alarm condition for 
+                                                                                    alarm and no alarm conditions. For 
+                                                                                    test purposes only, the DER 
+                                                                                    manufacturer shall specify at least 
+                                                                                    one way an alarm condition that
+                                                                                    is supported in the protocol being 
+                                                                                    tested can be set and cleared.
+                '''
+
+                for error in [True, False]:
+                    eut.set_error(params={'error_as': error})  # configure and error state
+                    ts.log_debug('****Configuring Experiment. Setting EUT error to %s' % setpoint)
+                    ts.sleep(2)
+                    inaccurate_measurement = True
+                    timeout = 5.
+                    test_pass_fail = 'FAIL'
+                    while inaccurate_measurement and timeout > 0:
+                        timeout -= 1
+                        eut_error = eut.get_monitoring().get('mn_alrm').get('mn_alm_priority_1')
+                        ts.log('    EUT-reported Status = %s, Error Status = %s, waiting another %0.1f sec' %
+                               (eut_error, error, timeout))
+                        if eut_error == error:
+                            test_pass_fail = 'PASS'
+                            inaccurate_measurement = False
+                        else:
+                            ts.log('    EUT outside non-compliant to IEEE 1547-2018 requirements.')
+                            ts.sleep(1)
+                    ts.log('RESULT = %s' % test_pass_fail)
+                eut.set_error(params={'error_as': False})  # configure and error state
+
+            else:
+                ts.log_warning('DER measurements testing not supported')
+        else:
+            ts.log('Skipping DER monitoring test')
 
         return script.RESULT_COMPLETE
 
@@ -546,6 +714,7 @@ def test_run():
 
     return result
 
+
 def run(test_script):
 
     try:
@@ -573,9 +742,9 @@ def run(test_script):
 
 info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.0.0')
 
-info.param_group('iop', label='Test Parameters')
-info.param('iop.settings_test', label='Run the Settings Test', default=True, values=[True, False])
-info.param('iop.monitoring_test', label='Run the Monitoring Test', default=True, values=[True, False])
+info.param_group('iop_params', label='Test Parameters')
+info.param('iop_params.settings_test', label='Run Settings Test', default='No', values=['Yes', 'No'])
+info.param('iop_params.monitoring_test', label='Run Monitoring Test', default='Yes', values=['Yes', 'No'])
 
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)
@@ -597,15 +766,15 @@ info.param('eut.imbalance_resp', label='EUT response to phase imbalance is calcu
                    'EUT response to the average of the three-phase effective (RMS)',
                    'EUT response to the positive sequence of voltages'])
 
-
 der1547.params(info)
 hil.params(info)
 das.params(info)
 pvsim.params(info)
 gridsim.params(info)
 
+
 def script_info():
-    
+
     return info
 
 
