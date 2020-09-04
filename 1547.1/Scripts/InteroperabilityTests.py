@@ -98,14 +98,32 @@ def print_params(param_dict, indent=1):
     """
     # ts.log('DER Parameter Dictionary: %s' % param_dict)
     for key, value in param_dict.items():
+        skip = False
+        if isinstance(value, list):
+            ts.log('\t' * indent + str(key) + ': <list>')
+            if len(value) == 0:
+                ts.log('\t' * (indent+1) + '[]')
+            count = 0
+            for v in value:
+                ts.log('\t' * indent + '    <list item %s>' % count)
+                print_params(v, indent+1)
+                count += 1
+            skip = True
         if not isinstance(value, dict):
-            if key in PARAM_MAP:
-                ts.log('\t' * indent + PARAM_MAP[key] + ' [' + key + '] : ' + str(value))
-            else:
-                ts.log('\t' * indent + str(key) + ': ' + str(value))
-        else:
-            if key in PARAM_MAP:
-                ts.log('\t' * indent + PARAM_MAP[key] + ' [' + key + '] : ')
+            if not skip:  # if it was already printed as a list
+                if isinstance(PARAM_MAP, dict):
+                    if key in PARAM_MAP:
+                        ts.log('\t' * indent + PARAM_MAP[key] + ' [' + key + '] : ' + str(value))
+                    else:
+                        ts.log('\t' * indent + str(key) + ': ' + str(value))
+                else:
+                    ts.log('\t' * indent + str(key) + ': ' + str(value))
+        else:   # for sub dicts recall this function
+            if isinstance(PARAM_MAP, dict):
+                if key in PARAM_MAP:
+                    ts.log('\t' * indent + PARAM_MAP[key] + ' [' + key + '] : ')
+                else:
+                    ts.log('\t' * indent + str(key) + ': ')
             else:
                 ts.log('\t' * indent + str(key) + ': ')
             print_params(value, indent+1)
@@ -332,15 +350,18 @@ def test_run():
                                                                                 tested can be set and cleared.
             '''
 
-            # for p in [0.25, 0.59, 0.87, 0.45]:
-            #     ts.log_debug('Test Read: %s' % eut.get_p_lim())
-            #     ts.log_debug('Test Write: %s' % eut.set_p_lim(params={"p_lim_mode_enable_as": True, "p_lim_w_as": p}))
-            #     ts.sleep(10)
-            #     mn_w = eut.get_monitoring().get("mn_w")
-            #     ts.log_debug('mn_w: %s' % mn_w)
-            #     ts.log_debug('w_max: %s' % w_max)
-            #     ts.log_debug('eval: %s' % (1e5 * (mn_w / w_max)))
-            # eut.set_p_lim(params={"p_lim_mode_enable_as": False, "p_lim_w_as": 1.})
+            # Test p_lim functionality
+            '''
+            for p in [0.25, 0.59, 0.87, 0.45]:
+                ts.log_debug('Test Read: %s' % eut.get_p_lim())
+                ts.log_debug('Test Write: %s' % eut.set_p_lim(params={"p_lim_mode_enable_as": True, "p_lim_w_as": p}))
+                ts.sleep(10)
+                mn_w = eut.get_monitoring().get("mn_w")
+                ts.log_debug('mn_w: %s' % mn_w)
+                ts.log_debug('w_max: %s' % w_max)
+                ts.log_debug('eval: %s' % (1e5 * (mn_w / w_max)))
+            eut.set_p_lim(params={"p_lim_mode_enable_as": False, "p_lim_w_as": 1.})
+            '''
 
             m = eut.get_monitoring()
             if m is not None:
@@ -387,28 +408,34 @@ def test_run():
                 ts.log_debug('    ****Resetting Function p_lim')
                 eut.set_p_lim(params={"p_lim_mode_enable_as": False, "p_lim_w_as": 1.})
 
-                # for q in [0.25, 0.59, 0.87, 0.45]:
-                #     ts.log_debug('Test Read: %s' % eut.get_const_q())
-                #     ts.log_debug('Test Write: %s' % eut.set_const_q(params={"const_q_mode_enable_as": True,
-                #                                                             "const_q_as": q}))
-                #     ts.sleep(10)
-                #     mn_var = eut.get_monitoring().get("mn_var")
-                #     ts.log_debug('mn_var: %s' % mn_var)
-                #     ts.log_debug('var_max: %s' % var_max)
-                #     ts.log_debug('eval: %s' % (1e5 * (mn_var / var_max)))
-                # eut.set_const_q(params={"const_q_mode_enable_as": False})
+                # Test Const Q functionality
+                '''
+                for q in [0.25, 0.59, 0.87, 0.45]:
+                    ts.log_debug('Test Read: %s' % eut.get_const_q())
+                    ts.log_debug('Test Write: %s' % eut.set_const_q(params={"const_q_mode_enable_as": True,
+                                                                            "const_q_as": q}))
+                    ts.sleep(10)
+                    mn_var = eut.get_monitoring().get("mn_var")
+                    ts.log_debug('mn_var: %s' % mn_var)
+                    ts.log_debug('var_max: %s' % var_max)
+                    ts.log_debug('eval: %s' % (1e5 * (mn_var / var_max)))
+                eut.set_const_q(params={"const_q_mode_enable_as": False})
+                '''
 
-                # for pf in [(0.10, 'inj'), (-0.10, 'abs'), (0.85, 'inj')]:
-                #     ts.log_debug('Test Read: %s' % eut.get_const_pf())
-                #     ts.log_debug('Test Write: %s' % eut.set_const_pf(params={"const_pf_mode_enable_as": True,
-                #                                                              "const_pf_abs_as": pf[0],
-                #                                                              "const_pf_excitation_as": pf[1]}))
-                #     ts.sleep(20)
-                #     mn_var = eut.get_monitoring().get("mn_var")
-                #     ts.log_debug('mn_var: %s' % mn_var)
-                #     # ts.log_debug('var_max: %s' % var_max)
-                #     ts.log_debug('eval: %s' % (1e5 * (mn_var / var_max)))
-                # eut.set_const_q(params={"const_q_mode_enable_as": False})
+                # Test Const PF functionality
+                '''
+                for pf in [(0.10, 'inj'), (-0.10, 'abs'), (0.85, 'inj')]:
+                    ts.log_debug('Test Read: %s' % eut.get_const_pf())
+                    ts.log_debug('Test Write: %s' % eut.set_const_pf(params={"const_pf_mode_enable_as": True,
+                                                                             "const_pf_abs_as": pf[0],
+                                                                             "const_pf_excitation_as": pf[1]}))
+                    ts.sleep(20)
+                    mn_var = eut.get_monitoring().get("mn_var")
+                    ts.log_debug('mn_var: %s' % mn_var)
+                    # ts.log_debug('var_max: %s' % var_max)
+                    ts.log_debug('eval: %s' % (1e5 * (mn_var / var_max)))
+                eut.set_const_q(params={"const_q_mode_enable_as": False})
+                '''
 
                 '''
                 ________________________________________________________________________________________________________
@@ -686,6 +713,86 @@ def test_run():
                 ts.log_warning('DER measurements testing not supported')
         else:
             ts.log('Skipping DER monitoring test')
+
+        # Spot checks for other functionality
+
+        # Volt-Var
+        '''
+        vv_data = eut.get_qv()
+        ts.log_debug('Test Read: %s' % vv_data)
+        print_params(vv_data)
+
+        params = {'qv_mode_enable_as': True, 'qv_vref_as': v_nom, 'qv_vref_auto_mode_as': False,
+                  'qv_vref_olrt_as': 1.0, 'qv_curve_v_pts': [0.95, 0.99, 1.01, 1.05],
+                  'qv_curve_q_pts': [1., 0., 0., -1.],  'qv_olrt_as': 5.}
+        ts.log_debug('Test Write: %s' % eut.set_qv(params=params))
+        ts.sleep(10)
+        vv_data = eut.get_qv()
+        ts.log_debug('Test Read: %s' % vv_data)
+        print_params(vv_data)
+
+        params = {'qv_mode_enable_as': True, 'qv_curve_v_pts': [0.93, 0.98, 1.02, 1.08],
+                  'qv_curve_q_pts': [0.3, 0., 0., -0.5]}
+        ts.log_debug('Test Write: %s' % eut.set_qv(params=params))
+        ts.sleep(10)
+        vv_data = eut.get_qv()
+        ts.log_debug('Test Read: %s' % vv_data)
+        print_params(vv_data)
+        # ts.log_debug('Test Write: %s' % eut.set_qv(params={'qv_mode_enable_as': False}))
+        '''
+
+        # Volt-Watt
+        '''
+        vw_data = eut.get_pv()
+        ts.log_debug('Test Read: %s' % vw_data)
+        print_params(vw_data)
+
+        params = {'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.03, 1.05],
+                  'pv_curve_p_pts_as': [1.0, 0.2],  'pv_olrt_as': 5.}
+        ts.log_debug('Test Write: %s' % eut.set_pv(params=params))
+        ts.sleep(10)
+        vw_data = eut.get_pv()
+        ts.log_debug('Test Read: %s' % vw_data)
+        print_params(vw_data)
+
+        params = {'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.05, 1.08],
+                  'pv_curve_p_pts_as': [1.0, 0.5]}
+        ts.log_debug('Test Write: %s' % eut.set_pv(params=params))
+        ts.sleep(10)
+        vw_data = eut.get_pv()
+        ts.log_debug('Test Read: %s' % vw_data)
+        print_params(vw_data)
+        ts.log_debug('Test Write: %s' % eut.set_pv(params={'pv_mode_enable_as': False}))
+        '''
+
+        # FW
+        '''
+        ts.log_debug('Test Read: %s' % eut.get_pf())
+        params = {'pf_mode_enable_as': True, 'pf_dbof_as': 0.02, 'pf_dbuf_as': 0.02,
+                  'pf_kof_as': 0.05, 'pf_kuf_as': 0.05, 'pf_olrt_as': 5.}
+        ts.log_debug('Test Write: %s' % eut.set_pf(params=params))
+        ts.sleep(10)
+        ts.log_debug('Test Read: %s' % eut.get_pf())
+
+        ts.log_debug('Test Read: %s' % eut.get_pf())
+        params = {'pf_mode_enable_as': True, 'pf_dbof_as': 0.036, 'pf_dbuf_as': 0.036,
+                  'pf_kof_as': 0.08, 'pf_kuf_as': 0.08, 'pf_olrt_as': 5.}
+        ts.log_debug('Test Write: %s' % eut.set_pf(params=params))
+        ts.sleep(10)
+        ts.log_debug('Test Read: %s' % eut.get_pf())
+        eut.set_pf(params={'pf_mode_enable_as': False})
+        '''
+
+        # Connect/Disconnect
+        '''
+        ts.log_debug('Test Read: %s' % eut.get_conn())
+        ts.log_debug('Test Write: %s' % eut.set_conn(params={'conn_as': False}))
+        ts.sleep(10)
+        ts.log_debug('Test Read: %s' % eut.get_conn())
+        ts.log_debug('Test Write: %s' % eut.set_conn(params={'conn_as': True}))
+        ts.sleep(10)
+        ts.log_debug('Test Read: %s' % eut.get_conn())
+        '''
 
         return script.RESULT_COMPLETE
 
