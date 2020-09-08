@@ -129,6 +129,7 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
         das_points = ActiveFunction.get_sc_points()
 
         # initialize data acquisition system
+        das_points = ActiveFunction.get_sc_points()
         daq = das.das_init(ts, sc_points=das_points['sc'], support_interfaces={'hil': chil}) 
         if daq is not None:
             daq.sc['P_TARGET'] = p_rated
