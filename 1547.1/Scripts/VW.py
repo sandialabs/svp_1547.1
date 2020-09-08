@@ -277,8 +277,8 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
                     if grid is not None:
                         grid.voltage(step_dict['V'])
 
-                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_step)
-                    ActiveFunction.evaluate_criterias()
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
                 # create result workbook

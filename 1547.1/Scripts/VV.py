@@ -123,7 +123,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
         if pv is not None:
             pv.power_set(p_rated)
             pv.power_on()  # Turn on DC so the EUT can be initialized
-            daq.set_dc_measurement(pv)  # send pv obj to daq to get dc measurements
+            #daq.set_dc_measurement(pv)  # send pv obj to daq to get dc measurements
             ts.sleep(0.5)
 
         # DAS soft channels
@@ -314,12 +314,13 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                         ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_step, step_label))
 
                         ActiveFunction.start(daq=daq, step_label=step_label)
+                        step_dict = {'V': v_step}
 
                         if grid is not None:
-                            grid.voltage(v_step)
+                            grid.voltage(step_dict['V'])
 
-                        ActiveFunction.record_timeresponse(daq=daq, step_value=v_step)
-                        ActiveFunction.evaluate_criterias()
+                        ActiveFunction.record_timeresponse(daq=daq)
+                        ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                         result_summary.write(ActiveFunction.write_rslt_sum())
 
                     ts.log('Sampling complete')
@@ -574,8 +575,9 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                     ActiveFunction.start(daq=daq, step_label=step_label)
                     v_target = ActiveFunction.set_grid_asymmetric(grid=grid, case='case_a', imbalance_resp=imbalance_response)
                     ts.log_debug(f'v_target={v_target}')
-                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
-                    ActiveFunction.evaluate_criterias()
+                    step_dict = {'V': v_target}
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
                 '''
@@ -587,8 +589,9 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                     ActiveFunction.start(daq=daq, step_label=step_label)
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
                     grid.voltage(v_target)
-                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
-                    ActiveFunction.evaluate_criterias()
+                    step_dict = {'V': v_target}
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
                 """
@@ -599,8 +602,9 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                     ActiveFunction.start(daq=daq, step_label=step_label)
                     ts.log('Voltage step: setting Grid simulator to case B (IEEE 1547.1-Table 24)(%s)' % step)
                     v_target = ActiveFunction.set_grid_asymmetric(grid=grid, case='case_b', imbalance_resp=imbalance_response)
-                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
-                    ActiveFunction.evaluate_criterias()
+                    step_dict = {'V': v_target}
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
                 """
@@ -612,8 +616,9 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
                     ActiveFunction.start(daq=daq, step_label=step_label)
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
                     grid.voltage(v_nom)
-                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
-                    ActiveFunction.evaluate_criterias()
+                    step_dict = {'V': v_target}
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
                 ts.log('Sampling complete')

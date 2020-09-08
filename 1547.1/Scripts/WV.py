@@ -287,8 +287,8 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
                     if pv is not None:
                         pv.power_set(step_dict['P'])
 
-                    ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
-                    ActiveFunction.evaluate_criterias()
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
                 ts.log('Sampling complete')

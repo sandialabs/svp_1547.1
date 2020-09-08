@@ -122,15 +122,21 @@ def test_run():
             mode.append(CPF)
         if wv_status == 'Enabled':
             mode.append(WV)
-
+        """
+        Version validation
+        """
+        p1547.VersionValidation(script_version=ts.info.version)
         """
         A separate module has been create for the 1547.1 Standard
         """
-        lib_1547 = p1547.module_1547(ts=ts, aif='PRI', absorb=absorb)
-        ts.log_debug("1547.1 Library configured for %s" % lib_1547.get_test_name())
+        ActiveFunction = p1547.ActiveFunction(ts=ts,
+                                              functions=[PRI, VW, FW, VV, CPF, CRP, WV],
+                                              script_name='Prioritization',
+                                              criteria_mode=[False, False, True])
+        ts.log_debug("1547.1 Library configured for %s" % ActiveFunction.get_script_name())
 
         # result params
-        result_params = lib_1547.get_rslt_param_plot()
+        result_params = ActiveFunction.get_rslt_param_plot()
         ts.log(result_params)
 
         """
@@ -154,7 +160,7 @@ def test_run():
             ts.sleep(0.5)
 
         # DAS soft channels
-        das_points = lib_1547.get_sc_points()
+        das_points = ActiveFunction.get_sc_points()
 
         # initialize data acquisition
         daq = das.das_init(ts, sc_points=das_points['sc'], support_interfaces={'pvsim': pv, 'hil': chil})
@@ -191,7 +197,7 @@ def test_run():
         result_summary_filename = 'result_summary.csv'
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
-        result_summary.write(lib_1547.get_rslt_sum_col_name())
+        result_summary.write(ActiveFunction.get_rslt_sum_col_name())
 
         """
         d) Adjust the EUT's available active power to Prated. For an EUT with an input voltage range, set the input
@@ -210,7 +216,7 @@ def test_run():
         default_curve = 1
 
         if eut is not None:
-            fw_settings = lib_1547.get_params(aif=FW)
+            fw_settings = ActiveFunction.get_params(function=FW)
             fw_curve_params = {
                 'Ena': True,
                 'curve': default_curve,
@@ -221,7 +227,7 @@ def test_run():
             ts.log_debug('Sending FW points: %s' % fw_curve_params)
             fw_current_settings = eut.freq_watt(fw_curve_params)
 
-            vw_settings = lib_1547.get_params(aif=VW)
+            vw_settings = ActiveFunction.get_params(aif=VW)
             #P2 require 0.2*p_rated value for VW function
             vw_settings['P2'] = 0.2*p_rated
             vw_curve_params = {'v': [int(vw_settings[default_curve]['V1'] * (100. / v_nom)),
@@ -249,15 +255,16 @@ def test_run():
                                         'RvrtTms': 0.0})
 
         for current_mode in mode:
-            ts.log_debug('Starting mode = %s and %s' % (current_mode,current_mode == VV))
-
+            ts.log_debug('Starting mode = %s' % current_mode)
+            ActiveFunction.reset_curve(curve=default_curve)
+            ActiveFunction.reset_time_settings(tr=pri_response_time)
             if current_mode == VV:
                 """
                 f) Set EUT volt-var parameters to the default values for the EUTs category and enable volt-var
                 mode
                 """
                 if eut is not None:
-                    vv_settings = lib_1547.get_params(aif=VV)
+                    vv_settings = ActiveFunction.get_params(aif=VV)
                     #ts.log_debug('Sending VV points: %s' % vv_settings)
                     vv_curve_params = {'v': [vv_settings[default_curve]['V1'] * (100 / v_nom),
                                              vv_settings[default_curve]['V2'] * (100 / v_nom),
@@ -302,7 +309,7 @@ def test_run():
                 mode of reactive power control and enable watt-var mode. Repeat steps g) through n).
                 """
                 if eut is not None:
-                    wv_settings = lib_1547.get_params(aif=WV)[default_curve]
+                    wv_settings = ActiveFunction.get_params(aif=WV)[default_curve]
                     ts.log('WV setting: %s' % wv_settings)
                     # Activate watt-var function with following parameters
                     # SunSpec convention is to use percentages for P and Q points.
@@ -325,8 +332,7 @@ def test_run():
             daq.data_capture(True)
             dataset_filename = 'PRI_{}'.format(current_mode)
             ts.log('------------{}------------'.format(dataset_filename))
-
-            #Todo : Start measuring Voltage and
+            ActiveFunction.reset_filename(filename=dataset_filename)
 
             """
             i) Allow the EUT to reach steady state.
@@ -349,8 +355,8 @@ def test_run():
             n) Repeat steps k) through m) for the rest of the steps in Table 38 or Table 39, depending on the
             EUTs normal operating performance category
             """
-
-            steps_dict = [{'V': 1.00, 'F': 60.00},
+            """
+            steps_dicts = [{'V': 1.00, 'F': 60.00},
                           {'V': 1.09, 'F': 60.00},
                           {'V': 1.09, 'F': 60.33},
                           {'V': 1.09, 'F': 60.00},
@@ -358,6 +364,7 @@ def test_run():
                           {'V': 1.00, 'F': 59.36},
                           {'V': 1.00, 'F': 60.00},
                           {'V': 1.00, 'F': 59.36}]
+            """
             '''
             target_dict = [{'P': 0.5*p_rated, VV: 0.00*var_rated, CRP: 0.44, CPF: 0.9, WV: 0},
                            {'P': 0.4*p_rated, VV: -0.25*var_rated, CRP: 0.44, CPF: 0.9, WV: 0},
@@ -368,54 +375,39 @@ def test_run():
                            {'P': 0.5*p_rated, VV: 0.00*var_rated, CRP: 0.44, CPF: 0.9, WV: 0},
                            {'P': 0.7*p_rated, VV: 0.00*var_rated, CRP: 0.44, CPF: 0.9, WV: 0.10}]
             '''
-            target_dict = lib_1547.get_params(aif=PRI)
-            ts.log('Target_dict: %s' % (target_dict))
-            target_dict_updated = {}
+            step_dicts = ActiveFunction.create_pri_dict_steps(function=current_mode)
+            ts.log('step_dicts: %s' % (step_dicts))
+
             i = 0
 
-            for step in steps_dict:
+            for step_dict in step_dicts:
                 step_label = 'Step_%i_%s' % (i+1, current_mode)
-                step['V'] *= v_nom
-                #v_step = step['V'] * v_nom
-                #f_step = step['F']
-                target_dict_updated['Q'] = target_dict[i][current_mode]
-                target_dict_updated['P'] = target_dict[i]['P']
-                ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (step['V'], step_label))
-                ts.log('Frequency step: setting Grid simulator frequency to %s (%s)' % (step['F'], step_label))
-                ts.log('Ptarget: %s (%s)' % (target_dict_updated['P'], step_label))
-                ts.log('Qtarget: %s (%s)' % (target_dict_updated['Q'], step_label))
 
-                initial_values = lib_1547.get_initial_value(daq=daq, step=step_label)
+                ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (step_dict['V'], step_label))
+                ts.log('Frequency step: setting Grid simulator frequency to %s (%s)' % (step_dict['F'], step_label))
+                ts.log('Steps: %s (%s)' % (step_dict, step_label))
+
+
+                ActiveFunction.start(daq=daq, step_label=step_label)
                 if grid is not None:
-                    grid.freq(step['F'])
-                    grid.voltage(step['V'])
-                ts.log_debug('step: %s' % step)
-                ts.log_debug('type: %s' % type(step))
+                    grid.freq(step_dict['F'])
+                    grid.voltage(step_dict['V'])
+
                 ts.log_debug('current mode %s' % current_mode)
-                lib_1547.process_data(
-                    daq=daq,
-                    tr=pri_response_time,
-                    step=step_label,
-                    initial_value=initial_values,
-                    x_target=step,
-                    y_target=target_dict_updated,
-                    #x_target=[v_step, f_step],
-                    #y_target=[p_target, q_target],
-                    result_summary=result_summary,
-                    filename=dataset_filename,
-                    aif=current_mode
-                )
-                ts.sleep(2 * pri_response_time)
+                ActiveFunction.record_timeresponse(daq=daq)
+                ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict, y_criterias_mod={'Q': current_mode})
+                result_summary.write(ActiveFunction.write_rslt_sum())
                 i += 1
 
-            if current_mode == VV:
-                eut.volt_var(params={'Ena': False})
-            elif current_mode == CPF:
-                eut.fixed_pf(params={'Ena': False})
-            elif current_mode == CRP:
-                eut.reactive_power(params={'Ena': False})
-            elif current_mode == WV:
-                eut.watt_var(params={'Ena': False})
+            if eut is not None:
+                if current_mode == VV:
+                    eut.volt_var(params={'Ena': False})
+                elif current_mode == CPF:
+                    eut.fixed_pf(params={'Ena': False})
+                elif current_mode == CRP:
+                    eut.reactive_power(params={'Ena': False})
+                elif current_mode == WV:
+                    eut.watt_var(params={'Ena': False})
 
             ts.log('Sampling complete')
             dataset_filename = dataset_filename + ".csv"
@@ -496,7 +488,7 @@ def run(test_script):
 
     sys.exit(rc)
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.3.0')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.4.2')
 
 # PRI test parameters
 info.param_group('pri', label='Test Parameters')
