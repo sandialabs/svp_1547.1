@@ -59,6 +59,9 @@ Current compliance test scripts available:
 - [ ] Interoperability test
 
 ### P1547 Library
+
+![P1547 Flowchart](1547.1/doc/P1547_flowchart.png)
+
 #### Functions Classes
 
 P1547 Library now has one main class named ActiveFunction and it inherit all the slow advanced inverter function (AIF) class needed (Volt-Var, Volt-Watt, Frequency-Watt, Constant Reactive Power, Constant Power Factor, Watt-Var, Limit Active and Prioritization).
@@ -97,6 +100,11 @@ ActiveFunction = p1547.ActiveFunction(ts=ts,
                                       criteria_mode=[False, False, True])
 
 
+#### Example of P1547 usage with a 1547 script library
+
+![P1547 example](1547.1/doc/PRI_example_flowchart.png)
+
+To be completed...
 
 ### Support
 
