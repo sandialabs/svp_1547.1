@@ -106,12 +106,10 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+/*
+!/1547.1
+/1547.1/*
+!/1547.1/doc/
+!/1547.1/Lib/svpelab/p1547.py
 
-# *
-# !*/
-# !.gitignore
-# !Scripts/*.py
-# !Suites/*.ste
-# !Tests/*.tst
-# !Lib/svpelab/p1547.py
 
