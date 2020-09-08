@@ -224,78 +224,6 @@ class UtilParameters:
         self.step_label += 1
         return step_label
 
-    def get_measurement_label(self, type_meas):
-        """
-        Returns the measurement label for a measurement type
-
-        :param type_meas:   (str) Either V, P, PF, I, F, VA, or Q
-        :return:            (list of str) List of labeled measurements, e.g., ['AC_VRMS_1', 'AC_VRMS_2', 'AC_VRMS_3']
-        """
-        meas_root = self.type_meas[type_meas]
-
-        if self.phases == 'Single phase':
-            meas_label = [meas_root + '_1']
-        elif self.phases == 'Split phase':
-            meas_label = [meas_root + '_1', meas_root + '_2']
-        elif self.phases == 'Three phase':
-            meas_label = [meas_root + '_1', meas_root + '_2', meas_root + '_3']
-
-        return meas_label
-
-    def get_measurement_total(self, type_meas, log=False):
-        """
-        Sum or average the EUT values from all phases
-
-        :param data:        dataset from data acquisition object
-        :param type_meas:   Either V,P or Q
-        :param log:         Boolean variable to disable or enable logging
-        :return: Any measurements from the DAQ
-        """
-        value = None
-        nb_phases = None
-
-        try:
-            if self.phases == 'Single phase':
-                value = self.data.get(self.get_measurement_label(type_meas)[0])
-                if log:
-                    self.ts.log_debug('        %s are: %s'
-                                      % (self.get_measurement_label(type_meas), value))
-                nb_phases = 1
-
-            elif self.phases == 'Split phase':
-                value1 = self.data.get(self.get_measurement_label(type_meas)[0])
-                value2 = self.data.get(self.get_measurement_label(type_meas)[1])
-                if log:
-                    self.ts.log_debug('        %s are: %s, %s'
-                                      % (self.get_measurement_label(type_meas), value1, value2))
-                value = value1 + value2
-                nb_phases = 2
-
-            elif self.phases == 'Three phase':
-                #self.ts.log_debug(f'type_meas={type_meas}')
-                value1 = self.data.get(self.get_measurement_label(type_meas)[0])
-                value2 = self.data.get(self.get_measurement_label(type_meas)[1])
-                value3 = self.data.get(self.get_measurement_label(type_meas)[2])
-                if log:
-                    self.ts.log_debug('        %s are: %s, %s, %s'
-                                      % (self.get_measurement_label(type_meas), value1, value2, value3))
-                value = value1 + value2 + value3
-                nb_phases = 3
-
-        except Exception as e:
-            self.ts.log_error('Inverter phase parameter not set correctly.')
-            self.ts.log_error('phases=%s' % self.phases)
-            raise p1547Error('Error in get_measurement_total() : %s' % (str(e)))
-
-        # TODO : imbalance_resp should change the way you acquire the data
-        if type_meas == 'V':
-            # average value of V
-            value = value / nb_phases
-        elif type_meas == 'F':
-            # No need to do data average for frequency
-            value = self.data.get(self.get_measurement_label(type_meas)[0])
-
-        return round(value, 3)
 
     def get_script_name(self):
         if self.script_complete_name is None:
@@ -451,6 +379,79 @@ class DataLogging:
         :return:            self.sc_points
         """
         return self.sc_points
+
+    def get_measurement_label(self, type_meas):
+        """
+        Returns the measurement label for a measurement type
+
+        :param type_meas:   (str) Either V, P, PF, I, F, VA, or Q
+        :return:            (list of str) List of labeled measurements, e.g., ['AC_VRMS_1', 'AC_VRMS_2', 'AC_VRMS_3']
+        """
+        meas_root = self.type_meas[type_meas]
+
+        if self.phases == 'Single phase':
+            meas_label = [meas_root + '_1']
+        elif self.phases == 'Split phase':
+            meas_label = [meas_root + '_1', meas_root + '_2']
+        elif self.phases == 'Three phase':
+            meas_label = [meas_root + '_1', meas_root + '_2', meas_root + '_3']
+
+        return meas_label
+
+    def get_measurement_total(self, type_meas, log=False):
+        """
+        Sum or average the EUT values from all phases
+
+        :param data:        dataset from data acquisition object
+        :param type_meas:   Either V,P or Q
+        :param log:         Boolean variable to disable or enable logging
+        :return: Any measurements from the DAQ
+        """
+        value = None
+        nb_phases = None
+
+        try:
+            if self.phases == 'Single phase':
+                value = self.data.get(self.get_measurement_label(type_meas)[0])
+                if log:
+                    self.ts.log_debug('        %s are: %s'
+                                      % (self.get_measurement_label(type_meas), value))
+                nb_phases = 1
+
+            elif self.phases == 'Split phase':
+                value1 = self.data.get(self.get_measurement_label(type_meas)[0])
+                value2 = self.data.get(self.get_measurement_label(type_meas)[1])
+                if log:
+                    self.ts.log_debug('        %s are: %s, %s'
+                                      % (self.get_measurement_label(type_meas), value1, value2))
+                value = value1 + value2
+                nb_phases = 2
+
+            elif self.phases == 'Three phase':
+                #self.ts.log_debug(f'type_meas={type_meas}')
+                value1 = self.data.get(self.get_measurement_label(type_meas)[0])
+                value2 = self.data.get(self.get_measurement_label(type_meas)[1])
+                value3 = self.data.get(self.get_measurement_label(type_meas)[2])
+                if log:
+                    self.ts.log_debug('        %s are: %s, %s, %s'
+                                      % (self.get_measurement_label(type_meas), value1, value2, value3))
+                value = value1 + value2 + value3
+                nb_phases = 3
+
+        except Exception as e:
+            self.ts.log_error('Inverter phase parameter not set correctly.')
+            self.ts.log_error('phases=%s' % self.phases)
+            raise p1547Error('Error in get_measurement_total() : %s' % (str(e)))
+
+        # TODO : imbalance_resp should change the way you acquire the data
+        if type_meas == 'V':
+            # average value of V
+            value = value / nb_phases
+        elif type_meas == 'F':
+            # No need to do data average for frequency
+            value = self.data.get(self.get_measurement_label(type_meas)[0])
+
+        return round(value, 3)
 
     def get_rslt_sum_col_name(self):
         """
