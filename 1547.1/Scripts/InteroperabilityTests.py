@@ -278,7 +278,7 @@ def test_run():
                     ts.log('  Setting %s to %0.1f.' % (param, val))
                     eut.set_settings(params={param: val})
                     ts.sleep(2)
-                    verify_val = iop.util.get_measurement_total(data=daq.data_capture_read(), type_meas=meas, log=True)
+                    verify_val = iop.datalogging.get_measurement_total(data=daq.data_capture_read(), type_meas=meas, log=True)
                     ts.log('  Verification value is: %f.' % verify_val)
                     ts.log('  Returning %s to %f.' % (param, final_val))
                     eut.set_settings(params={param: val})

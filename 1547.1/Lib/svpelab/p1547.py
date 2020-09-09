@@ -1478,7 +1478,7 @@ class FrequencyWatt(EutParameters, UtilParameters):
         return f_steps_dict[mode]
 
                                               
-class Interoperability(EutParameters, UtilParameters):
+class Interoperability(EutParameters, DataLogging):
 
     meas_values = ['V', 'P', 'F']  # Values to be recorded
     x_criteria = ['V']  # Values defined as target/step values which will be controlled as step
@@ -1486,7 +1486,7 @@ class Interoperability(EutParameters, UtilParameters):
 
     def __init__(self, ts):
         self.eut_params = EutParameters.__init__(self, ts)
-        self.util = UtilParameters.__init__(self)
+        self.datalogging = DataLogging.__init__(self)
         self.pairs = {}
         self.param = {}
         self.target_dict = []
