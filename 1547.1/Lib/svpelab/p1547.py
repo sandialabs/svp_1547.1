@@ -843,7 +843,7 @@ class CriteriaValidation:
 
     def evaluate_criterias(self, daq, step_dict=None, y_criterias_mod=None):
         
-                                              self.step_dict = step_dict
+        self.step_dict = step_dict
         self.define_target(daq=daq, y_criterias_mod=y_criterias_mod)
                                               
         if self.criteria_mode[0]:
@@ -1478,7 +1478,7 @@ class FrequencyWatt(EutParameters, UtilParameters):
         return f_steps_dict[mode]
 
                                               
-class Interoperability(EutParameters, DataLogging):
+class Interoperability(EutParameters):
 
     meas_values = ['V', 'P', 'F']  # Values to be recorded
     x_criteria = ['V']  # Values defined as target/step values which will be controlled as step
@@ -1486,7 +1486,7 @@ class Interoperability(EutParameters, DataLogging):
 
     def __init__(self, ts):
         self.eut_params = EutParameters.__init__(self, ts)
-        self.datalogging = DataLogging.__init__(self)
+        #self.datalogging = DataLogging.__init__(self)
         self.pairs = {}
         self.param = {}
         self.target_dict = []
