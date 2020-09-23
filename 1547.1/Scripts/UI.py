@@ -30,6 +30,7 @@ from svpelab import der
 from svpelab import der1547
 from svpelab import p1547
 import script
+import time
 
 
 def find_rlc():
@@ -132,6 +133,20 @@ def run_ui_test(phil, model_name, daq, test_num, t_trips, q_inc, high_freq_count
 
     return t_trips, t_trip, high_freq_count, low_freq_count
 
+# The following EUT functions are required for the UI test:
+# eut.get_ui()
+# eut.set_ui()
+# eut.set_p_lim()
+# eut.set_ov()  # Overvoltage trip
+# eut.set_uv()  # Undervoltage trip
+# eut.set_of()  # Overfrequency trip
+# eut.set_uf()  # Underfrequency trip
+# eut.set_pv()  # P(V) or Volt-Watt
+# eut.set_qv()  # Q(V) or VV
+# eut.set_qp()  # Q(P) or Watt-Var
+# eut.set_pf()  # P(f) or Freq-Watt/Freq-Droop
+
+
 def test_run():
 
     result = script.RESULT_PASS
@@ -152,15 +167,27 @@ def test_run():
         execute = ts.param_value('hil_config.execute')
         model_name = ts.param_value('hil_config.model_name')
 
-        test_num = ts.param_value('phase_jump.test_num')
+        test_nums = str(ts.param_value('phase_jump.test_num')).split(',')
+        test_num = []
+        for t in test_nums:
+            try:
+                test_num.append(int(t))
+            except ValueError as e:
+                ts.log_error('Invalid test numbers: %s' % e)
+                raise
+
         n_iter = ts.param_value('phase_jump.n_iter')
         eut_startup_time = ts.param_value('phase_jump_startup.eut_startup_time')
 
+        v_ll = ts.param_value('eut.v_ll')
+        s_rated = ts.param_value('eut.s_rated')
+        p_rated = s_rated
+        phase_comp = ts.param_value('phase_jump.phase_comp')
+        v_tranducer_scale = ts.param_value('phase_jump.transducer_gain')
+
         cat = ts.param_value('eut.cat')
         cat2 = ts.param_value('eut.cat2')
-        p_rated = ts.param_value('eut.p_rated')
         var_rated = ts.param_value('eut.var_rated')
-        s_rated = ts.param_value('eut.s_rated')
         phases = ts.param_value('eut.phases')
 
         '''
@@ -188,14 +215,15 @@ def test_run():
         """
         A separate module has been create for the 1547.1 Standard
         """
-        active_function = p1547.active_function(ts=ts, functions=['UI'], script_name='UI',
-                                                criteria_mode=[False, False, False])
+        active_function = p1547.ActiveFunction(ts=ts, functions=['UI'], script_name='UI',
+                                               criteria_mode=[False, False, False])
         ts.log_debug("1547.1 Library configured for %s" % active_function.get_script_name())
 
         # initialize the pv
         pv = pvsim.pvsim_init(ts)
-        pv.power_on()
-        ts.sleep(0.5)
+        if pv is not None:
+            pv.power_on()
+            ts.sleep(0.5)
 
         if phil is not None:
             ts.log("{}".format(phil.info()))
@@ -208,12 +236,11 @@ def test_run():
         ts.sleep(0.5)
 
         # initialize the der
-        if ts.param_value('der_iop.phases') == '1547-2018 Compliant':
-            eut = der1547.der1547_init(ts)
-        else:
-            eut = der.der_init(ts)
+        eut = der1547.der1547_init(ts)
         eut.config()
         ts.sleep(0.5)
+
+        ts.log_debug('ui = %s' % eut.get_ui())
 
         # result params
         result_params = active_function.get_rslt_param_plot()
@@ -243,7 +270,8 @@ def test_run():
         |                           | level, then it shall be operated at its closest nonzero power level capability.
         -----------------------------------------------------------------------------------------------------------
         '''
-        pv.power(p_rated*1.25)
+        if pv is not None:
+            pv.power(p_rated*1.25)
 
         '''
         
@@ -296,12 +324,36 @@ def test_run():
 
         '''
         cat_a_tests = {'1A': {'p_eut': 1., 'q_eut': 0., 'pf': 1., 'vv': None, 'wv': None, 'q_fixed': None,
-                              't_resp': None, 'vw': 'default', 'fw': 'default',
+                              't_resp': None, 'vw': 'Default', 'fw': 'Default',
                               'pr_pl_pc': -1., 'qc': 1., 'ql': -1., 'qf': 1.},
                        '2A': {'p_eut': 0.5, 'q_eut': 0., 'pf': 1., 'vv': None, 'wv': None, 'q_fixed': None,
-                              't_resp': None, 'vw': 'default', 'fw': 'default',
+                              't_resp': None, 'vw': 'Default', 'fw': 'Default',
                               'pr_pl_pc': -0.5, 'qc': 0.5, 'ql': -0.5, 'qf': 1.},
-                       }  # todo: complete other tests
+                       '3A': {'p_eut': 0.9, 'q_eut': -0.25, 'pf': -0.96, 'vv': None, 'wv': None, 'q_fixed': None,
+                              't_resp': None, 'vw': None, 'fw': 'LA',
+                              'pr_pl_pc': -0.90, 'qc': 0.90, 'ql': -0.65, 'qf': 1.},
+                       '4A': {'p_eut': 0.9, 'q_eut': 0.44, 'pf': 0.90, 'vv': None, 'wv': None, 'q_fixed': None,
+                              't_resp': None, 'vw': None, 'fw': 'LA',
+                              'pr_pl_pc': -0.90, 'qc': 0.46, 'ql': -0.90, 'qf': 1.},
+                       '5A': {'p_eut': 1.0, 'q_eut': 0., 'pf': None, 'vv': 'MA', 'wv': None, 'q_fixed': None,
+                              't_resp': 1., 'vw': 'MA', 'fw': 'MA',
+                              'pr_pl_pc': -1., 'qc': 1., 'ql': -1., 'qf': 1.},
+                       '6A': {'p_eut': 0.5, 'q_eut': 0., 'pf': None, 'vv': 'Default', 'wv': None, 'q_fixed': None,
+                              't_resp': 10., 'vw': 'MA', 'fw': 'MA',
+                              'pr_pl_pc': -0.5, 'qc': 0.5, 'ql': -0.5, 'qf': 1.},
+                       '7A': {'p_eut': 0.5, 'q_eut': 0., 'pf': None, 'vv': None, 'wv': 'Default', 'q_fixed': None,
+                              't_resp': None, 'vw': 'MA', 'fw': 'MA',
+                              'pr_pl_pc': -0.5, 'qc': 0.5, 'ql': -0.5, 'qf': 1.},
+                       '8A': {'p_eut': 1., 'q_eut': 0., 'pf': None, 'vv': None, 'wv': 'MA', 'q_fixed': None,
+                              't_resp': None, 'vw': 'MA', 'fw': 'MA',
+                              'pr_pl_pc': -1., 'qc': 1., 'ql': -1., 'qf': 1.},
+                       '9A': {'p_eut': 0.9, 'q_eut': -0.25, 'pf': None, 'vv': None, 'wv': None, 'q_fixed': -0.25,
+                              't_resp': None, 'vw': 'MA', 'fw': 'MA',
+                              'pr_pl_pc': -0.9, 'qc': 0.9, 'ql': -0.65, 'qf': 1.},
+                       '10A': {'p_eut': 0.5, 'q_eut': 0.44, 'pf': None, 'vv': None, 'wv': None, 'q_fixed': 0.44,
+                              't_resp': None, 'vw': 'MA', 'fw': 'MA',
+                              'pr_pl_pc': -0.5, 'qc': 0.06, 'ql': -0.5, 'qf': 1.},
+                       }
 
         '''
 
@@ -343,12 +395,36 @@ def test_run():
         '''
 
         cat_b_tests = {'1B': {'p_eut': 1., 'q_eut': 0., 'pf': 1., 'vv': None, 'wv': None, 'q_fixed': None,
-                              't_resp': None, 'vw': 'default', 'fw': 'default',
+                              't_resp': None, 'vw': 'Default', 'fw': 'Default',
                               'pr_pl_pc': -1., 'qc': 1., 'ql': -1., 'qf': 1.},
                        '2B': {'p_eut': 0.5, 'q_eut': 0., 'pf': 1., 'vv': None, 'wv': None, 'q_fixed': None,
-                              't_resp': None, 'vw': 'default', 'fw': 'default',
+                              't_resp': None, 'vw': 'Default', 'fw': 'Default',
                               'pr_pl_pc': -0.5, 'qc': 0.5, 'ql': -0.5, 'qf': 1.},
-                       }  # todo: complete other tests
+                       '3B': {'p_eut': 0.9, 'q_eut': -0.25, 'pf': -0.90, 'vv': None, 'wv': None, 'q_fixed': None,
+                              't_resp': None, 'vw': None, 'fw': 'LA',
+                              'pr_pl_pc': -0.90, 'qc': 0.90, 'ql': -0.46, 'qf': 1.},
+                       '4B': {'p_eut': 0.9, 'q_eut': 0.44, 'pf': 0.90, 'vv': None, 'wv': None, 'q_fixed': None,
+                              't_resp': None, 'vw': None, 'fw': 'LA',
+                              'pr_pl_pc': -0.90, 'qc': 0.46, 'ql': -0.90, 'qf': 1.},
+                       '5B': {'p_eut': 1.0, 'q_eut': 0., 'pf': None, 'vv': 'MA', 'wv': None, 'q_fixed': None,
+                              't_resp': 1., 'vw': 'MA', 'fw': 'MA',
+                              'pr_pl_pc': -1., 'qc': 1., 'ql': -1., 'qf': 1.},
+                       '6B': {'p_eut': 0.5, 'q_eut': 0., 'pf': None, 'vv': 'Default', 'wv': None, 'q_fixed': None,
+                              't_resp': 10., 'vw': 'MA', 'fw': 'MA',
+                              'pr_pl_pc': -0.5, 'qc': 0.5, 'ql': -0.5, 'qf': 1.},
+                       '7B': {'p_eut': 0.5, 'q_eut': 0., 'pf': None, 'vv': None, 'wv': 'Default', 'q_fixed': None,
+                              't_resp': None, 'vw': 'MA', 'fw': 'MA',
+                              'pr_pl_pc': -0.5, 'qc': 0.5, 'ql': -0.5, 'qf': 1.},
+                       '8B': {'p_eut': 1., 'q_eut': 0., 'pf': None, 'vv': None, 'wv': 'MA', 'q_fixed': None,
+                              't_resp': None, 'vw': 'MA', 'fw': 'MA',
+                              'pr_pl_pc': -1., 'qc': 1., 'ql': -1., 'qf': 1.},
+                       '9B': {'p_eut': 0.5, 'q_eut': -0.44, 'pf': None, 'vv': None, 'wv': None, 'q_fixed': -0.44,
+                              't_resp': None, 'vw': 'MA', 'fw': 'MA',
+                              'pr_pl_pc': -0.9, 'qc': 0.5, 'ql': -0.06, 'qf': 1.},
+                       '10B': {'p_eut': 0.5, 'q_eut': 0.44, 'pf': None, 'vv': None, 'wv': None, 'q_fixed': 0.44,
+                               't_resp': None, 'vw': 'MA', 'fw': 'MA',
+                               'pr_pl_pc': -0.5, 'qc': 0.06, 'ql': -0.5, 'qf': 1.},
+                       }
 
         '''
         c) Establish a balanced load condition for each test case.
@@ -369,7 +445,6 @@ def test_run():
         balance requirements so long as the resulting EUT power levels remain within 0.05 p.u. of the
         values in Table 13 or Table 14. The order in which adjustments are made is not specified in this
         procedure.
-        
         '''
 
         if compilation == 'Yes':
@@ -388,10 +463,57 @@ def test_run():
             ts.log("    {}".format(phil.start_simulation()))
             daq.data_capture(True)  # Start RMS data capture
 
+        ctrl_sigs = phil.get_control_signals(details=False)
+        # ts.log_debug('Control signals on load: %s' % str(ctrl_sigs))
+
+        # ctrl_sigs[0] = Control Signal #1 = Test Num
+        # ctrl_sigs[1] = Control Signal #2 = SubTest Num
+        # ctrl_sigs[2] = Control Signal #3 = Islanding Test
+        # ctrl_sigs[3] = Control Signal #4 = Ametek Output
+        # ctrl_sigs[4] = Control Signal #5 = Inv VLL
+        # ctrl_sigs[5] = Control Signal #6 = Inv VAmax
+        # ctrl_sigs[6] = Control Signal #7 = V Trans. Gain
+        # ctrl_sigs[7] = Control Signal #8 = Phase Comp. (Deg)
+        # ctrl_sigs[8] = Control Signal #9 = Resistors Pot
+        # ctrl_sigs[9] = Control Signal #10 = Res Man Test
+        # ctrl_sigs[10] = Control Signal #11 = PR Cust. Test
+        # ctrl_sigs[11] = Control Signal #12 = Rinternal Pot
+        # ctrl_sigs[12] = Control Signal #13 = Rinternal Manual Test
+        # ctrl_sigs[13] = Control Signal #14 = PL Custom Test
+        # ctrl_sigs[14] = Control Signal #15 = Inductor Pot
+        # ctrl_sigs[15] = Control Signal #16 = Inductor Manual Test
+        # ctrl_sigs[16] = Control Signal #17 = QL Custom Test
+        # ctrl_sigs[17] = Control Signal #18 = Capacitor Pot
+        # ctrl_sigs[18] = Control Signal #19 = Cap Man Test
+        # ctrl_sigs[19] = Control Signal #20 = QC Cust. Test
+        ctrl_sigs[0] = 2  # test num
+        ctrl_sigs[3] = 1  # energize amplifier
+        ctrl_sigs[2] = 0  # close S3 switch
+        ctrl_sigs[4] = v_ll  # set line-line voltage
+        ctrl_sigs[5] = s_rated  # set EUT apparent power
+
+        phil.get_acq_signals(verbose=False)
+        phil.set_control_signals(values=ctrl_sigs)
+        # ctrl_sigs = phil.get_control_signals(details=False)
+        # ts.log_debug('Control signals update: %s' % str(ctrl_sigs))
+
+        # data = daq.data_read()
+        # ts.log_debug('Data = %s' % data)
+        for count in range(eut_startup_time):
+            ts.sleep(1)
+            count += 1
+            ts.log('Waited %s sec for EUT to start. Power is %s %% of nameplate' %
+                   (count, daq.data_read()['AC_P']/p_rated))
+            if count > eut_startup_time:
+                result = script.RESULT_FAIL
+                ts.log_error('EUT did not start.')
+                raise Exception
+
         # get PS3 and QS3
         daq.data_sample()
         meas = daq.data_read()
-        ps3_pu = meas['PS3']/p_rated
+        ts.log_debug(meas)
+        ps3_pu = meas['AC_SOURCE_P_1']/p_rated
         qs3_pu = meas['QS3']/s_rated
 
         while -0.02 < ps3_pu > 0.02 or -0.02 < qs3_pu > 0.02:  # tune RLC to get target P/Q levels through switch 3
@@ -422,6 +544,7 @@ def test_run():
             # get PS3 and QS3
             daq.data_sample()
             meas = daq.data_read()
+            ts.log_debug(meas)
             ps3_pu = meas['PS3'] / p_rated
             qs3_pu = meas['QS3'] / s_rated
 
@@ -440,6 +563,7 @@ def test_run():
         '''
         2) Operate the EUT and RLC load under the conditions established in step c) for any one of the
         test cases in Table 13 or Table 14 as appropriate for the EUT Category.
+        
         3) With the EUT and load operating at stable conditions, record the voltage and current at switch
         S3. Record the active and reactive power at switch S3, switch S2, the resistive load, the
         capacitive load and the inductive load on a net and per phase basis.
@@ -447,6 +571,7 @@ def test_run():
         ts.sleep(2.)
         daq.data_sample()
         meas = daq.data_read()
+        ts.log_debug(meas)
         ts.log('Voltages = [%0.1f, %0.1f, %0.1f] and currents = [%0.1f, %0.1f, %0.1f] at switch S3' %
                (meas['v1_s3'], meas['v2_s3'], meas['v3_s3'], meas['i1_s3'], meas['i2_s3'], meas['i3_s3']))
         ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at switch S3' %
@@ -474,14 +599,14 @@ def test_run():
         5) De-energize the island.
         '''
         # phil.stop_simulation()
-        eut.set_p_lim(params={'p_lim_mode_enable_as': True, 'p_lim_dbof_as': 0.0})
+        eut.set_p_lim(params={'p_lim_mode_enable_as': True, 'p_lim_w_as': 0.0})
 
         '''
         6) Enable the unintentional islanding protection in the EUT.
         '''
         eut.set_ui(params={'ui_mode_enable_as': True})
         ts.log('EUT settings: %s' % eut.get_ui())
-        eut.set_p_lim(params={'p_lim_mode_enable_as': True, 'p_lim_dbof_as': 100.})
+        eut.set_p_lim(params={'p_lim_mode_enable_as': True, 'p_lim_w_as': 100.})
 
         '''
         e) Clearing time tests.
@@ -492,11 +617,14 @@ def test_run():
 
         for test_number in test_num:
             if cat == 'CAT_A':
-                test = test_number + 'A'
+                test = str(test_number) + 'A'
                 test_params = cat_a_tests[test]
             else:
-                test = test_number + 'B'
-                test_params = cat_b_tests[test]
+                test = str(test_number) + 'B'
+                test_params = cat_b_tests[test]  # This is completed by the RT-Lab Code
+
+                # Set test number to initialize the RLC parameter based on Table 12 or 13
+                phil.set_params(model_name + '/SC_InputsandOutputs/Test Num/Value', 0)  # open S3
 
             '''
             Table 15 shows the voltage and frequency trip levels and clearing time settings to be used for the
@@ -555,10 +683,10 @@ def test_run():
             Open Loop Response Time             0.5                             10
             --------------------------------------------------------------------------------
             '''
-            if test_params['vw'] == 'default':
+            if test_params['vw'] == 'Default':
                 eut.set_pv(params={'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.06, 1.10],
                                    'pv_curve_p_pts_as': [1., 0.2], 'pv_olrt_as': 10.})
-            elif test_params['vw'] == 'ma':
+            elif test_params['vw'] == 'MA':
                 eut.set_pv(params={'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.05, 1.06],
                                    'pv_curve_p_pts_as': [1., 0.2], 'pv_olrt_as': 0.5})
             else:
@@ -595,22 +723,22 @@ def test_run():
             --------------------------------------------------------------------------------
             '''
             if cat == 'CAT_A':
-                if test_params['vv'] == 'default':
+                if test_params['vv'] == 'Default':
                     eut.set_qv(params={'qv_mode_enable_as': True, 'qv_vref_as': 1., 'qv_vref_auto_mode_as': 'Off',
                                        'qv_curve_v_pts': [0.9, 1., 1., 1.1],
                                        'qv_curve_q_pts': [0.25, 0., 0., -0.25], 'qv_olrt_as': 10.})
-                elif test_params['vv'] == 'ma':
+                elif test_params['vv'] == 'MA':
                     eut.set_qv(params={'qv_mode_enable_as': True, 'qv_vref_as': 1., 'qv_vref_auto_mode_as': 'Off',
                                        'qv_curve_v_pts': [0.98, 1., 1., 1.02],
                                        'qv_curve_q_pts': [0.25, 0., 0., -0.25], 'qv_olrt_as': 1.})
                 else:
                     eut.set_qv(params={'qv_mode_enable_as': False})
             else:
-                if test_params['vv'] == 'default':
+                if test_params['vv'] == 'Default':
                     eut.set_qv(params={'qv_mode_enable_as': True, 'qv_vref_as': 1., 'qv_vref_auto_mode_as': 'Off',
                                        'qv_curve_v_pts': [0.92, 0.98, 1.02, 1.08],
                                        'qv_curve_q_pts': [0.44, 0., 0., -0.44], 'qv_olrt_as': 5.})
-                elif test_params['vv'] == 'ma':
+                elif test_params['vv'] == 'MA':
                     eut.set_qv(params={'qv_mode_enable_as': True, 'qv_vref_as': 1., 'qv_vref_auto_mode_as': 'Off',
                                        'qv_curve_v_pts': [0.98, 1., 1., 1.02],
                                        'qv_curve_q_pts': [0.44, 0., 0., -0.44], 'qv_olrt_as': 1.})
@@ -639,19 +767,19 @@ def test_run():
             
             '''
             if cat == 'CAT_A':
-                if test_params['wv'] == 'default':
+                if test_params['wv'] == 'Default':
                     eut.set_qp(params={'qp_mode_enable_as': True, 'qp_curve_p_gen_pts_as': [0.2, 0.5, 1.0],
                                        'qp_curve_q_gen_pts_as': [0., 0., -0.25]})
-                elif test_params['wv'] == 'ma':
+                elif test_params['wv'] == 'MA':
                     eut.set_qp(params={'qp_mode_enable_as': True, 'qp_curve_p_gen_pts_as': [0.2, 0.8, 0.9],
                                        'qp_curve_q_gen_pts_as': [0.44, 0.44, -0.25]})
                 else:
                     eut.set_pv(params={'qp_mode_enable_as': False})
             else:
-                if test_params['wv'] == 'default':
+                if test_params['wv'] == 'Default':
                     eut.set_qp(params={'qp_mode_enable_as': True, 'qp_curve_p_gen_pts_as': [0.2, 0.5, 1.0],
                                        'qp_curve_q_gen_pts_as': [0., 0., -0.44]})
-                elif test_params['wv'] == 'ma':
+                elif test_params['wv'] == 'MA':
                     eut.set_qp(params={'qp_mode_enable_as': True, 'qp_curve_p_gen_pts_as': [0.2, 0.9, 1.0],
                                        'qp_curve_q_gen_pts_as': [0.44, 0.44, -0.44]})
                 else:
@@ -676,7 +804,7 @@ def test_run():
                 if test_params['fw'] == 'la':
                     eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 1.0, 'pf_dbuf_as': 1.0,
                                        'pf_kof_as': 0.05, 'pf_kuf_as': 0.05, 'pf_olrt_as': 0.})
-                elif test_params['fw'] == 'default':
+                elif test_params['fw'] == 'Default':
                     eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 0.036, 'pf_dbuf_as': 0.036,
                                        'pf_kof_as': 0.05, 'pf_kuf_as': 0.05, 'pf_olrt_as': 5.})
                 else:  # ma
@@ -686,7 +814,7 @@ def test_run():
                 if test_params['fw'] == 'la':
                     eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 1.0, 'pf_dbuf_as': 1.0,
                                        'pf_kof_as': 0.05, 'pf_kuf_as': 0.05, 'pf_olrt_as': 10.})
-                elif test_params['fw'] == 'default':
+                elif test_params['fw'] == 'Default':
                     eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 0.036, 'pf_dbuf_as': 0.036,
                                        'pf_kof_as': 0.05, 'pf_kuf_as': 0.05, 'pf_olrt_as': 5.})
                 else:  # ma
@@ -853,8 +981,11 @@ info.param('hil_config.execute', label='Execute the model on target?', default="
 info.param('hil_config.model_name', label='Model Name', default="Phase_Jump_A_B_A")
 
 info.param_group('phase_jump', label='IEEE 1547.1 Phase Jump Configuration')
-info.param('phase_jump.test_num', label='Test Number (1-5)', default=1)
+info.param('phase_jump.test_num', label='Comma-seperated Test Numbers (1-10)', default='1,2,3,4')
 info.param('phase_jump.n_iter', label='Number of Iterations', default=5)
+info.param('phase_jump.phase_comp', label='Phase compensation(deg)', default=0.)
+info.param('phase_jump.transducer_gain', label='PHIL transducer gain', default=43.1)
+
 info.param_group('phase_jump_startup', label='IEEE 1547.1 Phase Jump Startup Time', glob=True)
 info.param('phase_jump_startup.eut_startup_time', label='EUT Startup Time (s)', default=85, glob=True)
 
@@ -863,19 +994,16 @@ info.param('eut.phases', label='Phases', default='Single Phase', values=['Single
 info.param('eut.cat', label='Alphabetic Category', default='CAT_A', values=['CAT_A', 'CAT_B'])
 info.param('eut.cat2', label='Numeric Category', default='CAT_I', values=['CAT_I', 'CAT_II', 'CAT_III'])
 info.param('eut.f_nom', label='Nominal frequency (Hz)', default=60.0)
-# info.param('eut.s_rated', label='Apparent power rating (VA)', default=10000.0)
+info.param('eut.s_rated', label='Apparent power rating (VA)', default=24000.0)
+info.param('eut.v_ll', label='Line-to-line EUT voltage (V)', default=480.)
+info.param('eut.v_nom', label='Line-to-neutral EUT voltage (V)', default=277.2)
 # info.param('eut.p_rated', label='Output power rating (W)', default=8000.0)
 # info.param('eut.p_min', label='Minimum Power Rating(W)', default=1000.)
 # info.param('eut.var_rated', label='Output var rating (vars)', default=2000.0)
 
-
 hil.params(info)
 das.params(info)
 pvsim.params(info)
-info.param_group('der_iop', label='Communication Interface', glob=True)
-info.param('der_iop.phases', label='1547-Compliance', default='Nonclompliant',
-           values=['Nonclompliant', '1547-2018 Compliant'])
-der.params(info)
 der1547.params(info)
 
 

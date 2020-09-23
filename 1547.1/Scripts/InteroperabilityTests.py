@@ -267,6 +267,8 @@ def test_run():
                                            settings['np_p_max_charge']))
                 else:
                     ts.log_warning('DER Settings does not include np_p_max_charge')
+
+                # TODO Mode Enable Interval - Set to 5 s, set to 300 s
                 basic_settings.append(('set_t_mod_ena', 5.0, 'P', 300.0))
 
                 for s in range(len(basic_settings)):
@@ -274,11 +276,11 @@ def test_run():
                     val = basic_settings[s][1]
                     meas = basic_settings[s][2]
                     final_val = basic_settings[s][3]
-                    ts.log('  Currently %s = %s' % (param, eut.get_settings()[param]))
+                    ts.log('  Currently %s = %s' % (param, eut.get_settings().get(param)))
                     ts.log('  Setting %s to %0.1f.' % (param, val))
                     eut.set_settings(params={param: val})
                     ts.sleep(2)
-                    verify_val = iop.get_measurement_total(data=daq.data_capture_read(), type_meas=meas, log=True)
+                    verify_val = iop.datalogging.get_measurement_total(data=daq.data_capture_read(), type_meas=meas, log=True)
                     ts.log('  Verification value is: %f.' % verify_val)
                     ts.log('  Returning %s to %f.' % (param, final_val))
                     eut.set_settings(params={param: val})
@@ -815,7 +817,10 @@ def test_run():
         if eut is not None:
             eut.close()
             if eut.close() != 'No Agent':
-                eut.stop_agent()
+                try:
+                    eut.stop_agent()
+                except Exception as e:
+                    ts.log_warning('Did not stop server agent, if one was running.')
         if result_summary is not None:
             result_summary.close()
 

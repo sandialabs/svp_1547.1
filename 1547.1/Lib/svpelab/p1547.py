@@ -61,6 +61,8 @@ CRP = 'CRP'  # Constant Reactive Power
 LAP = 'LAP'  # Limit Active Power
 PRI = 'PRI'  # Priority
 IOP = 'IOP'  # Interoperability Tests
+UI = 'UI'  # Unintentional Islanding Tests
+
 LV = 'LV'
 HV = 'HV'
 CAT_2 = 'CAT_2'
@@ -232,7 +234,6 @@ class UtilParameters:
 
         self.step_label += 1
         return step_label
-
 
     def get_script_name(self):
         if self.script_complete_name is None:
@@ -776,7 +777,6 @@ class CriteriaValidation:
             p_targ = (step_dict['P']*self.p_rated)+self.MRA['P']
             return p_targ
 
-
     def calculate_min_max_values(self, function, meas_value=None):
 
         step_dict = self.step_dict
@@ -837,7 +837,6 @@ class CriteriaValidation:
         elif function == LAP:
             target_min = self.update_target_value(function=LAP) - (self.MRA['P'] * 1.5)
             target_max = self.update_target_value(function=LAP) + (self.MRA['P'] * 1.5)
-
 
         return target_min, target_max
 
@@ -1507,6 +1506,7 @@ class Interoperability(EutParameters):
         self.param['settings_test'] = self.ts.param_value('iop.settings_test')
         self.param['monitoring_test'] = self.ts.param_value('iop.monitoring_test')
 
+
 class WattVar(EutParameters, UtilParameters):
     meas_values = ['P', 'Q']
     x_criteria = ['P']
@@ -1625,6 +1625,18 @@ class LimitActivePower(EutParameters, UtilParameters):
         UtilParameters.__init__(self)
         #LimitActivePower.set_params(self)
 
+
+class UnintentionalIslanding(EutParameters, UtilParameters):
+    meas_values = ['F', 'V', 'P', 'Q']
+    x_criteria = ['V']
+    y_criteria = {'P': UI}
+    script_complete_name = 'Unintentional Islanding'
+
+    def __init__(self, ts):
+        EutParameters.__init__(self, ts)
+        UtilParameters.__init__(self)
+
+
 class Prioritization(EutParameters, UtilParameters):
     meas_values = ['F', 'V', 'P', 'Q']
     x_criteria = ['V', 'F']
@@ -1682,13 +1694,16 @@ class Prioritization(EutParameters, UtilParameters):
                 i += 1
 
         return step_dicts
+
+
 """
 This section is for the Active function
 """
 
-class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent, VoltWatt, VoltVar, ConstantReactivePower,
-                     ConstantPowerFactor, WattVar, FrequencyWatt, Interoperability, LimitActivePower, Prioritization):
 
+class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent, VoltWatt, VoltVar, ConstantReactivePower,
+                     ConstantPowerFactor, WattVar, FrequencyWatt, Interoperability, LimitActivePower, Prioritization,
+                     UnintentionalIslanding):
     """
     This class acts as the main function
     As multiple functions might be needed for a compliance script, this function will inherit
@@ -1750,7 +1765,12 @@ class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent, VoltWa
             Interoperability.__init__(self, ts)
             x_criterias += Interoperability.x_criteria
             self.y_criteria.update(Interoperability.y_criteria)
-        # Remove duplicates                                 
+        if UI in functions:
+            UnintentionalIslanding.__init__(self, ts)
+            x_criterias += UnintentionalIslanding.x_criteria
+            self.y_criteria.update(UnintentionalIslanding.y_criteria)
+
+        # Remove duplicates
         self.x_criteria = list(OrderedDict.fromkeys(x_criterias))
         # self.y_criteria=list(OrderedDict.fromkeys(y_criterias))
         self.meas_values = list(OrderedDict.fromkeys(x_criterias + list(self.y_criteria.keys())))
