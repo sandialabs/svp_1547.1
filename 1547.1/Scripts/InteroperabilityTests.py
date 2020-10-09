@@ -46,16 +46,16 @@ import script
 import math
 
 # todo
-PARAM_MAP = {'np_p_max': 'Active power rating at unity power factor (nameplate active power rating',
-             'np_p_max_over_pf': 'Active power rating at specified over-excited power factor',
+PARAM_MAP = {'np_p_max': 'Active power rating at unity power factor (nameplate active power rating) (kW)',
+             'np_p_max_over_pf': 'Active power rating at specified over-excited power factor (kW)',
              'np_over_pf': 'Specified over-excited power factor',
              'np_under_pf': 'Specified under-excited power factor',
-             'np_va_max': 'Apparent power maximum rating',
+             'np_va_max': 'Apparent power maximum rating (kVA)',
              'np_normal_op_cat': 'Normal operating performance category', 
              'np_abnormal_op_cat': 'Abnormal operating performance category', 
-             'np_q_max_inj': 'Reactive power injected maximum rating',
-             'np_q_max_abs': 'Reactive power absorbed maximum rating',
-             'np_apparent_power_charge_max': 'Apparent power charge maximum rating',
+             'np_q_max_inj': 'Reactive power injected maximum rating (kvar)',
+             'np_q_max_abs': 'Reactive power absorbed maximum rating (kvar)',
+             'np_apparent_power_charge_max': 'Apparent power charge maximum rating (kVA)',
              'np_ac_v_nom': 'AC voltage nominal rating',
              'np_ac_v_max_er_max': 'AC voltage maximum rating',
              'np_ac_v_min_er_min': 'AC voltage minimum rating',
@@ -97,6 +97,9 @@ def print_params(param_dict, indent=1):
     :return: None
     """
     # ts.log('DER Parameter Dictionary: %s' % param_dict)
+    if param_dict is None:
+        return
+
     for key, value in param_dict.items():
         skip = False
         if isinstance(value, list):
@@ -105,8 +108,7 @@ def print_params(param_dict, indent=1):
                 ts.log('\t' * (indent+1) + '[]')
             count = 0
             for v in value:
-                ts.log('\t' * indent + '    <list item %s>' % count)
-                print_params(v, indent+1)
+                print_params({'<list item %s>' % count: v}, indent+1)
                 count += 1
             skip = True
         if not isinstance(value, dict):
@@ -276,13 +278,25 @@ def test_run():
                     val = basic_settings[s][1]
                     meas = basic_settings[s][2]
                     final_val = basic_settings[s][3]
-                    ts.log('  Currently %s = %s' % (param, eut.get_settings().get(param)))
-                    ts.log('  Setting %s to %0.1f.' % (param, val))
+                    der_read = eut.get_settings().get(param)
+                    if der_read is not None:
+                        ts.log('  Currently %s = %0.3f.' % (param, der_read))
+                    else:
+                        ts.log('  Currently %s = %s.' % (param, der_read))
+                    ts.log('  Setting %s to %0.3f.' % (param, val))
                     eut.set_settings(params={param: val})
                     ts.sleep(2)
-                    verify_val = iop.datalogging.get_measurement_total(data=daq.data_capture_read(), type_meas=meas, log=True)
-                    ts.log('  Verification value is: %f.' % verify_val)
-                    ts.log('  Returning %s to %f.' % (param, final_val))
+                    der_read = eut.get_settings().get(param)
+                    if der_read is not None:
+                        ts.log('  --> Readback value is %0.3f' % eut.get_settings().get(param))
+                    else:
+                        ts.log('  --> Readback value is %s' % eut.get_settings().get(param))
+
+                    if daq is not None:
+                        verify_val = iop.datalogging.get_measurement_total(data=daq.data_capture_read(),
+                                                                           type_meas=meas, log=True)
+                        ts.log('  Verification value is: %f.' % verify_val)
+                        ts.log('  Returning %s to %f.' % (param, final_val))
                     eut.set_settings(params={param: val})
                     ts.sleep(2)
             else:
@@ -367,6 +381,8 @@ def test_run():
 
             m = eut.get_monitoring()
             if m is not None:
+                ts.log('-' * 30)
+                ts.log('Monitoring Values:')
                 print_params(m)
                 '''
                 ________________________________________________________________________________________________________
@@ -429,14 +445,17 @@ def test_run():
                 for pf in [(0.10, 'inj'), (-0.10, 'abs'), (0.85, 'inj')]:
                     ts.log_debug('Test Read: %s' % eut.get_const_pf())
                     ts.log_debug('Test Write: %s' % eut.set_const_pf(params={"const_pf_mode_enable_as": True,
-                                                                             "const_pf_abs_as": pf[0],
+                                                                             # "const_pf_abs_as": pf[0],
+                                                                             "const_pf_inj_as": pf[0],
                                                                              "const_pf_excitation_as": pf[1]}))
                     ts.sleep(20)
+                    ts.log_debug('Test Read: %s' % eut.get_const_pf())
+                    ts.log_debug('----')
                     mn_var = eut.get_monitoring().get("mn_var")
                     ts.log_debug('mn_var: %s' % mn_var)
                     # ts.log_debug('var_max: %s' % var_max)
                     ts.log_debug('eval: %s' % (1e5 * (mn_var / var_max)))
-                eut.set_const_q(params={"const_q_mode_enable_as": False})
+                eut.set_const_pf(params={"const_pf_mode_enable_as": False})
                 '''
 
                 '''
@@ -745,27 +764,60 @@ def test_run():
 
         # Volt-Watt
         '''
-        vw_data = eut.get_pv()
+        vw_data = eut.get_qp()
         ts.log_debug('Test Read: %s' % vw_data)
         print_params(vw_data)
 
-        params = {'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.03, 1.05],
-                  'pv_curve_p_pts_as': [1.0, 0.2],  'pv_olrt_as': 5.}
-        ts.log_debug('Test Write: %s' % eut.set_pv(params=params))
+        params = {'qp_mode_enable_as': True,
+                  'qp_curve_p_gen_pts_as': [0.2, 0.5, 1.0],
+                  'qp_curve_q_gen_pts_as': [0., 0., -0.44],
+                  'qp_curve_p_load_pts_as': [-0.2, -0.5, -1.0],
+                  'qp_curve_q_load_pts_as': [0., 0., 0.44]}
+        ts.log_debug('Test Write: %s' % eut.set_qp(params=params))
         ts.sleep(10)
-        vw_data = eut.get_pv()
+        vw_data = eut.get_qp()
         ts.log_debug('Test Read: %s' % vw_data)
         print_params(vw_data)
+
+        params = {'qp_mode_enable_as': True,
+                  'qp_curve_p_gen_pts_as': [0.1, 0.6, 1.0],
+                  'qp_curve_q_gen_pts_as': [0., -0.1, -0.25],
+                  'qp_curve_p_load_pts_as': [-0.1, -0.6, -1.0],
+                  'qp_curve_q_load_pts_as': [0., 0.1, 0.25]}
+        ts.log_debug('Test Write: %s' % eut.set_qp(params=params))
+        ts.sleep(2)
+        vw_data = eut.get_qp()
+        ts.log_debug('Test Read: %s' % vw_data)
+        print_params(vw_data)
+        ts.log_debug('Test Write: %s' % eut.set_qp(params={'qp_mode_enable_as': False}))
+        '''
+
+        # ts.log(eut.get_models())
+        # ts.log_debug('SunSpec info: %s' % eut.print_modbus_map(w_labels=True))
+        # ts.log_debug('SunSpec info: %s' % eut.print_modbus_map(models='DERWattVar', w_labels=True))
+
+        # Watt-Var
+        wv_data = eut.get_pv()
+        ts.log_debug('Test Read: %s' % wv_data)
+        print_params(wv_data)
+
+        params = {'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.03, 1.05],
+                  'pv_curve_p_pts_as': [1.0, 0.2], 'pv_olrt_as': 5.}
+        ts.log_debug('Test Write: %s' % eut.set_pv(params=params))
+        ts.sleep(10)
+        wv_data = eut.get_pv()
+        ts.log_debug('Test Read: %s' % wv_data)
+        print_params(wv_data)
 
         params = {'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.05, 1.08],
                   'pv_curve_p_pts_as': [1.0, 0.5]}
         ts.log_debug('Test Write: %s' % eut.set_pv(params=params))
         ts.sleep(10)
-        vw_data = eut.get_pv()
-        ts.log_debug('Test Read: %s' % vw_data)
-        print_params(vw_data)
+        wv_data = eut.get_pv()
+        ts.log_debug('Test Read: %s' % wv_data)
+        print_params(wv_data)
         ts.log_debug('Test Write: %s' % eut.set_pv(params={'pv_mode_enable_as': False}))
-        '''
+
 
         # FW
         '''
