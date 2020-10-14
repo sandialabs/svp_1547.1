@@ -181,6 +181,8 @@ class UtilParameters:
         self.pwr = 1.0
         self.curve = 1
         self.filename = None
+        self.double_letter_label = None
+        self.script_complete_name = 'UNDEFINED IN TEST CLASS'
 
     def reset_curve(self, curve=1):
         self.curve = curve
@@ -332,7 +334,7 @@ class DataLogging:
         row_data.append('FILENAME')
 
         self.rslt_sum_col_name = ','.join(row_data) + '\n'
-        self.ts.log_debug(f'summary column={self.rslt_sum_col_name}')
+        self.ts.log_debug(f'summary column={self.rslt_sum_col_name}'.rstrip())
 
     def get_rslt_param_plot(self):
         """
@@ -1630,11 +1632,11 @@ class UnintentionalIslanding(EutParameters, UtilParameters):
     meas_values = ['F', 'V', 'P', 'Q']
     x_criteria = ['V']
     y_criteria = {'P': UI}
-    script_complete_name = 'Unintentional Islanding'
 
     def __init__(self, ts):
         EutParameters.__init__(self, ts)
         UtilParameters.__init__(self)
+        self.script_complete_name = 'Unintentional Islanding'
 
 
 class Prioritization(EutParameters, UtilParameters):
