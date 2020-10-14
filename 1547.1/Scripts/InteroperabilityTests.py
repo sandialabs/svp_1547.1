@@ -762,11 +762,11 @@ def test_run():
         # ts.log_debug('Test Write: %s' % eut.set_qv(params={'qv_mode_enable_as': False}))
         '''
 
-        # Volt-Watt
+        # Watt-Var
         '''
-        vw_data = eut.get_qp()
-        ts.log_debug('Test Read: %s' % vw_data)
-        print_params(vw_data)
+        wv_data = eut.get_qp()
+        ts.log_debug('Test Read: %s' % wv_data)
+        print_params(wv_data)
 
         params = {'qp_mode_enable_as': True,
                   'qp_curve_p_gen_pts_as': [0.2, 0.5, 1.0],
@@ -774,10 +774,10 @@ def test_run():
                   'qp_curve_p_load_pts_as': [-0.2, -0.5, -1.0],
                   'qp_curve_q_load_pts_as': [0., 0., 0.44]}
         ts.log_debug('Test Write: %s' % eut.set_qp(params=params))
-        ts.sleep(10)
-        vw_data = eut.get_qp()
-        ts.log_debug('Test Read: %s' % vw_data)
-        print_params(vw_data)
+        ts.sleep(2)
+        wv_data = eut.get_qp()
+        ts.log_debug('Test Read: %s' % wv_data)
+        print_params(wv_data)
 
         params = {'qp_mode_enable_as': True,
                   'qp_curve_p_gen_pts_as': [0.1, 0.6, 1.0],
@@ -786,38 +786,35 @@ def test_run():
                   'qp_curve_q_load_pts_as': [0., 0.1, 0.25]}
         ts.log_debug('Test Write: %s' % eut.set_qp(params=params))
         ts.sleep(2)
-        vw_data = eut.get_qp()
-        ts.log_debug('Test Read: %s' % vw_data)
-        print_params(vw_data)
+        wv_data = eut.get_qp()
+        ts.log_debug('Test Read: %s' % wv_data)
+        print_params(wv_data)
         ts.log_debug('Test Write: %s' % eut.set_qp(params={'qp_mode_enable_as': False}))
         '''
 
-        # ts.log(eut.get_models())
-        # ts.log_debug('SunSpec info: %s' % eut.print_modbus_map(w_labels=True))
-        # ts.log_debug('SunSpec info: %s' % eut.print_modbus_map(models='DERWattVar', w_labels=True))
-
-        # Watt-Var
-        wv_data = eut.get_pv()
-        ts.log_debug('Test Read: %s' % wv_data)
-        print_params(wv_data)
+        # Volt-Watt
+        '''
+        vw_data = eut.get_pv()
+        ts.log_debug('Test Read: %s' % vw_data)
+        print_params(vw_data)
 
         params = {'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.03, 1.05],
                   'pv_curve_p_pts_as': [1.0, 0.2], 'pv_olrt_as': 5.}
         ts.log_debug('Test Write: %s' % eut.set_pv(params=params))
-        ts.sleep(10)
-        wv_data = eut.get_pv()
-        ts.log_debug('Test Read: %s' % wv_data)
-        print_params(wv_data)
+        ts.sleep(2)
+        vw_data = eut.get_pv()
+        ts.log_debug('Test Read: %s' % vw_data)
+        print_params(vw_data)
 
         params = {'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.05, 1.08],
                   'pv_curve_p_pts_as': [1.0, 0.5]}
         ts.log_debug('Test Write: %s' % eut.set_pv(params=params))
-        ts.sleep(10)
-        wv_data = eut.get_pv()
-        ts.log_debug('Test Read: %s' % wv_data)
-        print_params(wv_data)
+        ts.sleep(2)
+        vw_data = eut.get_pv()
+        ts.log_debug('Test Read: %s' % vw_data)
+        print_params(vw_data)
         ts.log_debug('Test Write: %s' % eut.set_pv(params={'pv_mode_enable_as': False}))
-
+        '''
 
         # FW
         '''
@@ -847,6 +844,89 @@ def test_run():
         ts.sleep(10)
         ts.log_debug('Test Read: %s' % eut.get_conn())
         '''
+
+        # ES Permit Service
+        '''
+        ts.log_debug('Test Read: %s' % eut.get_es_permit_service())
+        params = {'es_permit_service_as': True, 'es_v_low_as': 0.9, 'es_v_high_as': 1.1,
+                  'es_f_low_as': 59.3, 'es_f_high_as': 60.5, 'es_randomized_delay_as': 50, 'es_delay_as': 62,
+                  'es_ramp_rate_as': 30}
+        ts.log_debug('Test Write: %s' % eut.set_es_permit_service(params=params))
+        ts.sleep(2)
+        ts.log_debug('Test Read: %s' % eut.get_es_permit_service())
+        params = {'es_permit_service_as': True, 'es_v_low_as': 0.89, 'es_v_high_as': 1.11,
+                  'es_f_low_as': 59.4, 'es_f_high_as': 60.8, 'es_randomized_delay_as': 60, 'es_delay_as': 30,
+                  'es_ramp_rate_as': 25}
+        ts.log_debug('Test Write: %s' % eut.set_es_permit_service(params=params))
+        ts.sleep(2)
+        ts.log_debug('Test Read: %s' % eut.get_es_permit_service())
+        '''
+
+        # Overvoltage Trip
+        # ts.log_debug('OV Trip Test Read: %s' % eut.get_ov())
+        # params = {'ov_trip_v_pts_as': [1.10, 1.20], 'ov_trip_t_pts_as': [13, 0.16]}
+        # ts.log_debug('OV Trip Test Write: %s' % eut.set_ov(params=params))
+        # ts.sleep(2)
+        # ts.log_debug('OV Trip Test Read: %s' % eut.get_ov())
+        # params = {'ov_trip_v_pts_as': [1.17, 1.25], 'ov_trip_t_pts_as': [15, 1.2]}
+        # ts.log_debug('OV Trip Test Write: %s' % eut.set_ov(params=params))
+        # ts.sleep(2)
+        # ts.log_debug('OV Trip Test Read: %s' % eut.get_ov())
+
+        # Undervoltage Trip
+        # ts.log_debug('UV Trip Test Read: %s' % eut.get_uv())
+        # params = {'uv_trip_v_pts_as': [0.88, 0.50], 'uv_trip_t_pts_as': [21.0, 2.0]}
+        # ts.log_debug('UV Trip Test Write: %s' % eut.set_uv(params=params))
+        # ts.sleep(2)
+        # ts.log_debug('UV Trip Test Read: %s' % eut.get_uv())
+        # params = {'uv_trip_v_pts_as': [0.86, 0.55], 'uv_trip_t_pts_as': [20.0, 3.0]}
+        # ts.log_debug('UV Trip Test Write: %s' % eut.set_uv(params=params))
+        # ts.sleep(2)
+        # ts.log_debug('UV Trip Test Read: %s' % eut.get_uv())
+
+        # Overvoltage Momentary Cessation
+        # ts.log_debug('OV MC Test Read: %s' % eut.get_ov_mc())
+        # params = {'ov_mc_v_pts_as': [1.10, 1.20], 'ov_mc_t_pts_as': [13, 0.16]}
+        # ts.log_debug('OV MC Test Write: %s' % eut.set_ov_mc(params=params))
+        # ts.sleep(2)
+        # ts.log_debug('OV MC Test Read: %s' % eut.get_ov_mc())
+        # params = {'ov_mc_v_pts_as': [1.15, 1.25], 'ov_mc_t_pts_as': [15, 1.2]}
+        # ts.log_debug('OV MC Test Write: %s' % eut.set_ov_mc(params=params))
+        # ts.sleep(2)
+        # ts.log_debug('OV MC Test Read: %s' % eut.get_ov_mc())
+
+        # Undervoltage Trip
+        # ts.log_debug('UV MC Test Read: %s' % eut.get_uv_mc())
+        # params = {'uv_mc_v_pts_as': [0.88, 0.50], 'uv_mc_t_pts_as': [21.0, 2.0]}
+        # ts.log_debug('UV MC Test Write: %s' % eut.set_uv_mc(params=params))
+        # ts.sleep(2)
+        # ts.log_debug('UV MC Test Read: %s' % eut.get_uv_mc())
+        # params = {'uv_mc_v_pts_as': [0.86, 0.55], 'uv_mc_t_pts_as': [20.0, 3.0]}
+        # ts.log_debug('UV MC Test Write: %s' % eut.set_uv_mc(params=params))
+        # ts.sleep(2)
+        # ts.log_debug('UV MC Test Read: %s' % eut.get_uv_mc())
+
+        # Overfrequency Trip
+        # ts.log_debug('OF Trip Test Read: %s' % eut.get_of())
+        # params = {'of_trip_f_pts_as': [61.8, 62.0], 'of_trip_t_pts_as': [299, 5]}
+        # ts.log_debug('OF Trip Test Write: %s' % eut.set_of(params=params))
+        # ts.sleep(2)
+        # ts.log_debug('OF Trip Test Read: %s' % eut.get_of())
+        # params = {'of_trip_f_pts_as': [61.5, 63.8], 'of_trip_t_pts_as': [384, 0.5]}
+        # ts.log_debug('OF Trip Test Write: %s' % eut.set_of(params=params))
+        # ts.sleep(2)
+        # ts.log_debug('OF Trip Test Read: %s' % eut.get_of())
+
+        # Underfrequency Trip
+        # ts.log_debug('UF Trip Test Read: %s' % eut.get_uf())
+        # params = {'uf_trip_f_pts_as': [59.2, 58.5], 'uf_trip_t_pts_as': [299, 5]}
+        # ts.log_debug('UF Trip Test Write: %s' % eut.set_uf(params=params))
+        # ts.sleep(2)
+        # ts.log_debug('UF Trip Test Read: %s' % eut.get_uf())
+        # params = {'uf_trip_f_pts_as': [59.6, 57.8], 'uf_trip_t_pts_as': [299, 5]}
+        # ts.log_debug('UF Trip Test Write: %s' % eut.set_uf(params=params))
+        # ts.sleep(2)
+        # ts.log_debug('UF Trip Test Read: %s' % eut.get_uf())
 
         return script.RESULT_COMPLETE
 
