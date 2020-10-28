@@ -59,6 +59,7 @@ CAT_2 = 'CAT_2'
 CAT_3 = 'CAT_3'
 
 
+
 def test_run():
     result = script.RESULT_FAIL
     grid = None
@@ -111,10 +112,27 @@ def test_run():
         absorb['p_rated_prime'] = ts.param_value('eut_cpf.p_rated_prime')
         absorb['p_min_prime'] = ts.param_value('eut_cpf.p_min_prime')
 
-        startup_time = ts.param_value('eut.startup_time')
 
         # Following parameters are collected in p1547.VoltageRideThrough.set_vrt_params in init:
-        # vrt.phase_comb, vrt.lv_ena, vrt.hv_ena, vrt.consecutive_ena, vrt.cat, vrt.range_steps
+        # vrt.lv_ena, vrt.hv_ena, vrt.consecutive_ena, vrt.cat, vrt.range_steps
+        consecutive_ena = ts.param_value('vrt.consecutive_ena')
+        if consecutive_ena == "Enabled":
+            consecutive_label = "CE"
+        else:
+            consecutive_label = "CD"
+
+        phase_comb_list = []
+
+        if ts.param_value('vrt.one_phase_mode') == "Enabled":
+            phase_comb_list.append([ts.param_value('vrt.one_phase_value')])
+        
+        if ts.param_value('vrt.two_phase_mode') == "Enabled":
+            phase_comb_list.append([ts.param_value('vrt.two_phase_value_1'),ts.param_value('vrt.two_phase_value_2')])
+
+        if ts.param_value('vrt.three_phase_mode') == "Enabled":
+            phase_comb_list.append(['A', 'B', 'C'])
+
+
 
         # Functions to be enabled for test
         mode = []
@@ -139,7 +157,7 @@ def test_run():
             phil.config()
 
         ''' RTLab OpWriteFile Math using worst case scenario of 160 seconds, 14 signals and Ts = 40e-6
-        Duration of acquisition in number of points: Npoints = (Tend-Tstart)/(Ts*dec) = (160)/(0.000040*250) = 16e3
+        Duration of acquisition in number of points: Npoints = (Tend-Tstart)/(Ts*dec) = (350)/(0.000040*25) = 1350e3
         
         Acquisition frame duration: Tframe = Nbss * Ts * dec = 1000*0.000040*250 = 10 sec
         
@@ -163,6 +181,14 @@ def test_run():
         if high_pwr_ena == 'Disabled' and low_pwr_ena == 'Disabled':
             ts.log_error('No power tests included in VRT test!')
 
+        if ts.param_value('vrt.wav_ena') == "Yes" :
+            wav_ena = True
+        else :
+            wav_ena = False
+        if ts.param_value('vrt.data_ena') == "Yes" :
+            data_ena = True
+        else :
+            data_ena = False
         """
         Configure settings in 1547.1 Standard module for the Voltage Ride Through Tests
         """
@@ -175,7 +201,7 @@ def test_run():
         ts.log_debug(15 * "*" + "Gridsim initialization" + 15 * "*")
         grid = gridsim.gridsim_init(ts, support_interfaces={"hil": phil})  # Turn on AC so the EUT can be initialized
         if grid is not None:
-            grid.voltage(v_nom)  # Setting the nominal voltage for the EUT in /SM_Source/SVP Commands/voltage_ph_x...
+            grid.voltage(v_nom)  
 
         # pv simulator is initialized with test parameters and enabled
         ts.log_debug(15 * "*" + "PVsim initialization" + 15 * "*")
@@ -187,6 +213,8 @@ def test_run():
         # initialize data acquisition
         ts.log_debug(15 * "*" + "DAS initialization" + 15 * "*")
         daq = das.das_init(ts, support_interfaces={"hil": phil, "pvsim": pv})
+        daq.waveform_config({"mat_file_name":"Data.mat",
+                            "wfm_channels": VoltRideThrough.get_wfm_file_header()})
         if daq is not None:
             daq.sc['V_MEAS'] = 100
             """
@@ -238,8 +266,15 @@ def test_run():
         """
         # Default curve is characteristic curve 1
         vv_curve = 1
-        VoltVar = p1547.VoltVar(ts=ts, imbalance=True)
-        v_pairs = VoltVar.get_params(curve=vv_curve)
+        ActiveFunction = p1547.ActiveFunction(ts=ts,
+                                              script_name='Volt-Var',
+                                              functions=[VV],
+                                              criteria_mode=[True, True, True])
+        # Don't need to be set to imbalance mode
+        #ActiveFunction.set_imbalance_config(imbalance_angle_fix="std")
+        #ActiveFunction.reset_curve(vv_curve)
+        #ActiveFunction.reset_time_settings(tr=10, number_tr=2)
+        v_pairs = ActiveFunction.get_params(function=VV, curve=vv_curve)
         ts.log_debug('v_pairs:%s' % v_pairs)
 
         if eut is not None:
@@ -256,41 +291,16 @@ def test_run():
             ts.log_debug('Setting VV points: %s' % vv_curve_params)
             # eut.volt_var(params={'Ena': True, 'curve': vv_curve_params})
 
-        """
-        The frequency-active power control mode of the EUT shall be set to the default settings.
-        """
-        # if eut is not None:
-        #     params = {'Ena': True,
-        #               'curve': 1,
-        #               'dbf': fw_param['dbf'],
-        #               'kof': fw_param['kof'],
-        #               'RspTms': fw_param['tr']}
-        #     ts.log_debug(params)
-        #     eut.freq_watt(params)
-
-        """
-        Set or verify that all frequency trip settings are set to not influence the outcome of the test.
-        """
-        # ts.log_debug('HFRT and trip parameters from EUT : {}'.format(eut.frt_stay_connected_high()))
-        # ts.log_debug('LFRT and trip parameters from EUT : {}'.format(eut.frt_stay_connected_low()))
-
-        """
-        Operate the ac test source at nominal frequency ± 0.1 Hz.
-        """
-        # Configured in PHIL on startup
+    
 
         # Initial loop for all mode that will be executed
         modes = VoltRideThrough.get_modes()  # Options: LV_CAT_2, HV_CAT_2, LV_CAT_3, HV_CAT_3
         ts.log(f"VRT modes tested : '{modes}'")
+        ts.log(f"VRT power level tested : '{pwr_lvl}'")
+        ts.log(f"VRT phase combination tested : '{phase_comb_list}'")
         for current_mode in modes:
             # Configuring waveform timing blocks with offset in seconds
             # daq.waveform_config(vrt_lib_1547.get_waveform_config(current_mode,offset=5))
-
-            ts.log_debug(f'Clearing old parameters if any')
-            # parameters.clear()
-
-            ts.log_debug(f'Initializing {current_mode}')
-
             """
             The ride-through tests shall be performed at two output power levels, high and low, and at any convenient
             power factor greater than 0.90. The output power levels shall be measured prior to the disturbance, i.e., in
@@ -298,83 +308,96 @@ def test_run():
             EUT nameplate active power rating at nominal voltage. ... Low-power tests shall be performed at any 
             convenient power level between 25% to 50% of EUT nameplate  apparent power rating at nominal voltage.
             """
-            for pwr in pwr_lvl:  # Loop for all power levels
-                dataset_filename = f'VRT_{current_mode}_{round(pwr*100)}PCT'
-                ts.log(f'------------{dataset_filename}------------')
-                daq.data_capture(True)
+            for pwr in pwr_lvl:  
+                for phase in phase_comb_list :  
+             
+                    phase_combination_label = "PH" + ''.join(phase)
 
-                """
-                Setting up available power to appropriate power level 
-                """
-                if pv is not None:
-                    ts.log_debug(f'Setting power level to {pwr}')
-                    pv.iv_curve_config(pmp=p_rated, vmp=v_nom_in)
-                    pv.irradiance_set(1000.)
-                    pv.power_set(p_rated * pwr)
+                    dataset_filename = f'{current_mode}_{round(pwr*100)}PCT_{phase_combination_label}_{consecutive_label}'
+                    ts.log_debug(15 * "*" + f"Starting {dataset_filename}" + 15 * "*")
+                    if data_ena:
+                        daq.data_capture(True)
 
-                """
-                Initiating voltage sequence for VRT
-                """
-                vrt_parameters, vrt_start_time, vrt_stop_time = VoltRideThrough.get_model_parameters(current_mode)
-                ts.log(f"The start time will be at {vrt_start_time}")
-                ts.log(f"The stop time will be at {vrt_stop_time}")
-                ts.log(f"Total VRT time is {vrt_stop_time-vrt_start_time}")
-                VoltRideThrough.waveform_config(param={"pre_trigger": vrt_start_time - 5,
-                                                       "post_trigger": vrt_stop_time + 5})
+                    """
+                    Setting up available power to appropriate power level 
+                    """
+                    if pv is not None:
+                        ts.log_debug(f'Setting power level to {pwr}')
+                        pv.iv_curve_config(pmp=p_rated, vmp=v_nom_in)
+                        pv.irradiance_set(1000.)
+                        pv.power_set(p_rated * pwr)
+                        
 
-                if phil is not None:
-                    # Set model parameters
-                    phil.set_parameters(vrt_parameters)
-                    vrt_stop_time = vrt_stop_time + 5
-                    ts.sleep(0.5)
-                    ts.log('Stop time set to %s' % phil.set_stop_time(vrt_stop_time))
-                    phil.load_model_on_hil()
-                    phil.start_simulation()
-
-                    sim_time = phil.get_time()
-                    while (vrt_stop_time - sim_time) > 1.0:  # final sleep will get to stop_time.
+                    """
+                    Initiating voltage sequence for VRT
+                    """
+                    vrt_test_sequences = VoltRideThrough.set_test_conditions(current_mode)
+                    VoltRideThrough.set_phase_combination(phase)
+                    vrt_stop_time = VoltRideThrough.get_vrt_stop_time(vrt_test_sequences)
+                    if phil is not None:
+                        # Set model parameters
+                        #phil.set_parameters(vrt_parameters)
+                        # This adds 5 seconds of nominal behavior for EUT normal shutdown. This 5 sec is not recorded.
+                        vrt_stop_time = vrt_stop_time + 5
+                        ts.log('Stop time set to %s' % phil.set_stop_time(vrt_stop_time))
+                        # The driver should take care of this by selecting "Yes" to "Load the model to target?"
+                        ts.sleep(2.0)
+                        phil.load_model_on_hil()
+                        # You need to first load the model, then configure the parameters
+                        # Now that we have all the test_sequences its time to sent them to the model.
+                        VoltRideThrough.set_vrt_model_parameters(vrt_test_sequences)
+                        # The driver parameter "Execute the model on target?" should be set to "No"
+                        phil.start_simulation() 
+                        ts.sleep(0.5)
                         sim_time = phil.get_time()
-                        ts.log('Sim Time: %0.3f.  Waiting another %0.3f sec before saving data.' % (
-                            sim_time, vrt_stop_time - sim_time))
-                        ts.sleep(5)
+                        while (vrt_stop_time - sim_time) > 1.0:  # final sleep will get to stop_time.
+                            sim_time = phil.get_time()
+                            ts.log('Sim Time: %0.3f.  Waiting another %0.3f sec before saving data.' % (
+                                sim_time, vrt_stop_time - sim_time))
+                            ts.sleep(5)
 
-                ts.log('Sampling RMS complete')
-                rms_dataset_filename = dataset_filename + "_RMS.csv"
-                wave_start_filename = dataset_filename + "_WAV.csv"
-                daq.data_capture(False)
+                    
+                        rms_dataset_filename = "No File"   
+                        wave_start_filename = "No File"        
+                        if data_ena:
+                            rms_dataset_filename = dataset_filename + "_RMS.csv"
+                            daq.data_capture(False)
 
-                # complete data capture
-                ts.log('Waiting for Opal to save the waveform data: {}'.format(dataset_filename))
-                ts.sleep(10)
-                # Convert and save the .mat file that contains the phase jump start
-                ts.log('Processing waveform dataset(s)')
-                ds = daq.waveform_capture_dataset()  # returns list of databases of waveforms (overloaded)
-                ts.log(f'Number of waveforms to save {len(ds)}')
-                if len(ds) > 0:
-                    ds[0].to_csv(ts.result_file_path(wave_start_filename))
-                    ts.result_file(wave_start_filename)
+                            # complete data capture
+                            ts.log('Waiting for Opal to save the waveform data: {}'.format(dataset_filename))
+                            ts.sleep(10)
+                        if wav_ena:
+                            # Convert and save the .mat file 
+                            ts.log('Processing waveform dataset(s)')
+                            wave_start_filename = dataset_filename + "_WAV.csv"
 
-                ts.log('Sampling RMS complete')
-                ds = daq.data_capture_dataset()
-                ts.log('Saving file: %s' % rms_dataset_filename)
-                ds.to_csv(ts.result_file_path(rms_dataset_filename))
-                ds.remove_none_row(ts.result_file_path(rms_dataset_filename), "TIME")
-                result_params = {
-                    'plot.title': rms_dataset_filename.split('.csv')[0],
-                    'plot.x.title': 'Time (sec)',
-                    'plot.x.points': 'TIME',
-                    'plot.y.points': 'AC_VRMS_1, AC_VRMS_2, AC_VRMS_3',
-                    'plot.y.title': 'Voltage (V)',
-                    'plot.y2.points': 'AC_IRMS_1, AC_IRMS_2, AC_IRMS_3',
-                    'plot.y2.title': 'Current (A)',
-                }
+                            ds = daq.waveform_capture_dataset()  # returns list of databases of waveforms (overloaded)
+                            ts.log(f'Number of waveforms to save {len(ds)}')
+                            if len(ds) > 0:
+                                ds[0].to_csv(ts.result_file_path(wave_start_filename))
+                                ts.result_file(wave_start_filename)
 
-                # Remove the None in the dataset file
-                ts.result_file(rms_dataset_filename, params=result_params)
-                result_summary.write('%s, %s, %s,\n' % (dataset_filename, wave_start_filename,
-                                                        rms_dataset_filename))
+                        if data_ena:
+                            ds = daq.data_capture_dataset()
+                            ts.log('Saving file: %s' % rms_dataset_filename)
+                            ds.to_csv(ts.result_file_path(rms_dataset_filename))
+                            ds.remove_none_row(ts.result_file_path(rms_dataset_filename), "TIME")
+                            result_params = {
+                                'plot.title': rms_dataset_filename.split('.csv')[0],
+                                'plot.x.title': 'Time (sec)',
+                                'plot.x.points': 'TIME',
+                                'plot.y.points': 'AC_VRMS_1, AC_VRMS_2, AC_VRMS_3',
+                                'plot.y.title': 'Voltage (V)',
+                                'plot.y2.points': 'AC_IRMS_1, AC_IRMS_2, AC_IRMS_3',
+                                'plot.y2.title': 'Current (A)',
+                            }
+                            ts.result_file(rms_dataset_filename, params=result_params)
+                        result_summary.write('%s, %s, %s,\n' % (dataset_filename, wave_start_filename,
+                                                                rms_dataset_filename))
 
-                phil.stop_simulation()
+                        phil.stop_simulation()
+
+                  
 
         result = script.RESULT_COMPLETE
 
@@ -443,7 +466,7 @@ def run(test_script):
     sys.exit(rc)
 
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.4.1')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.4.2')
 
 # PRI test parameters
 info.param_group('vrt', label='Test Parameters')
@@ -460,10 +483,18 @@ info.param('vrt.cat', label='Category II and/or III:', default=CAT_2, values=[CA
 # TODO: The consecutive option needs a way to verify the first test to apply a different perturbation accordingly.
 info.param('vrt.consecutive_ena', label='Consecutive Ride-Through test?', default='Enabled',
            values=['Disabled', 'Enabled'])
-info.param('vrt.phase_comb', label="Phase combination (e.g. '3' will apply the vrt to all three phases)",
-           default='1', values=['1', '2', '3'])
+
+info.param('vrt.one_phase_mode', label="Apply disturbance to one phase" , default='Enabled', values=['Disabled', 'Enabled'])
+info.param('vrt.one_phase_value', label="Which phase ?" , active='vrt.one_phase_mode', active_value=['Enabled'], default='A', values=['A', 'B', 'C'])
+
+info.param('vrt.two_phase_mode', label="Apply disturbance to two phases" , default='Enabled', values=['Disabled', 'Enabled'])
+info.param('vrt.two_phase_value_1', label="Which phase ?" , active='vrt.two_phase_mode', active_value=['Enabled'], default='A', values=['A', 'B', 'C'])
+info.param('vrt.two_phase_value_2', label="Which phase ?" , active='vrt.two_phase_mode', active_value=['Enabled'], default='B', values=['A', 'B', 'C'])
+info.param('vrt.three_phase_mode', label="Apply disturbance to all phases" , default='Enabled', values=['Disabled', 'Enabled'])
 info.param('vrt.range_steps', label='Ride-Through Profile ("Figure" is following the RT images from standard)',
            default='Figure', values=['Figure', 'Random'])
+info.param('vrt.wav_ena', label='Waveform acquisition needed (.mat->.csv) ?', default='Yes', values=['Yes', 'No'])
+info.param('vrt.data_ena', label='RMS acquisition needed (SVP creates .csv from block queries)?', default='No', values=['Yes', 'No'])
 
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)
@@ -478,6 +509,10 @@ info.param('eut.v_high', label='Maximum AC voltage (V)', default=132.0)
 info.param('eut.v_in_nom', label='V_in_nom: Nominal input voltage (Vdc)', default=400)
 info.param('eut.f_nom', label='Nominal AC frequency (Hz)', default=60.0)
 info.param('eut.startup_time', label='EUT Startup time', default=10)
+info.param('eut.scale_current', label='EUT Current scale input string (e.g. 30.0,30.0,30.0)', default="33.3400,33.3133,33.2567")
+info.param('eut.offset_current', label='EUT Current offset input string (e.g. 0,0,0)', default="0,0,0")
+info.param('eut.scale_voltage', label='EUT Voltage scale input string (e.g. 30.0,30.0,30.0)', default="20.0,20.0,20.0")
+info.param('eut.offset_voltage', label='EUT Voltage offset input string (e.g. 0,0,0)', default="0,0,0")
 
 # Add the SIRFN logo
 info.logo('sirfn.png')
@@ -507,3 +542,6 @@ if __name__ == "__main__":
     test_script.log('log it')
 
     run(test_script)
+
+
+

@@ -1,20 +1,27 @@
 <suite globals="True" name="VRT">
   <members>
-    <member name="LVRT_CAT2.tst" />
-    <member name="LVRT_CAT3.tst" />
-    <member name="HVRT_CAT2.tst" />
-    <member name="HVRT_CAT3.tst" />
+    <member name="LVRT_CAT3_CONSECUTIVE_CA.tst" />
+    <member name="LVRT_CAT3_CONSECUTIVE_RANDOM.tst" />
+    <member name="LVRT_CAT3_CONSECUTIVE_AB.tst" />
   </members>
   <params>
+    <param name="eut.offset_current" type="string">0,0,0</param>
+    <param name="eut.offset_voltage" type="string">0,0,0</param>
+    <param name="gridsim.opal.phases" type="int">1</param>
     <param name="pvsim.terrasas.channel" type="string">1,2</param>
     <param name="eut.startup_time" type="int">5</param>
+    <param name="eut.scale_voltage" type="string">20.0,20.0,20.0</param>
+    <param name="eut.scale_current" type="string">33.3400,33.3133,33.2567</param>
+    <param name="gridsim.opal.f_min" type="float">45.0</param>
     <param name="eut.f_nom" type="float">60.0</param>
-    <param name="gridsim.opal.f_nom" type="float">60.0</param>
+    <param name="gridsim.opal.freq" type="float">60.0</param>
+    <param name="gridsim.opal.f_max" type="float">70.0</param>
     <param name="eut.v_low" type="float">116.0</param>
     <param name="eut.v_nom" type="float">120.0</param>
     <param name="gridsim.opal.v_nom" type="float">120.0</param>
     <param name="pvsim.terrasas.ipaddr" type="string">127.0.0.1</param>
     <param name="eut.v_high" type="float">132.0</param>
+    <param name="gridsim.opal.v_max" type="float">300.0</param>
     <param name="eut.v_in_nom" type="int">400</param>
     <param name="pvsim.terrasas.vmp" type="float">460.0</param>
     <param name="das.opal.sample_interval" type="int">500</param>
@@ -24,13 +31,13 @@
     <param name="pvsim.terrasas.pmp" type="float">3000.0</param>
     <param name="eut.p_rated" type="float">8000.0</param>
     <param name="eut.s_rated" type="float">10000.0</param>
-    <param name="gridsim.opal.p_nom" type="float">24000.0</param>
     <param name="hil.opal.workspace_path" type="string">C:\OPAL-RT\WorkspaceFOREVERYONE</param>
     <param name="das.opal.wfm_dir" type="string">C:\OPAL-RT\WorkspaceFOREVERYONE\IEEE_1547_Fast_Functions\models\IEEE_1547_fast_function\ieee_1547_fast_function_sm_source\OpREDHAWKtarget</param>
     <param name="der.mode" type="string">Disabled</param>
     <param name="gridsim.auto_config" type="string">Disabled</param>
     <param name="pvsim.terrasas.curve_type" type="string">EN50530</param>
     <param name="hil.opal.hil_config" type="string">False</param>
+    <param name="hil.opal.rt_mode" type="string">Hardware</param>
     <param name="hil.opal.project_dir" type="string">IEEE_1547_Fast_Functions</param>
     <param name="hil.opal.project_name" type="string">IEEE_1547_Fast_Functions.llp</param>
     <param name="hil.opal.rt_lab_model" type="string">IEEE_1547_fast_function</param>
@@ -48,7 +55,5 @@
     <param name="hil.opal.hil_config_open" type="string">Yes</param>
     <param name="hil.opal.hil_config_stop_sim" type="string">Yes</param>
     <param name="hil.opal.hil_config_load" type="string">Yes</param>
-    <param name="gridsim.opal.freq_params" type="string">frequency_ph_a, frequency_ph_b, frequency_ph_c</param>
-    <param name="gridsim.opal.volt_params" type="string">voltage_ph_a, voltage_ph_b, voltage_ph_c</param>
   </params>
 </suite>

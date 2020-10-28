@@ -74,7 +74,8 @@ FULL_NAME = {'V': 'Voltage',
              'Q': 'Reactive Power',
              'F': 'Frequency',
              'PF': 'Power Factor'}
-
+LFRT = "LFRT"
+HFRT = "HFRT"
 
 class p1547Error(Exception):
     pass
@@ -1114,13 +1115,50 @@ class HilModel(object):
             self.hil = support_interfaces.get('hil')
         else:
             self.hil = None
+        self.set_time_path()
+        self.set_nominal_values()
 
-    def set_model_on(self):
+        self.set_input_scale_offset()
+    def set_nominal_values(self):
+        parameters = []
+        parameters.append((f"VNOM",1.0))
+        parameters.append((f"FNOM",self.f_nom))
+        self.hil.set_matlab_variables(parameters)
+
+    def set_time_path(self):
         """
-        Set the HIL model on
+        Set the time path signal
         """
-        model_name = self.params["model_name"]
-        self.hil.set_params(model_name + "/SM_Source/SVP Commands/mode/Value", 3)
+        self.hil.set_time_sig("/SM_Source/IEEE_1547_TESTING/Clock/port1")
+
+    def set_input_scale_offset(self):
+        """
+        Set input scale and offset of voltage and current
+        """
+        # .replace(" ", "") removes the space 
+        # .split(",") split with the comma
+        scale_current = self.ts.param_value('eut.scale_current').replace(" ", "").split(",")
+        offset_current = self.ts.param_value('eut.offset_current').replace(" ", "").split(",")
+        scale_voltage = self.ts.param_value('eut.scale_voltage').replace(" ", "").split(",")
+        offset_voltage = self.ts.param_value('eut.offset_voltage').replace(" ", "").split(",")
+
+
+        if self.phases == "Single Phase":
+            phases = ["A"]
+        elif self.phases == "Split phase":
+            phases = ["A","B"]
+        elif self.phases == "Three phase":
+            phases = ["A","B","C"]
+
+        parameters = []
+        i=0
+        for ph in phases:
+            parameters.append((f"CURRENT_INPUT_SCALE_PH{ph}",float(scale_current[i])))
+            parameters.append((f"VOLT_INPUT_SCALE_PH{ph}",float(scale_voltage[i])))
+            parameters.append((f"VOLT_INPUT_OFFSET_PH{ph}",float(offset_voltage[i])))
+            parameters.append((f"CURRENT_INPUT_OFFSET_PH{ph}",float(offset_current[i])))
+            i = i + 1
+        self.hil.set_matlab_variables(parameters)
 
     """
     Getter functions
@@ -1130,13 +1168,7 @@ class HilModel(object):
         self.ts.log(f'Getting HIL parameters for {current_mode}')
         return self.parameters_dic[current_mode], self.start_time, self.stop_time
 
-    def get_waveform_config(self, current_mode, offset):
-        params = {}
-        params["start_time_value"] = float(self.start_time - offset)
-        params["end_time_value"] = float(self.stop_time + offset)
-        params["start_time_variable"] = "Tstart"
-        params["end_time_variable"] = "Tend"
-        return params
+    
 
 
 """
@@ -1780,6 +1812,15 @@ class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent, VoltWa
         DataLogging.__init__(self)
         ImbalanceComponent.__init__(self)
 
+class NormalOperation(HilModel, EutParameters, DataLogging):
+    def __init__(self, ts, support_interfaces):
+        EutParameters.__init__(self, ts)
+        HilModel.__init__(self, ts, support_interfaces)
+        self._config()
+
+    def _config(self):
+        self.set_normal_params()
+        self.set_vrt_modes()
 
 """
 This section is for Ride-Through test
@@ -1789,11 +1830,14 @@ class VoltageRideThrough(HilModel, EutParameters, DataLogging):
     def __init__(self, ts, support_interfaces):
         EutParameters.__init__(self, ts)
         HilModel.__init__(self, ts, support_interfaces)
+        self.wfm_header = None
         self._config()
+        self.phase_combination = None
 
     def _config(self):
         self.set_vrt_params()
         self.set_vrt_modes()
+        self.set_wfm_file_header()
 
     """
     Setter functions
@@ -1811,131 +1855,304 @@ class VoltageRideThrough(HilModel, EutParameters, DataLogging):
             self.params["range_steps"] = self.ts.param_value('vrt.range_steps')
             self.params["phase_comb"] = self.ts.param_value('vrt.phase_comb')
             self.params["dataset"] = self.ts.param_value('vrt.dataset_type')
+            self.params["consecutive_ena"] = self.ts.param_value('vrt.consecutive_ena')
+
+            
 
         except Exception as e:
             self.ts.log_error('Incorrect Parameter value : %s' % e)
             raise
 
-    def set_vrt_model_parameters(self):
-        tc = self.params["test_condition"]
-        mn = self.params["model_name"]
-
+    def extend_list_end(self, _list, extend_value, final_length):
+        list_length = len(_list)
+        _list.extend([float(extend_value)] * ( final_length - list_length ))
+        return _list
+    
+    def set_vrt_model_parameters(self, test_sequence):
+        model_name = self.params["model_name"]
         parameters = []
         # Enable VRT mode in the IEEE1547_fast_functions model
-        parameters.append((mn + '/SM_Source/SVP Commands/mode/Value', 3))
-        parameters.append(
-            (mn + '/SM_Source/VRT/VRT_State_Machine/Phase_combination/Value', int(self.params["phase_comb"])))
-        self.ts.log_debug(tc)
-        self.params["vrt_start_time"] = tc.head(1)["StartTime"].item()
-        self.params["vrt_stop_time"] = tc.tail(1)["StopTime"].item()
+        parameters.append(("MODE",3.0))
+
+
         # Add ROCOM only for LVRT CAT II
-        if self.params["lv_mode"] == 'Enabled' and (
-                self.params["categories"] == CAT_2 or self.params["categories"] == 'Both'):
-            parameters.append((mn + '/SM_Source/Waveform_Generator/ROCOM_ENABLE/Value', 1))
-            # 0.115 p.u. Volt per second
-            parameters.append((mn + '/SM_Source/Waveform_Generator/ROCOM_VALUE/Value', 0.115 * self.v_nom))
-            parameters.append((mn + '/SM_Source/Waveform_Generator/ROCOM_INIT/Value', tc.loc["D"]["Voltage"].item()))
-            parameters.append(
-                (mn + '/SM_Source/Waveform_Generator/ROCOM_START_TIME/Value', tc.loc["E"]["StartTime"].item()))
-            parameters.append(
-                (mn + '/SM_Source/Waveform_Generator/ROCOM_END_TIME/Value', tc.loc["E"]["StopTime"].item()))
-        for index, row in tc.iterrows():
-            # Enable needed conditions
-            parameters.append((mn + f'/SM_Source/VRT/VRT_State_Machine/Condition_{index}_Enable/Value', 1))
-            # Start time of condition
-            parameters.append(
-                (mn + f'/SM_Source/VRT/VRT_State_Machine/Condition_{index}_Time/Threshold', row["StartTime"].item()))
-            # Voltage value of condition
-            parameters.append(
-                (mn + f'/SM_Source/VRT/VRT_State_Machine/Condition_{index}_Voltage/Value', row["Voltage"].item()))
-        self.params["parameters"] = parameters
+        self.ts.log_debug(test_sequence)
+        # if self.params["lv_mode"] == 'Enabled' and (self.params["categories"] == CAT_2 or self.params["categories"] == 'Both'):
+        #     parameters.append(("ROCOF_ENABLE", 1))
+        #     parameters.append(("ROCOF_VALUE", 0.115))
+        #     parameters.append(("ROCOF_INIT", test_sequence.loc["D"]["Voltage"].item()))
+        #     parameters.append(("ROCOM_START_TIME", test_conditionc.loc["E"]["StartTime"].item()))
+        #     parameters.append(("ROCOM_END_TIME", test_conditionc.loc["E"]["StopTime"]))
 
+        # We need to do some padding because of RT-compilation allow a fixe size.
+        # In our case, with pad with 0 a vector size of 20. This will tell the state machine the final value.
+
+        vrt_condition_list = self.extend_list_end(test_sequence["VRT_CONDITION"].to_list(), 0.0, 20)
+        parameters.append(("VRT_CONDITION", vrt_condition_list))
+
+        vrt_start_timing_list = self.extend_list_end(test_sequence["VRT_START_TIMING"].to_list(), 0.0, 20)
+        parameters.append(("VRT_START_TIMING",vrt_start_timing_list))
+
+        vrt_end_timing_list = self.extend_list_end(test_sequence["VRT_END_TIMING"].to_list(), 0.0, 20)
+        parameters.append(("VRT_END_TIMING",vrt_end_timing_list))
+
+        vrt_values_list = self.extend_list_end(test_sequence["VRT_VALUES"].to_list(), 0.0, 20)
+        parameters.append(("VRT_VALUES",vrt_values_list))
+        self.hil.set_matlab_variables(parameters)
+
+    def set_phase_combination(self, phase):
+        parameters = []
+
+        for ph in phase :
+            parameters.append((f"VRT_PH{ph}_ENABLE",1.0))
+        self.hil.set_matlab_variables(parameters)
+
+    def set_wfm_file_header(self):
+        self.wfm_header  = ['TIME', 
+                'AC_V_1', 'AC_V_2', 'AC_V_3', 
+                'AC_I_1', 'AC_I_2', 'AC_I_3',
+                'AC_P_1', 'AC_P_2', 'AC_P_3', 
+                'AC_Q_1', 'AC_Q_2', 'AC_Q_3',
+                'AC_V_CMD_1', 'AC_V_CMD_2', 'AC_V_CMD_3',
+                "TRIGGER"]
     def set_test_conditions(self, current_mode):
-        t0 = self.params["eut_startup_time"]
-        # Table 4 - Category II LVRT
+        # Set useful variables
         mra_v_pu = self.MRA["V"] / self.v_nom
+        RANGE_STEPS = self.params["range_steps"]
+        index=['VRT_CONDITION', 'MIN_DURATION', 'VRT_VALUES']
+        TEST_CONDITION = {}
+        # each condition are set with a pandas series as follow:
+        # pd.Series([test condition, minimum duration(s), Residual Voltage (p.u.)], index=index)
+
+        # TABLE 4 - CATEGORY II LVRT TEST CONDITION
         if CAT_2 in current_mode and LV in current_mode:
-            t1 = t0 + 10
-            t2 = t1 + 0.16
-            t3 = t1 + 0.32
-            t4 = t1 + 3
-            t5 = t1 + 5
-            t6 = t5 + 120.0
-            if self.params["range_steps"] == "Figure":
-                voltage = [0.94, 0.3 - 2 * mra_v_pu, 0.45 - 2 * mra_v_pu, 0.65, 0.88, 0.94]
-            elif self.params["range_steps"] == "Random":
-                voltage = [random.uniform(0.88, 1.0),
-                           random.uniform(0.0, 0.3),
-                           random.uniform(0.0, 0.45),
-                           random.uniform(0.45, 0.65),
-                           random.uniform(0.65, 0.88),
-                           random.uniform(0.88, 1.0)]
-            test_condition = pd.DataFrame({'Voltage': np.array(voltage) * self.v_nom,
-                                           'StartTime': [t0, t1, t2, t3, t4, t5],
-                                           'StopTime': [t1, t2, t3, t4, t5, t6]},
-                                          index=["A", "B", "C", "D", "E", "F"])
-        # Table 5 - Category III LVRT
+            # The possible test conditions are ABCDD'EF
+            if RANGE_STEPS == "Figure":
+                # Using value of Figure 2 - CATEGORY II LVRT test signal
+                TEST_CONDITION["A"] = pd.Series([1,10,0.94], index=index)
+                TEST_CONDITION["B"] = pd.Series([2,0.160,0.3 - 2 * mra_v_pu], index=index)
+                TEST_CONDITION["C"] = pd.Series([3,0.160,0.45 - 2 * mra_v_pu], index=index)
+                TEST_CONDITION["D"] = pd.Series([4,2.68,0.65], index=index)
+                TEST_CONDITION["D'"]= pd.Series([4+10,7.68,0.67 + 2 * mra_v_pu], index=index)
+                TEST_CONDITION["E"] = pd.Series([5,2.0,0.88], index=index)
+                TEST_CONDITION["F"] = pd.Series([6,120.0,0.94], index=index)
+            elif RANGE_STEPS == "Random":
+                TEST_CONDITION["A"] = pd.Series([1,10,random.uniform(0.88 + 2 * mra_v_pu, 1.0)], index=index)
+                TEST_CONDITION["B"] = pd.Series([2,0.160,random.uniform(0.0, 0.3 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["C"] = pd.Series([3,0.160,random.uniform(0.0, 0.45 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["D"] = pd.Series([4,2.68,random.uniform(0.45 + 2 * mra_v_pu, 0.65 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["D'"]= pd.Series([4+10,7.68,random.uniform(0.67, 0.88 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["E"] = pd.Series([5,2.0,random.uniform(0.65 + 2 * mra_v_pu, 0.88 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["F"] = pd.Series([6,120.0,random.uniform(0.88 + 2 * mra_v_pu, 1.0)], index=index)
+
+        # TABLE 5 - CATEGORY III LVRT TEST CONDITION
         elif CAT_3 in current_mode and LV in current_mode:
-            t1 = t0 + 5
-            t2 = t1 + 1
-            t3 = t1 + 10
-            t4 = t1 + 20
-            t5 = t4 + 120
-            if self.params["range_steps"] == "Figure":
-                voltage = [0.94, 0.05 - 2 * mra_v_pu, 0.5, 0.7, 0.94]
-            elif self.params["range_steps"] == "Random":
-                voltage = [random.uniform(0.88, 1.0),
-                           random.uniform(0.0, 0.05),
-                           random.uniform(0.0, 0.5),
-                           random.uniform(0.5, 0.7),
-                           random.uniform(0.88, 1.0)]
-            test_condition = pd.DataFrame({'Voltage': np.array(voltage) * self.v_nom,
-                                           'StartTime': [t0, t1, t2, t3, t4],
-                                           'StopTime': [t1, t2, t3, t4, t5]},
-                                          index=["A", "B", "C", "D", "E"])
-        # Table 7 - Category II HVRT
+            # The possible test conditions are ABCC'DE
+            if RANGE_STEPS == "Figure":
+                TEST_CONDITION["A"] = pd.Series([1,5,0.94], index=index)
+                TEST_CONDITION["B"] = pd.Series([2,1,0.05 - 2 * mra_v_pu], index=index)
+                TEST_CONDITION["C"] = pd.Series([3,9,0.5 - 2 * mra_v_pu], index=index)
+                TEST_CONDITION["C'"] = pd.Series([3,9,0.52 + 2 * mra_v_pu], index=index)
+                TEST_CONDITION["D"] = pd.Series([4,10.0,0.7], index=index)
+                TEST_CONDITION["E"] = pd.Series([5,120.0, 0.94], index=index)
+            elif RANGE_STEPS == "Random":
+                TEST_CONDITION["A"] = pd.Series([1,5,random.uniform(0.88 + 2 * mra_v_pu, 1.0)], index=index)
+                TEST_CONDITION["B"] = pd.Series([2,1,random.uniform(0.0, 0.05 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["C"] = pd.Series([3,9,random.uniform(0.0, 0.5- 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["C'"] = pd.Series([3,9,random.uniform(0.52, 0.7- 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["D"] = pd.Series([4,10.0,random.uniform(0.5 + 2 * mra_v_pu, 0.7 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["E"] = pd.Series([5,120.0, random.uniform(0.88 + 2 * mra_v_pu, 1.0)], index=index)
+
+        # TABLE 7 - CATEGORY II HVRT TEST CONDITION
         elif CAT_2 in current_mode and HV in current_mode:
-            t1 = t0 + 10
-            t2 = t1 + 0.2
-            t3 = t1 + 0.5
-            t4 = t1 + 1.0
-            t5 = t4 + 120
-            if self.params["range_steps"] == "Figure":
-                voltage = [1.0, 1.2, 1.175, 1.15, 1.0]
-            elif self.params["range_steps"] == "Random":
-                voltage = [random.uniform(1.0, 1.1),
-                           random.uniform(1.18, 1.2),
-                           random.uniform(1.155, 1.175),
-                           random.uniform(1.13, 1.15),
-                           random.uniform(1.0, 1.1)]
-            test_condition = pd.DataFrame({'Voltage': np.array(voltage) * self.v_nom,
-                                           'StartTime': [t0, t1, t2, t3, t4],
-                                           'StopTime': [t1, t2, t3, t4, t5]},
-                                          index=["A", "B", "C", "D", "E"])
-        # Table 7 - Category III HVRT
+            #ABCDE
+            if RANGE_STEPS == "Figure":
+                TEST_CONDITION["A"] = pd.Series([1,10,1.0], index=index)
+                TEST_CONDITION["B"] = pd.Series([2,0.2,1.2 - 2 * mra_v_pu], index=index)
+                TEST_CONDITION["C"] = pd.Series([3,0.3,1.175], index=index)
+                TEST_CONDITION["D"] = pd.Series([4,0.5,1.15], index=index)
+                TEST_CONDITION["E"] = pd.Series([5,120.0, 1.0], index=index)
+            elif RANGE_STEPS == "Random":
+                TEST_CONDITION["A"] = pd.Series([1,10, random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["B"] = pd.Series([2,0.2, random.uniform(1.18, 1.2 )], index=index)
+                TEST_CONDITION["C"] = pd.Series([3,0.3, random.uniform(1.155, 1.175)], index=index)
+                TEST_CONDITION["D"] = pd.Series([4,0.5, random.uniform(1.13, 1.15)], index=index)
+                TEST_CONDITION["E"] = pd.Series([5,120.0, random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
+
+        # TABLE 8 - CATEGORY III HVRT TEST CONDITION
         elif CAT_3 in current_mode and HV in current_mode:
-            t1 = t0 + 5
-            t2 = t1 + 12
-            t3 = t2 + 120
-            if self.params["range_steps"] == "Figure":
-                voltage = [1.05, 1.2, 1.05]
-            elif self.params["range_steps"] == "Random":
-                voltage = [random.uniform(1.0, 1.1),
-                           random.uniform(1.18, 1.2),
-                           random.uniform(1.0, 1.1)]
-            test_condition = pd.DataFrame({'Voltage': np.array(voltage) * self.v_nom,
-                                           'StartTime': [t0, t1, t2],
-                                           'StopTime': [t1, t2, t3]},
-                                          index=["A", "B", "C"])
+            #ABB'C
+            if RANGE_STEPS == "Figure":
+                TEST_CONDITION["A"] = pd.Series([1,5,1.05], index=index)
+                TEST_CONDITION["B"] = pd.Series([1,12,1.2- 2 * mra_v_pu], index=index)
+                TEST_CONDITION["B'"] = pd.Series([1,12,1.12 ], index=index)
+                TEST_CONDITION["C"] = pd.Series([1,120,1.05], index=index)
+            elif RANGE_STEPS == "Random":
+                TEST_CONDITION["A"] = pd.Series([1,5,random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["B"] = pd.Series([1,12,random.uniform(1.18, 1.2)], index=index)
+                TEST_CONDITION["B'"] = pd.Series([1,12,random.uniform(1.12, 1.2)], index=index)
+                TEST_CONDITION["C"] = pd.Series([1,120,random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
+        '''
+        Get the full test sequence :
+        Example for CAT_2 + LV + Not Consecutive
+                ___________________________________________________
+        VRT_CONDITION  MIN_DURATION  VRT_VALUES  VRT_START_TIMING  VRT_END_TIMING
+        1.0         10.00        0.94              0.00           10.00
+        2.0          0.16        0.28             10.00           10.16
+        3.0          0.16        0.43             10.16           10.32
+        4.0          2.68        0.65             10.32           13.00
+        5.0          2.00        0.88             13.00           15.00
+        6.0        120.00        0.94             15.00          135.00
+
+                Example for CAT_3 + HV + Consecutive
+                ___________________________________________________
+        VRT_CONDITION  MIN_DURATION  VRT_VALUES  VRT_START_TIMING  VRT_END_TIMING
+        1.0           5.0        1.05               0.0             5.0
+        2.0          12.0        1.20               5.0            17.0
+        1.0           5.0        1.05              17.0            22.0
+        2.0          12.0        1.20              22.0            34.0
+        1.0           5.0        1.05              34.0            39.0
+        2.0          12.0        1.20              39.0            51.0
+        3.0         120.0        1.05              51.0           171.0
+        1.0           5.0        1.05             171.0           176.0
+        12.0         12.0        1.14             176.0           188.0
+        3.0         120.0        1.05             188.0           308.0
+
+        Note: The Test condition value is directly connected to the alphabetical order.
+        The value 1.0 is for A, 2.0 is for B and so on. When a prime is present, we 
+        just add the value 10.0. The value 12.0 is for B', 13 is for C' and so on.
+        The idea is just to show this on the data.
+        '''
+        test_sequences_df = self.get_test_sequence(current_mode,TEST_CONDITION)
+
+        
+
+        return test_sequences_df
+    def get_vrt_stop_time(self, test_sequences_df):
+        return test_sequences_df["VRT_END_TIMING"].iloc[-1]
+        
+    def get_test_sequence(self, current_mode, test_condition):
+        index=['VRT_CONDITION', 'MIN_DURATION', 'VRT_VALUES']
+        T0 = self.params["eut_startup_time"]
+        if self.params["consecutive_ena"] == "Enabled" :
+            CONSECUTIVE = True  
         else:
-            self.ts.log_error('No test_condition value')
-            self.ts.log_debug(self.params)
-        self.params["test_condition"] = test_condition
+            CONSECUTIVE = False  
+        test_sequences_df = pd.DataFrame(columns=index)
+        if CAT_2 in current_mode and LV in current_mode:
+            if CONSECUTIVE:
+                # ABCDE
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)
+                # ABCDEF
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["F"],ignore_index=True)
+                # ABCD'F
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D'"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["F"],ignore_index=True)
+                
+            else:
+                # ABCDEF 
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["F"],ignore_index=True)
+        elif CAT_3 in current_mode and LV in current_mode:
+            if CONSECUTIVE:
+                # ABCD
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
+                # ABCD
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
+                # ABCDE
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)
+                # ABC'DE
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C'"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)
+            else:
+                # ABCDE
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)   
+        elif CAT_2 in current_mode and HV in current_mode:
+            if CONSECUTIVE:
+                #ABCD
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
 
-        self.set_vrt_model_parameters()
+                #ABCDE
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)
+            else:
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)
+                pass
+        elif CAT_3 in current_mode and HV in current_mode:
+            if CONSECUTIVE:
+                #AB
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                
+                #AB
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                
+                #ABC
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
 
-        return test_condition
-
+                #AB'C
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B'"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+            else:
+                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+                pass
+            
+        test_sequences_df.loc[0, 'VRT_START_TIMING'] = T0
+        # Calculate the timing sequences
+        test_sequences_df.loc[0, 'VRT_END_TIMING'] = T0 + test_sequences_df.loc[0, 'MIN_DURATION']
+        for i in range(1, len(test_sequences_df)):
+            test_sequences_df.loc[i, 'VRT_START_TIMING'] = test_sequences_df.loc[i-1, 'VRT_END_TIMING']
+            test_sequences_df.loc[i, 'VRT_END_TIMING'] = test_sequences_df.loc[i,'VRT_START_TIMING'] + test_sequences_df.loc[i, 'MIN_DURATION']
+        return test_sequences_df
     def set_vrt_modes(self):
         modes = []
         if self.params["lv_mode"] == 'Enabled' and (
@@ -1953,109 +2170,140 @@ class VoltageRideThrough(HilModel, EutParameters, DataLogging):
         self.params["modes"] = modes
         self.ts.log_debug(self.params)
 
-    def waveform_config(self, param):
-        parameters = []
-        mn = self.params["model_name"]
-        pre_trigger = param["pre_trigger"]
-        post_trigger = param["post_trigger"]
-        if self.params["dataset"] == "WAVEFORM":
-            parameters.append((mn + '/SM_Source/VRT/Waveform/VRT_Trigger_Start/Threshold', pre_trigger))
-            parameters.append((mn + '/SM_Source/VRT/Waveform/VRT_Trigger_End/Threshold', post_trigger))
-        if self.params["dataset"] == "RMS":
-            parameters.append((mn + '/SM_Source/VRT/RMS/VRT_Trigger_Start/Threshold', pre_trigger))
-            parameters.append((mn + '/SM_Source/VRT/RMS/VRT_Trigger_End/Threshold', post_trigger))
-        self.hil.set_parameters(parameters)
+    
 
     """
     Getter functions
     """
 
-    def get_model_parameters(self, current_mode):
-        self.ts.log(f"Getting HIL parameters for mode '{current_mode}''")
-        self.set_test_conditions(current_mode)
-        return self.params["parameters"], self.params["vrt_start_time"], self.params["vrt_stop_time"]
+    def get_wfm_file_header(self):
+        return self.wfm_header
 
     def get_modes(self):
         return self.params["modes"]
 
 
-class FrequencyRideThrough(HilModel):
-    def __init__(self):
-        HilModel.__init__()
+class FrequencyRideThrough(HilModel, EutParameters, DataLogging):
+    def __init__(self, ts, support_interfaces):
+        EutParameters.__init__(self, ts)
+        HilModel.__init__(self, ts, support_interfaces)
+        self.wfm_header = None
         self._config()
 
     def _config(self):
         self.set_frt_params()
-        self.set_model_on()
-        self.set_frt_model_parameters_dic()
+        self.set_modes()
+        self.set_wfm_file_header()
 
     """
     Setter functions
     """
 
-    def set_params(self):
+    def set_frt_params(self):
         try:
             # RT test parameters
-            self.params["lf_mode"] = self.ts.param_value('frt.lv_ena')
-            self.params["hf_mode"] = self.ts.param_value('frt.hv_ena')
-
-            # consecutive_ena = ts.param_value('vrt.consecutive_ena')
-            self.params["categories"] = self.ts.param_value('frt.cat')
-            self.params["range_steps"] = self.ts.param_value('frt.range_steps')
-            self.eut_startup_time = self.ts.param_value('eut.startup_time')
+            self.params["lf_mode"] = self.ts.param_value('frt.lf_ena')
+            self.params["hf_mode"] = self.ts.param_value('frt.hf_ena')
+            self.params["lf_parameter"] = self.ts.param_value('frt.lf_parameter')
+            self.params["lf_period"] = self.ts.param_value('frt.lf_period')
+            self.params["hf_parameter"] = self.ts.param_value('frt.hf_parameter')
+            self.params["hf_period"] = self.ts.param_value('frt.hf_period')
+            self.params["eut_startup_time"] = self.ts.param_value('eut.startup_time')
             self.params["model_name"] = self.hil.rt_lab_model
+
         except Exception as e:
             self.ts.log_error('Incorrect Parameter value : %s' % e)
             raise
 
-    # TODO to be completed with FRT
-    def set_model_parameters_dic(self):
-        categories = self.params["categories"]
-        lf_mode = self.params["lf_mode"]
-        hf_mode = self.params["hf_mode"]
+    def set_modes(self):
+
+        modes = []
+        if self.params["lf_mode"] == "Enabled":
+            modes.append(LFRT)
+        if self.params["hf_mode"] == "Enabled":
+            modes.append(HFRT)
+        self.params["modes"] = modes
+    def set_wfm_file_header(self):
+        self.wfm_header  = ['TIME', 
+                        'AC_V_1', 'AC_V_2', 'AC_V_3', 
+                        'AC_I_1', 'AC_I_2', 'AC_I_3',
+                        'AC_FREQ_CMD', "TRIGGER"]
+    def set_test_conditions(self, current_mode):
+        # Set useful variables
+        mra_f = self.MRA["F"]
+        index=['FRT_CONDITION', 'MIN_DURATION', 'FRT_VALUES']
+        TEST_CONDITION = {}
+        # Test Procedure 5.5.3.4
+        if LFRT in current_mode :
+            TEST_CONDITION["Step E"] = pd.Series([1,1,self.f_nom], index=index)
+            TEST_CONDITION["Step G"] = pd.Series([2, self.params["lf_period"], self.params["lf_parameter"]], index=index)
+            TEST_CONDITION["Step H"] = pd.Series([1,1,self.f_nom], index=index)
+
+        # TABLE 5 - CATEGORY III LVRT TEST CONDITION
+        elif HFRT in current_mode :
+            TEST_CONDITION["Step E"] = pd.Series([1,1,self.f_nom], index=index)
+            TEST_CONDITION["Step G"] = pd.Series([2, self.params["hf_period"], self.params["hf_parameter"]], index=index)
+            TEST_CONDITION["Step H"] = pd.Series([1,1,self.f_nom], index=index)
+        test_sequences_df = self.get_test_sequence(current_mode,TEST_CONDITION)
+
+        return test_sequences_df
+    def set_frt_model_parameters(self, test_sequence):
         model_name = self.params["model_name"]
-        range_steps = self.params["range_steps"]
-
-        if lf_mode == 'Enabled':
-            # Timestep is cumulative
-            if categories == CAT_2 or categories == 'Both':
-                self.mode.append(f'{LV}_{CAT_2}')
-                self.vrt_start_time = self.eut_startup_time
-                self.vrt_stop_time = 12 + self.vrt_start_time
-                # TODO change sequence parameter for parameter to be chosen by users or average of both max & min values?
-                self.parameters_dic.update({f'{LV}_{CAT_2}': [
-                    # Add ROCOM only for condition E
-                    (model_name + '/SM_Source/Waveform_Generator/ROCOM_START_TIME/Value', 10 + self.vrt_start_time),
-                    (model_name + '/SM_Source/Waveform_Generator/ROCOM_END_TIME/Value', 12 + self.vrt_start_time),
-                    # Enable needed conditions
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/cond_a_ena/Value', 1),
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/cond_b_ena/Value', 1),
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/cond_c_ena/Value', 1),
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/cond_d_ena/Value', 1),
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/cond_e_ena/Value', 1),
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/cond_f_ena/Value', 1),
-                    # Timesteps
-                    # (model_name + '/SM_Source/VRT/VRT_State_Machine/condition A/Threshold', 20 + self.vrt_start_time),
-                    # (model_name + '/SM_Source/VRT/VRT_State_Machine/condition B/Threshold', 20.16 + self.vrt_start_time),
-                    # (model_name + '/SM_Source/VRT/VRT_State_Machine/condition C/Threshold', 20.32 + self.vrt_start_time),
-                    # (model_name + '/SM_Source/VRT/VRT_State_Machine/condition D/Threshold', 23 + self.vrt_start_time),
-                    # (model_name + '/SM_Source/VRT/VRT_State_Machine/condition E/Threshold', 25 + self.vrt_start_time),
-                    # (model_name + '/SM_Source/VRT/VRT_State_Machine/condition F/Threshold', 125 + self.vrt_start_time),
-
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/condition A/Threshold', 2 + self.vrt_start_time),
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/condition B/Threshold', 4 + self.vrt_start_time),
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/condition C/Threshold', 6 + self.vrt_start_time),
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/condition D/Threshold', 8 + self.vrt_start_time),
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/condition E/Threshold', 10 + self.vrt_start_time),
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/condition F/Threshold', self.vrt_stop_time),
-                    # Values
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/voltage_ph_seqA/Value', 0.94 * 120),
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/condition B/Threshold', 0.28 * 120),
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/condition C/Threshold', 0.43 * 120),
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/condition D/Threshold', 0.65 * 120),
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/condition E/Threshold', 0.88 * 120),
-                    (model_name + '/SM_Source/VRT/VRT_State_Machine/condition F/Threshold', 0.94 * 120)]})
+        parameters = []
+        # Enable FRT mode in the IEEE1547_fast_functions model
+        parameters.append(("MODE",4.0))
 
 
+       
+
+        condition_list = self.extend_list_end(test_sequence["FRT_CONDITION"].to_list(), 0.0, 4)
+        parameters.append(("FRT_CONDITION", condition_list))
+
+        start_timing_list = self.extend_list_end(test_sequence["FRT_START_TIMING"].to_list(), 0.0, 4)
+        parameters.append(("FRT_START_TIMING",start_timing_list))
+
+        end_timing_list = self.extend_list_end(test_sequence["FRT_END_TIMING"].to_list(), 0.0, 4)
+        parameters.append(("FRT_END_TIMING", end_timing_list))
+
+        values_list = self.extend_list_end(test_sequence["FRT_VALUES"].to_list(), 0.0, 4)
+        parameters.append(("FRT_VALUES",values_list))
+        self.hil.set_matlab_variables(parameters)
+
+    """
+    Getter functions
+    """
+    def get_rocof_dic(self,):
+        params = {  "ROCOF_ENABLE"  : 1.0,
+                    "ROCOF_VALUE"   : 3.0,
+                    "ROCOF_INIT"    : 60.0}
+        return params
+    def get_test_sequence(self, current_mode, test_condition):
+        index=['FRT_CONDITION', 'MIN_DURATION', 'FRT_VALUES']
+        T0 = self.params["eut_startup_time"]  
+        test_sequences_df = pd.DataFrame(columns=index)
+        test_sequences_df = test_sequences_df.append(test_condition["Step E"],ignore_index=True)
+        test_sequences_df = test_sequences_df.append(test_condition["Step G"],ignore_index=True)
+        test_sequences_df = test_sequences_df.append(test_condition["Step H"],ignore_index=True)
+           
+        test_sequences_df.loc[0, 'FRT_START_TIMING'] = T0
+        # Calculate the timing sequences
+        test_sequences_df.loc[0, 'FRT_END_TIMING'] = T0 + test_sequences_df.loc[0, 'MIN_DURATION']
+        for i in range(1, len(test_sequences_df)):
+            test_sequences_df.loc[i, 'FRT_START_TIMING'] = test_sequences_df.loc[i-1, 'FRT_END_TIMING']
+            test_sequences_df.loc[i, 'FRT_END_TIMING'] = test_sequences_df.loc[i,'FRT_START_TIMING'] + test_sequences_df.loc[i, 'MIN_DURATION']
+        return test_sequences_df
+  
+
+    def get_frt_stop_time(self, test_sequences_df):
+        return test_sequences_df["FRT_END_TIMING"].iloc[-1]
+
+    def get_modes(self):
+        return self.params["modes"]
+    def get_wfm_file_header(self):
+        return self.wfm_header
+    def extend_list_end(self, _list, extend_value, final_length):
+            list_length = len(_list)
+            _list.extend([float(extend_value)] * ( final_length - list_length ))
+            return _list
 if __name__ == "__main__":
     pass
