@@ -165,6 +165,9 @@ def test_run():
         eut = der1547.der1547_init(ts)
         eut.config()
 
+        # if callable(getattr(eut, "print_modbus_map", None)):
+        #     ts.log_debug('SunSpec info: %s' % eut.print_modbus_map(w_labels=True))
+
         das_points = {'sc': ('event')}
         daq = das.das_init(ts, sc_points=das_points['sc'])
 
