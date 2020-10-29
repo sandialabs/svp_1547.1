@@ -1952,14 +1952,14 @@ class VoltageRideThrough(HilModel, EutParameters, DataLogging):
                 TEST_CONDITION["A"] = pd.Series([1,5,0.94], index=index)
                 TEST_CONDITION["B"] = pd.Series([2,1,0.05 - 2 * mra_v_pu], index=index)
                 TEST_CONDITION["C"] = pd.Series([3,9,0.5 - 2 * mra_v_pu], index=index)
-                TEST_CONDITION["C'"] = pd.Series([3,9,0.52 + 2 * mra_v_pu], index=index)
+                TEST_CONDITION["C'"] = pd.Series([3+10,9,0.52 + 2 * mra_v_pu], index=index)
                 TEST_CONDITION["D"] = pd.Series([4,10.0,0.7], index=index)
                 TEST_CONDITION["E"] = pd.Series([5,120.0, 0.94], index=index)
             elif RANGE_STEPS == "Random":
                 TEST_CONDITION["A"] = pd.Series([1,5,random.uniform(0.88 + 2 * mra_v_pu, 1.0)], index=index)
                 TEST_CONDITION["B"] = pd.Series([2,1,random.uniform(0.0, 0.05 - 2 * mra_v_pu)], index=index)
                 TEST_CONDITION["C"] = pd.Series([3,9,random.uniform(0.0, 0.5- 2 * mra_v_pu)], index=index)
-                TEST_CONDITION["C'"] = pd.Series([3,9,random.uniform(0.52, 0.7- 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["C'"] = pd.Series([3+10,9,random.uniform(0.52, 0.7- 2 * mra_v_pu)], index=index)
                 TEST_CONDITION["D"] = pd.Series([4,10.0,random.uniform(0.5 + 2 * mra_v_pu, 0.7 - 2 * mra_v_pu)], index=index)
                 TEST_CONDITION["E"] = pd.Series([5,120.0, random.uniform(0.88 + 2 * mra_v_pu, 1.0)], index=index)
 
@@ -1984,14 +1984,14 @@ class VoltageRideThrough(HilModel, EutParameters, DataLogging):
             #ABB'C
             if RANGE_STEPS == "Figure":
                 TEST_CONDITION["A"] = pd.Series([1,5,1.05], index=index)
-                TEST_CONDITION["B"] = pd.Series([1,12,1.2- 2 * mra_v_pu], index=index)
-                TEST_CONDITION["B'"] = pd.Series([1,12,1.12 ], index=index)
-                TEST_CONDITION["C"] = pd.Series([1,120,1.05], index=index)
+                TEST_CONDITION["B"] = pd.Series([2,12,1.2- 2 * mra_v_pu], index=index)
+                TEST_CONDITION["B'"] = pd.Series([2+10,12,1.12 ], index=index)
+                TEST_CONDITION["C"] = pd.Series([4,120,1.05], index=index)
             elif RANGE_STEPS == "Random":
                 TEST_CONDITION["A"] = pd.Series([1,5,random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
-                TEST_CONDITION["B"] = pd.Series([1,12,random.uniform(1.18, 1.2)], index=index)
-                TEST_CONDITION["B'"] = pd.Series([1,12,random.uniform(1.12, 1.2)], index=index)
-                TEST_CONDITION["C"] = pd.Series([1,120,random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["B"] = pd.Series([2,12,random.uniform(1.18, 1.2)], index=index)
+                TEST_CONDITION["B'"] = pd.Series([2+10,12,random.uniform(1.12, 1.2)], index=index)
+                TEST_CONDITION["C"] = pd.Series([4,120,random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
         '''
         Get the full test sequence :
         Example for CAT_2 + LV + Not Consecutive
