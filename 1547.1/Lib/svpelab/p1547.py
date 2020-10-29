@@ -1986,12 +1986,12 @@ class VoltageRideThrough(HilModel, EutParameters, DataLogging):
                 TEST_CONDITION["A"] = pd.Series([1,5,1.05], index=index)
                 TEST_CONDITION["B"] = pd.Series([2,12,1.2- 2 * mra_v_pu], index=index)
                 TEST_CONDITION["B'"] = pd.Series([2+10,12,1.12 ], index=index)
-                TEST_CONDITION["C"] = pd.Series([4,120,1.05], index=index)
+                TEST_CONDITION["C"] = pd.Series([3,120,1.05], index=index)
             elif RANGE_STEPS == "Random":
                 TEST_CONDITION["A"] = pd.Series([1,5,random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
                 TEST_CONDITION["B"] = pd.Series([2,12,random.uniform(1.18, 1.2)], index=index)
                 TEST_CONDITION["B'"] = pd.Series([2+10,12,random.uniform(1.12, 1.2)], index=index)
-                TEST_CONDITION["C"] = pd.Series([4,120,random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["C"] = pd.Series([3,120,random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
         '''
         Get the full test sequence :
         Example for CAT_2 + LV + Not Consecutive
