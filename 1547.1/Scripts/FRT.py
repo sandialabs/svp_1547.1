@@ -43,6 +43,8 @@ from svpelab import p1547
 import script
 from svpelab import result as rslt
 import collections
+import random
+import time
 
 FW = 'FW'
 CPF = 'CPF'
@@ -51,8 +53,10 @@ VV = 'VV'
 WV = 'WV'
 CRP = 'CRP'
 PRI = 'PRI'
-LF = 'Low-Frequency'
-HF = 'High-Frequency'
+
+LFRT = 'LFRT'
+HFRT = 'HFRT'
+
 
 def test_run():
     result = script.RESULT_FAIL
@@ -61,15 +65,13 @@ def test_run():
     daq = None
     eut = None
     rs = None
-    chil = None
+    phil = None
     result_summary = None
     step = None
     q_initial = None
     dataset_filename = None
 
     try:
-        cat = ts.param_value('eut.cat')
-        cat2 = ts.param_value('eut.cat2')
         sink_power = ts.param_value('eut.sink_power')
         p_rated = ts.param_value('eut.p_rated')
         p_rated_prime = ts.param_value('eut.p_rated_prime')
@@ -90,20 +92,12 @@ def test_run():
         v_min = ts.param_value('eut.v_low')
         v_max = ts.param_value('eut.v_high')
         f_nom = ts.param_value('eut.f_nom')
-        f_min = ts.param_value('eut.f_min')
-        f_max = ts.param_value('eut.f_max')
-
         p_min = ts.param_value('eut.p_min')
         p_min_prime = ts.param_value('eut.p_min_prime')
         phases = ts.param_value('eut.phases')
 
+    
 
-        # RT test parameters
-        lf_ena = ts.param_value('frt.lf_ena')
-        hf_ena = ts.param_value('frt.hf_ena')
-        freq_response_time = ts.param_value('frt.response_time')
-        n_iter = ts.param_value('frt.n_iter')
-        pwr_lvl = ts.param_value('frt.pwr_value')
         # Pass/fail accuracies
         pf_msa = ts.param_value('eut.pf_msa')
 
@@ -113,226 +107,214 @@ def test_run():
         absorb['p_rated_prime'] = ts.param_value('eut_cpf.p_rated_prime')
         absorb['p_min_prime'] = ts.param_value('eut_cpf.p_min_prime')
 
-        # Functions to be enabled for test
-        mode = []
-        steps_dict = {}
-        if lf_ena == 'Enabled':
-            mode.append(LF)
-            lf_value = ts.param_value('frt.lf_value')
-            if not(isinstance(lf_value, float) or isinstance(lf_value, int)):
-                #TODO if not numeric value inputed
-                pass
-            elif not (f_min <= lf_value <= 57.0):
-                #TODO raise error if not between f_min and 57.0
-                raise ValueError
+       
+        
 
-            steps_dict[LF] = {'location': f'C:/', 'value': lf_value}
 
-        if hf_ena == 'Enabled':
-            mode.append(HF)
-            hf_value = ts.param_value('frt.hf_value')
-            if not(isinstance(hf_value, float) or isinstance(hf_value, int)):
-                #TODO if not numeric value inputed
-                pass
-            elif not 61.7 <= hf_value <= f_max:
-                #TODO raise error if not between 63.0 and f_max
-                raise ValueError
-
-            steps_dict[HF] = {'location': f'C:/', 'value': hf_value}
-
-        if not (isinstance(freq_response_time, float) or isinstance(freq_response_time, int)):
-            # TODO if not numeric value inputed
-            pass
-        elif 299 > freq_response_time:
-            # TODO timedelay must be over 299 sec
-            raise ValueError
-
-        time_step = {'location': f'C:....', 'value': freq_response_time }
-        """
-        A separate module has been create for the 1547.1 Standard
-        """
-
-        lib_1547 = p1547.module_1547(ts=ts, aif='FW', absorb=absorb)
-        ts.log_debug("1547.1 Library configured for %s" % lib_1547.get_test_name())
-
-        # result params
-        result_params = lib_1547.get_rslt_param_plot()
-        ts.log(result_params)
 
         # initialize HIL environment, if necessary
+        ts.log_debug(15 * "*" + "HIL initialization" + 15 * "*")
+
         phil = hil.hil_init(ts)
         if phil is not None:
+            # return self.ts.param_value(self.group_name + '.' + GROUP_NAME + '.' + name)
+            open_proj = phil._param_value('hil_config_open')
+            compilation = phil._param_value('hil_config_compile')
+            stop_sim = phil._param_value('hil_config_stop_sim')
+            load = phil._param_value('hil_config_load')
+            execute = phil._param_value('hil_config_execute')
+            model_name = phil._param_value('hil_config_model_name')
             phil.config()
 
-        # grid simulator is initialized with test parameters and enabled
-        grid = gridsim.gridsim_init(ts)  # Turn on AC so the EUT can be initialized
-        if grid is not None:
-            grid.voltage(v_nom)
+        ''' RTLab OpWriteFile Math using worst case scenario of 160 seconds, 14 signals and Ts = 40e-6
+        Duration of acquisition in number of points: Npoints = (Tend-Tstart)/(Ts*dec) = (350)/(0.000040*25) = 1350e3
+        
+        Acquisition frame duration: Tframe = Nbss * Ts * dec = 1000*0.000040*250 = 10 sec
+        
+        Number of buffers to be acquired: Nbuffers = Npoints / Nbss = (Tend - Tstart) / Tframe = 16
+        
+        Minimum file size: MinSize= Nbuffers x SizeBuf = [(Tend - Tstart) / Ts ] * (Nsig+1) * 8 * Nbss 
+            = (160/40e-6)*(14+1)*8*1000 = 4.8e11
+        
+        SizeBuf = 1/Nbuffers * {[(Tend - Tstart) / Ts ]*(Nsig+1)*8*Nbss} = [(160/0.000040)*(14+1)*8*1e3]/16 = 30e9
+        Size of one buffer in bytes (SizeBuf) = (Nsig+1) * 8 * Nbss (Minimum) = (14+1)*8*1000 = 120e3
+        '''
 
+
+        """
+        Configure settings in 1547.1 Standard module for the Frequency Ride Through Tests
+        """
+        pwr = float(ts.param_value('frt.high_pwr_value'))
+        repetitions = ts.param_value('frt.repetitions')
+        if ts.param_value('frt.wav_ena') == "Yes" :
+            wav_ena = True
+        else :
+            wav_ena = False
+        if ts.param_value('frt.data_ena') == "Yes" :
+            data_ena = True
+        else :
+            data_ena = False
+        FreqRideThrough = p1547.FrequencyRideThrough(ts=ts, support_interfaces={"hil": phil})
+        # result params
+        # result_params = lib_1547.get_rslt_param_plot()
+        # ts.log(result_params
+
+        # grid simulator is initialized with test parameters and enabled
+        ts.log_debug(15 * "*" + "Gridsim initialization" + 15 * "*")
+        grid = gridsim.gridsim_init(ts, support_interfaces={"hil": phil})  # Turn on AC so the EUT can be initialized
+        if grid is not None:
+            grid.voltage(v_nom)  
+        # Set the grid simulator rocof to 3Hz/s
+        grid.rocof(FreqRideThrough.get_rocof_dic())
         # pv simulator is initialized with test parameters and enabled
+        ts.log_debug(15 * "*" + "PVsim initialization" + 15 * "*")
         pv = pvsim.pvsim_init(ts)
         if pv is not None:
             pv.power_set(p_rated)
             pv.power_on()  # Turn on DC so the EUT can be initialized
 
-        # DAS soft channels
-        das_points = lib_1547.get_sc_points()
-
         # initialize data acquisition
-        daq = das.das_init(ts, sc_points=das_points['sc'])
+        ts.log_debug(15 * "*" + "DAS initialization" + 15 * "*")
+        daq = das.das_init(ts, support_interfaces={"hil": phil, "pvsim": pv})
+        daq.waveform_config({"mat_file_name":"WAV.mat",
+                            "wfm_channels": FreqRideThrough.get_wfm_file_header()})
 
-        """
         if daq is not None:
-            daq.sc['V_MEAS'] = 100
-            daq.sc['P_MEAS'] = 100
-            daq.sc['Q_MEAS'] = 100
-            daq.sc['Q_TARGET_MIN'] = 100
-            daq.sc['Q_TARGET_MAX'] = 100
-            daq.sc['PF_TARGET'] = 1
-            daq.sc['event'] = 'None'
-            ts.log('DAS device: %s' % daq.info())
-        """
+            daq.sc['F_MEAS'] = 100
 
-        """
-        a) Connect the EUT according to the instructions and specifications provided by the manufacturer.
-        """
-        # it is assumed the EUT is on
-        eut = der.der_init(ts)
-        if eut is not None:
-            eut.config()
-            eut.deactivate_all_fct()
 
         # open result summary file
         result_summary_filename = 'result_summary.csv'
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
-        result_summary.write(lib_1547.get_rslt_sum_col_name())
+        result_summary.write('Test Name, Waveform File, RMS File\n')
 
         """
-        c) Set the frequency droop function and droop values to make the active power change with respect to
+        Set the frequency droop function and droop values to make the active power change with respect to
         frequency as small as possible.
         """
+        # Wait to establish communications with the EUT after AC and DC power are provided
+        eut = der.der_init(ts)
         if eut is not None:
-            default_curve = 1
-            fw_settings = lib_1547.get_params(aif=FW)
-            fw_curve_params = {
-                'Ena': True,
-                'curve': default_curve,
-                'dbf': fw_settings[default_curve]['dbf'],
-                'kof': fw_settings[default_curve]['kof'],
-                'RspTms': fw_settings[default_curve]['tr']
-            }
-            eut.freq_watt(fw_curve_params)
-            ts.log_debug('Sending FW points: %s' % fw_curve_params)
+            eut.config()
 
+        # Default curve is characteristic curve 1
+        fw_curve = 1
+        ActiveFunction = p1547.ActiveFunction(ts=ts,
+                                              script_name='Freq-Watt',
+                                              functions=[FW],                                              
+                                              criteria_mode=[True, True, True])
+        fw_param = ActiveFunction.get_params(function=FW, curve=fw_curve)
+        ts.log_debug('fw_param:%s' % fw_param)
+
+        if eut is not None:
+            params = {     'Ena': True,
+                            'curve': fw_curve,
+                            'dbf': fw_param['dbf'],
+                            'kof': fw_param['kof'],
+                            'RspTms': fw_param['tr']
+                        }
+            settings = eut.freq_watt(params)
+            ts.log_debug('Initial EUT FW settings are %s' % settings)
+
+       
 
         """
-        d) Set or verify that all frequency trip settings are set to not influence the outcome of the test.
+        Set or verify that all frequency trip settings are set to not influence the outcome of the test.
         """
-        ts.log_debug('If not done already, set L/HVRT and trip parameters to the widest range of adjustability.')
-        ts.log_debug(f'{mode}')
+        # ts.log_debug('HFRT and trip parameters from EUT : {}'.format(eut.frt_stay_connected_high()))
+        # ts.log_debug('LFRT and trip parameters from EUT : {}'.format(eut.frt_stay_connected_low()))
 
+        """
+        Operate the ac test source at nominal frequency ± 0.1 Hz.
+        """
+        # Configured in PHIL on startup
 
-        #TODO Isolated Source mode??
-        for current_mode in mode:
-            ts.log_debug(f'Initializing {current_mode}')
-
-            # TODO FIND A WAY TO SET ROCOF
-
-            """
-            e) Operate the ac test source at nominal frequency ± 0.1 Hz.
-            """
-
-            if grid is not None:
-                grid.voltage(v_nom)
-                ts.log(f'Setting Grid simulator voltage to {v_nom}')
-                grid.freq(f_nom)
-                ts.log(f'Setting Grid simulator frequency to {f_nom}')
-
-            for i in range(1, n_iter+1):
-                ts.log_debug('Starting mode = %s and %s' % (current_mode, current_mode == VV))
-                daq.data_capture(True)
-                dataset_filename = f'FRT_{current_mode}_{i}'
-                ts.log('------------{}------------'.format(dataset_filename))
-                #step_label = lib_1547.set_step_label(starting_label='F')
-                #step = lib_1547.get_step_label()
+        # Initial loop for all mode that will be executed
+        modes = FreqRideThrough.get_modes()  # Options: LFRT, HFRT
+        ts.log(f"FRT modes tested : '{modes}'")
+        for current_mode in modes:        
+            for repetition in range(1,repetitions+1):        
+                dataset_filename = f'{current_mode}_{round(pwr*100)}PCT_{repetition}'
+                ts.log_debug(15 * "*" + f"Starting {dataset_filename}" + 15 * "*")
+                if data_ena :
+                    daq.data_capture(True)
 
                 """
-                f) Operate EUT at any convenient power level between 90% and 100% of EUT rating and at any
-                convenient power factor. Record the output current of the EUT at the nominal frequency condition.
+                Setting up available power to appropriate power level 
                 """
                 if pv is not None:
+                    ts.log_debug(f'Setting power level to {pwr}')
                     pv.iv_curve_config(pmp=p_rated, vmp=v_nom_in)
                     pv.irradiance_set(1000.)
-                    pv.power_set(round(pwr_lvl*p_rated))
-
+                    pv.power_set(p_rated * pwr)
+                        
                 """
-                ***For High Frequency RT test mode***
-                g) Adjust the source frequency from PN to PU where fU is greater than or equal to 61.8 Hz. The source
-                shall be held at this frequency for period th, which shall be not less than 299 s.
+                Initiating voltage sequence for FRT
                 """
-                # Set values for steps
-                freq_step_location = steps_dict[current_mode]['location']
-                freq_step_value = steps_dict[current_mode]['value']
-                ts.log(f'Frequency step: setting Grid simulator frequency to {freq_step_value}Hz')
-                ts.log(f'At frequency step location: {freq_step_location}')
-
-                # Set timestep
-                time_step_location = time_step['location']
-                time_step_value = time_step['value']
-                ts.log(f'Time setting: setting Grid simulator time setting to {time_step_value}sec')
-                ts.log(f'At time step location: {time_step_location}')
-
+                frt_test_sequences = FreqRideThrough.set_test_conditions(current_mode)
+                ts.log_debug(frt_test_sequences)
+                frt_stop_time = FreqRideThrough.get_frt_stop_time(frt_test_sequences)
                 if phil is not None:
-                    #Send commands to HIL
-                    phil.set_params((freq_step_location, freq_step_value))
-                    phil.set_params((time_step_location, time_step_value))
-
-                    #TODO HIL SECTION TO BE COMPLETED
-                    ts.log('Stop time set to %s' % phil.set_stop_time(stop_time))
-
-                    if compilation == 'Yes':
-                        ts.log("    Model ID: {}".format(phil.compile_model().get("modelId")))
-                    if stop_sim == 'Yes':
-                        ts.log("    {}".format(phil.stop_simulation()))
-                    if load == 'Yes':
-                        ts.log("    {}".format(phil.load_model_on_hil()))
-                    if execute == 'Yes':
-                        ts.log("    {}".format(phil.start_simulation()))
-
+                    # This adds 5 seconds of nominal behavior for EUT normal shutdown. This 5 sec is not recorded.
+                    frt_stop_time = frt_stop_time + 5
+                    ts.log('Stop time set to %s' % phil.set_stop_time(frt_stop_time))
+                    # The driver should take care of this by selecting "Yes" to "Load the model to target?"
+                    phil.load_model_on_hil()
+                    # You need to first load the model, then configure the parameters
+                    # Now that we have all the test_sequences its time to sent them to the model.
+                    FreqRideThrough.set_frt_model_parameters(frt_test_sequences)
+                    # The driver parameter "Execute the model on target?" should be set to "No"
+                    phil.start_simulation() 
+                    ts.sleep(0.5)
                     sim_time = phil.get_time()
-                    while (stop_time - sim_time) > 1.0:  # final sleep will get to stop_time.
+                    while (frt_stop_time - sim_time) > 1.0:  # final sleep will get to stop_time.
                         sim_time = phil.get_time()
-                        ts.log('Sim Time: %s.  Waiting another %s sec before saving data.' % (
-                            sim_time, stop_time - sim_time))
-                        ts.sleep(1)
+                        ts.log('Sim Time: %0.3f.  Waiting another %0.3f sec before saving data.' % (
+                            sim_time, frt_stop_time - sim_time))
+                        ts.sleep(5)
 
-                """
-                h) Decrease the frequency of the ac test source to the nominal frequency ± 0.1 Hz.
-                """
-                if grid is not None:
-                    grid.freq(f_nom)
-                    ts.log(f'Frequency step: setting Grid simulator frequency to {f_nom}')
+                    rms_dataset_filename = "No File"   
+                    wave_start_filename = "No File"        
+                    if data_ena:
+                        rms_dataset_filename = dataset_filename + "_RMS.csv"
+                        daq.data_capture(False)
 
-                """
-                i) Repeat steps f) and g) twice for a total of three tests.
-                """
-                """
-                j) During all frequency transitions in steps f) through h), the ROCOF shall be greater than or equal to
-                the ROCOF limit in Table 21 of IEEE Std 1547-2018 and shall be within the demonstrated ROCOF
-                capability of the EUT.
-                """
+                        # complete data capture
+                        ts.log('Waiting for Opal to save the waveform data: {}'.format(dataset_filename))
+                        ts.sleep(10)
+                    if wav_ena:
+                        # Convert and save the .mat file 
+                        ts.log('Processing waveform dataset(s)')
+                        wave_start_filename = dataset_filename + "_WAV.csv"
 
+                        ds = daq.waveform_capture_dataset()  # returns list of databases of waveforms (overloaded)
+                        ts.log(f'Number of waveforms to save {len(ds)}')
+                        if len(ds) > 0:
+                            ds[0].to_csv(ts.result_file_path(wave_start_filename))
+                            ts.result_file(wave_start_filename)
 
-                ts.log('Sampling complete')
-                dataset_filename = dataset_filename + ".csv"
-                daq.data_capture(False)
-                ds = daq.data_capture_dataset()
-                ts.log('Saving file: %s' % dataset_filename)
-                ds.to_csv(ts.result_file_path(dataset_filename))
-                result_params['plot.title'] = dataset_filename.split('.csv')[0]
-                ts.result_file(dataset_filename, params=result_params)
-                result = script.RESULT_COMPLETE
+                    if data_ena:
+                        ds = daq.data_capture_dataset()
+                        ts.log('Saving file: %s' % rms_dataset_filename)
+                        ds.to_csv(ts.result_file_path(rms_dataset_filename))
+                        ds.remove_none_row(ts.result_file_path(rms_dataset_filename), "TIME")
+                        result_params = {
+                            'plot.title': rms_dataset_filename.split('.csv')[0],
+                            'plot.x.title': 'Time (sec)',
+                            'plot.x.points': 'TIME',
+                            'plot.y.points': 'AC_VRMS_1, AC_VRMS_2, AC_VRMS_3',
+                            'plot.y.title': 'Voltage (V)',
+                            'plot.y2.points': 'AC_IRMS_1, AC_IRMS_2, AC_IRMS_3',
+                            'plot.y2.title': 'Current (A)',
+                        }
+                        ts.result_file(rms_dataset_filename, params=result_params)
+                    result_summary.write('%s, %s, %s,\n' % (dataset_filename, wave_start_filename,
+                                                            rms_dataset_filename))
+
+                    phil.stop_simulation()
+
+        result = script.RESULT_COMPLETE
 
     except script.ScriptFail as e:
         reason = str(e)
@@ -341,19 +323,10 @@ def test_run():
 
     except Exception as e:
         ts.log_error((e, traceback.format_exc()))
-        if dataset_filename is not None:
-            dataset_filename = dataset_filename + ".csv"
-            daq.data_capture(False)
-            ds = daq.data_capture_dataset()
-            ts.log('Saving file: %s' % dataset_filename)
-            ds.to_csv(ts.result_file_path(dataset_filename))
-            result_params['plot.title'] = dataset_filename.split('.csv')[0]
-            ts.result_file(dataset_filename, params=result_params)
+
         ts.log_error('Test script exception: %s' % traceback.format_exc())
 
-
     finally:
-
         if grid is not None:
             grid.close()
         if pv is not None:
@@ -363,12 +336,14 @@ def test_run():
         if daq is not None:
             daq.close()
         if eut is not None:
-            eut.freq_watt(params={'Ena': False})
+            # eut.fixed_pf(params={'Ena': False, 'PF': 1.0})
             eut.close()
         if rs is not None:
             rs.close()
-        if chil is not None:
-            chil.close()
+        if phil is not None:
+            if phil.model_state() == 'Model Running':
+                phil.stop_simulation()
+            phil.close()
 
         if result_summary is not None:
             result_summary.close()
@@ -406,21 +381,23 @@ def run(test_script):
     sys.exit(rc)
 
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.3.0')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.4.2')
 
 # PRI test parameters
 info.param_group('frt', label='Test Parameters')
-info.param('frt.isolated_der', label='Is DER capable of frequency operation while isolated from external sources?',
-           default='No', values=['No', 'Yes'])
-info.param('frt.pwr_value', label='Power Output level (between 0.9-1.0):', default=0.90)
-info.param('frt.lf_ena', label='Low Frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
-info.param('frt.lf_value', label='Low Frequency step (Hz):', default=57.0, active='frt.lf_ena',
-           active_value='Enabled')
-info.param('frt.hf_ena', label='High Frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
-info.param('frt.hf_value', label='High Frequency step (Hz):', default=61.8, active='frt.hf_ena',
-           active_value='Enabled')
-info.param('frt.response_time', label='Test Response Time (secs)', default=299.0)
-info.param('frt.n_iter', label='Number of iterations:', default=3)
+info.param('frt.lf_ena', label='Low frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
+info.param('frt.lf_parameter', label='Low frequency parameter (Hz):', default=57.0,active='frt.lf_ena', active_value=['Enabled'])
+info.param('frt.lf_period', label='Low frequency period (s):', default=299.0,active='frt.lf_ena', active_value=['Enabled'])
+
+info.param('frt.hf_ena', label='High frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
+info.param('frt.hf_parameter', label='High frequency parameter (Hz):', default=61.8,active='frt.hf_ena', active_value=['Enabled'])
+info.param('frt.hf_period', label='High frequency period (s):', default=299.0,active='frt.hf_ena', active_value=['Enabled'])
+info.param('frt.high_pwr_value', label='Power Output level (Over 90%):', default=0.9)
+info.param('frt.repetitions', label='Number of repetitions', default=3)
+info.param('frt.wav_ena', label='Waveform acquisition needed (.mat->.csv)  ?', default='Yes', values=['Yes', 'No'])
+info.param('frt.data_ena', label='RMS acquisition needed (SVP creates .csv from block queries))?', default='No', values=['Yes', 'No'])
+
+
 
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)
@@ -434,9 +411,11 @@ info.param('eut.v_low', label='Minimum AC voltage (V)', default=116.0)
 info.param('eut.v_high', label='Maximum AC voltage (V)', default=132.0)
 info.param('eut.v_in_nom', label='V_in_nom: Nominal input voltage (Vdc)', default=400)
 info.param('eut.f_nom', label='Nominal AC frequency (Hz)', default=60.0)
-info.param('eut.f_min', label='Nominal AC frequency (Hz)', default=56.0)
-info.param('eut.f_max', label='Nominal AC frequency (Hz)', default=64.0)
-
+info.param('eut.startup_time', label='EUT Startup time', default=10)
+info.param('eut.scale_current', label='EUT Current scale input string (e.g. 30.0,30.0,30.0)', default="33.3400,33.3133,33.2567")
+info.param('eut.offset_current', label='EUT Current offset input string (e.g. 0,0,0)', default="0,0,0")
+info.param('eut.scale_voltage', label='EUT Voltage scale input string (e.g. 30.0,30.0,30.0)', default="20.0,20.0,20.0")
+info.param('eut.offset_voltage', label='EUT Voltage offset input string (e.g. 0,0,0)', default="0,0,0")
 
 # Add the SIRFN logo
 info.logo('sirfn.png')
@@ -466,5 +445,6 @@ if __name__ == "__main__":
     test_script.log('log it')
 
     run(test_script)
+
 
 

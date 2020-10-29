@@ -512,9 +512,10 @@ def test_run():
         # get PS3 and QS3
         daq.data_sample()
         meas = daq.data_read()
-        ts.log_debug(meas)
-        ps3_pu = meas['AC_SOURCE_P_1']/p_rated
-        qs3_pu = meas['QS3']/s_rated
+        import pprint
+        ts.log_debug(pprint.pformat(meas))
+        ps3_pu = meas['AC_P_S1_1'] + meas['AC_P_S1_2'] + meas['AC_P_S1_3'] / 3.
+        qs3_pu = meas['AC_Q_S1_1'] + meas['AC_Q_S1_2'] + meas['AC_Q_S1_3'] / 3.
 
         while -0.02 < ps3_pu > 0.02 or -0.02 < qs3_pu > 0.02:  # tune RLC to get target P/Q levels through switch 3
             # calculations to determine RLC adjustments
@@ -545,8 +546,8 @@ def test_run():
             daq.data_sample()
             meas = daq.data_read()
             ts.log_debug(meas)
-            ps3_pu = meas['PS3'] / p_rated
-            qs3_pu = meas['QS3'] / s_rated
+            ps3_pu = meas['AC_P_S1_1'] + meas['AC_P_S1_2'] + meas['AC_P_S1_3'] / 3.
+            qs3_pu = meas['AC_Q_S1_1'] + meas['AC_Q_S1_2'] + meas['AC_Q_S1_3'] / 3.
 
             # todo: verify the voltage are within 5% of each other
 
@@ -573,17 +574,23 @@ def test_run():
         meas = daq.data_read()
         ts.log_debug(meas)
         ts.log('Voltages = [%0.1f, %0.1f, %0.1f] and currents = [%0.1f, %0.1f, %0.1f] at switch S3' %
-               (meas['v1_s3'], meas['v2_s3'], meas['v3_s3'], meas['i1_s3'], meas['i2_s3'], meas['i3_s3']))
+               (meas['AC_VRMS_SOURCE_1'], meas['AC_VRMS_SOURCE_2'], meas['AC_VRMS_SOURCE_3'],
+                meas['AC_IRMS_SOURCE_1'], meas['AC_IRMS_SOURCE_2'], meas['AC_IRMS_SOURCE_3']))
+
         ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at switch S3' %
-               (meas['p1_s3'], meas['p2_s3'], meas['p3_s3'], meas['q1_s3'], meas['q2_s3'], meas['q3_s3']))
+               (meas['AC_P_S1_1'], meas['AC_P_S1_2'], meas['AC_P_S1_3'], meas['q1_s3'], meas['q2_s3'], meas['q3_s3']))
         ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at switch S2' %
                (meas['p1_s2'], meas['p2_s2'], meas['p3_s2'], meas['q1_s2'], meas['q2_s2'], meas['q3_s2']))
+
         ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at resistive load'
-               % (meas['p1_r'], meas['p2_r'], meas['p3_r'], meas['q1_r'], meas['q2_r'], meas['q3_r']))
+               % (meas['AC_P_LOAD_R_1'], meas['AC_P_LOAD_R_2'], meas['AC_P_LOAD_R_3'],
+                  meas['AC_Q_LOAD_R_1'], meas['AC_Q_LOAD_R_2'], meas['AC_Q_LOAD_R_3']))
         ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at capacitive '
-               'load' % (meas['p1_c'], meas['p2_c'], meas['p3_c'], meas['q1_c'], meas['q2_c'], meas['q3_c']))
+               'load' % (meas['AC_P_LOAD_C_1'], meas['AC_P_LOAD_C_2'], meas['AC_P_LOAD_C_3'],
+                         meas['AC_Q_LOAD_C_1'], meas['AC_Q_LOAD_C_2'], meas['AC_Q_LOAD_C_3']))
         ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at inductive '
-               'load' % (meas['p1_l'], meas['p2_l'], meas['p3_l'], meas['q1_l'], meas['q2_l'], meas['q3_l']))
+               'load' % (meas['AC_P_LOAD_L_1'], meas['AC_P_LOAD_L_2'], meas['AC_P_LOAD_L_3'],
+                         meas['AC_Q_LOAD_L_1'], meas['AC_Q_LOAD_L_2'], meas['AC_Q_LOAD_L_3']))
 
         '''
         4) Open switch S3. If, after 10 s, the island circuit remains energized, the test setup is considered
@@ -594,7 +601,8 @@ def test_run():
         daq.data_sample()
         meas = daq.data_read()
         ts.log('Voltage = [%0.1f, %0.1f, %0.1f] and frequency = [%0.1f, %0.1f, %0.1f] of island.'
-               'load' % (meas['AC_V1'], meas['AC_V2'], meas['AC_V3'], meas['AC_V1'], meas['q2_l'], meas['q3_l']))
+               'load' % (meas['AC_VRMS_1'], meas['AC_VRMS_2'], meas['AC_VRMS_3'],
+                         meas['AC_FREQ_PCC'], meas['AC_FREQ_PCC'], meas['AC_FREQ_PCC']))
         '''
         5) De-energize the island.
         '''

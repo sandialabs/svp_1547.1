@@ -58,6 +58,22 @@ Current compliance test scripts available:
 #### Varia
 - [ ] Interoperability test
 
+#### Unitentional Islanding
+- [ ] Unitentional islanding test
+
+Note: The Unintentional Islanding PHIL model was created through the CIESESE program at Sandia National Laboratories. 
+A multi-year collaboration between the University of Puerto Rico Mayaguez and Sandia National Laboratories produced the 
+UI Opal-RT RT-LAB model that combines hardware and software tools (OPAL + MATLAB/Simulink + LabView + SVP) to emulate an 
+RLC load bank with full visualization of values with easy adjustment of the resonance condition necessary for island 
+experiments. 
+
+Preliminary results are presented in the following papers and will be discussed 
+in detail in the Ph.D. dissertation of Edgardo Desardén Carrero, expected in May 2021.
+
+* S. Gonzalez, E. Desarden, N. S. Gurule, and E. E. A. Bezares, “Unintentional Islanding Evaluation Utilizing Discrete RLC Circuit Versus Power Hardware-in-the Loop Method,” 46th IEEE Photovolt. Spec. Conf., 2019. 
+* E. Desarden-Carrero, R. Darbali-Zamora, N. S. Gurule, E. Aponte-Bezares and S. Gonzalez, “Evaluation of the IEEE Std 1547.1-2020 Unintentional Islanding Test Using Power Hardware-in-the-Loop” 47th IEEE Photovolt. Spec. Conf., 2020. 
+
+
 ### P1547 Library
 
 ![P1547 Flowchart](1547.1/doc/P1547_flowchart.png)
