@@ -31,7 +31,7 @@ from svpelab import der1547
 from svpelab import p1547
 import script
 import time
-
+import pprint
 
 def find_rlc():
     res = 1
@@ -180,6 +180,7 @@ def test_run():
         eut_startup_time = ts.param_value('phase_jump_startup.eut_startup_time')
 
         v_ll = ts.param_value('eut.v_ll')
+        v_nom = ts.param_value('eut.v_nom')
         s_rated = ts.param_value('eut.s_rated')
         p_rated = s_rated
         phase_comp = ts.param_value('phase_jump.phase_comp')
@@ -211,6 +212,7 @@ def test_run():
 
         # initialize the hardware in the loop
         phil = hil.hil_init(ts)
+        phil.control_panel_info(state=1)
 
         """
         A separate module has been create for the 1547.1 Standard
@@ -271,7 +273,7 @@ def test_run():
         -----------------------------------------------------------------------------------------------------------
         '''
         if pv is not None:
-            pv.power(p_rated*1.25)
+            pv.power_set(p_rated*1.25)
 
         '''
         
@@ -447,182 +449,6 @@ def test_run():
         procedure.
         '''
 
-        if compilation == 'Yes':
-            ts.sleep(1)
-            ts.log("    Model ID: {}".format(phil.compile_model().get("modelId")))
-        if stop_sim == 'Yes':
-            ts.sleep(1)
-            ts.log("    {}".format(phil.stop_simulation()))
-
-        ts.log('Stop time set to %s' % phil.set_stop_time(1000.))
-
-        if load == 'Yes':
-            ts.sleep(1)
-            ts.log("    {}".format(phil.load_model_on_hil()))
-        if execute == 'Yes':
-            ts.log("    {}".format(phil.start_simulation()))
-            daq.data_capture(True)  # Start RMS data capture
-
-        ctrl_sigs = phil.get_control_signals(details=False)
-        # ts.log_debug('Control signals on load: %s' % str(ctrl_sigs))
-
-        # ctrl_sigs[0] = Control Signal #1 = Test Num
-        # ctrl_sigs[1] = Control Signal #2 = SubTest Num
-        # ctrl_sigs[2] = Control Signal #3 = Islanding Test
-        # ctrl_sigs[3] = Control Signal #4 = Ametek Output
-        # ctrl_sigs[4] = Control Signal #5 = Inv VLL
-        # ctrl_sigs[5] = Control Signal #6 = Inv VAmax
-        # ctrl_sigs[6] = Control Signal #7 = V Trans. Gain
-        # ctrl_sigs[7] = Control Signal #8 = Phase Comp. (Deg)
-        # ctrl_sigs[8] = Control Signal #9 = Resistors Pot
-        # ctrl_sigs[9] = Control Signal #10 = Res Man Test
-        # ctrl_sigs[10] = Control Signal #11 = PR Cust. Test
-        # ctrl_sigs[11] = Control Signal #12 = Rinternal Pot
-        # ctrl_sigs[12] = Control Signal #13 = Rinternal Manual Test
-        # ctrl_sigs[13] = Control Signal #14 = PL Custom Test
-        # ctrl_sigs[14] = Control Signal #15 = Inductor Pot
-        # ctrl_sigs[15] = Control Signal #16 = Inductor Manual Test
-        # ctrl_sigs[16] = Control Signal #17 = QL Custom Test
-        # ctrl_sigs[17] = Control Signal #18 = Capacitor Pot
-        # ctrl_sigs[18] = Control Signal #19 = Cap Man Test
-        # ctrl_sigs[19] = Control Signal #20 = QC Cust. Test
-        ctrl_sigs[0] = 2  # test num
-        ctrl_sigs[3] = 1  # energize amplifier
-        ctrl_sigs[2] = 0  # close S3 switch
-        ctrl_sigs[4] = v_ll  # set line-line voltage
-        ctrl_sigs[5] = s_rated  # set EUT apparent power
-
-        phil.get_acq_signals(verbose=False)
-        phil.set_control_signals(values=ctrl_sigs)
-        # ctrl_sigs = phil.get_control_signals(details=False)
-        # ts.log_debug('Control signals update: %s' % str(ctrl_sigs))
-
-        # data = daq.data_read()
-        # ts.log_debug('Data = %s' % data)
-        for count in range(eut_startup_time):
-            ts.sleep(1)
-            count += 1
-            ts.log('Waited %s sec for EUT to start. Power is %s %% of nameplate' %
-                   (count, daq.data_read()['AC_P']/p_rated))
-            if count > eut_startup_time:
-                result = script.RESULT_FAIL
-                ts.log_error('EUT did not start.')
-                raise Exception
-
-        # get PS3 and QS3
-        daq.data_sample()
-        meas = daq.data_read()
-        import pprint
-        ts.log_debug(pprint.pformat(meas))
-        ps3_pu = meas['AC_P_S1_1'] + meas['AC_P_S1_2'] + meas['AC_P_S1_3'] / 3.
-        qs3_pu = meas['AC_Q_S1_1'] + meas['AC_Q_S1_2'] + meas['AC_Q_S1_3'] / 3.
-
-        while -0.02 < ps3_pu > 0.02 or -0.02 < qs3_pu > 0.02:  # tune RLC to get target P/Q levels through switch 3
-            # calculations to determine RLC adjustments
-            r, l, c = find_rlc()
-            ts.log('Setting R = %0.3f Ohms, L = %0.3f Ohms, C = %0.3f Ohms...' % (r, l, c))
-
-            parameters = []
-            # Phase A RLC
-            parameters.append((model_name + '/SM_Source/Switch1/Threshold', r))
-            parameters.append((model_name + '/SM_Source/Switch2/Threshold', l))
-            parameters.append((model_name + '/SM_Source/Phase Angle Phase A0/Value', c))
-            # Phase B RLC
-            parameters.append((model_name + '/SM_Source/Switch1/Threshold', r))
-            parameters.append((model_name + '/SM_Source/Switch2/Threshold', l))
-            parameters.append((model_name + '/SM_Source/Phase Angle Phase A0/Value', c))
-            # Phase C RLC
-            parameters.append((model_name + '/SM_Source/Switch1/Threshold', r))
-            parameters.append((model_name + '/SM_Source/Switch2/Threshold', l))
-            parameters.append((model_name + '/SM_Source/Phase Angle Phase A0/Value', c))
-
-            for p, v in parameters:
-                ts.log_debug('Setting %s = %s' % (p, v))
-                phil.set_params(p, v)
-
-            ts.sleep(2)  # wait to see how changes affect P/Q
-
-            # get PS3 and QS3
-            daq.data_sample()
-            meas = daq.data_read()
-            ts.log_debug(meas)
-            ps3_pu = meas['AC_P_S1_1'] + meas['AC_P_S1_2'] + meas['AC_P_S1_3'] / 3.
-            qs3_pu = meas['AC_Q_S1_1'] + meas['AC_Q_S1_2'] + meas['AC_Q_S1_3'] / 3.
-
-            # todo: verify the voltage are within 5% of each other
-
-        '''
-        d) Verify the test setup can sustain an island.
-        
-        1) Disable the unintentional islanding protection in the EUT.
-        '''
-        ts.log('This EUT supports the following Unintentional Islanding modes: %s' %
-               eut.get_ui()['ui_capability_er'])
-        ts.log('Disabling the UI on EUT for Step D.1.')
-        eut.set_ui(params={'ui_mode_enable_as': False})
-
-        '''
-        2) Operate the EUT and RLC load under the conditions established in step c) for any one of the
-        test cases in Table 13 or Table 14 as appropriate for the EUT Category.
-        
-        3) With the EUT and load operating at stable conditions, record the voltage and current at switch
-        S3. Record the active and reactive power at switch S3, switch S2, the resistive load, the
-        capacitive load and the inductive load on a net and per phase basis.
-        '''
-        ts.sleep(2.)
-        daq.data_sample()
-        meas = daq.data_read()
-        ts.log_debug(meas)
-        ts.log('Voltages = [%0.1f, %0.1f, %0.1f] and currents = [%0.1f, %0.1f, %0.1f] at switch S3' %
-               (meas['AC_VRMS_SOURCE_1'], meas['AC_VRMS_SOURCE_2'], meas['AC_VRMS_SOURCE_3'],
-                meas['AC_IRMS_SOURCE_1'], meas['AC_IRMS_SOURCE_2'], meas['AC_IRMS_SOURCE_3']))
-
-        ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at switch S3' %
-               (meas['AC_P_S1_1'], meas['AC_P_S1_2'], meas['AC_P_S1_3'], meas['q1_s3'], meas['q2_s3'], meas['q3_s3']))
-        ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at switch S2' %
-               (meas['p1_s2'], meas['p2_s2'], meas['p3_s2'], meas['q1_s2'], meas['q2_s2'], meas['q3_s2']))
-
-        ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at resistive load'
-               % (meas['AC_P_LOAD_R_1'], meas['AC_P_LOAD_R_2'], meas['AC_P_LOAD_R_3'],
-                  meas['AC_Q_LOAD_R_1'], meas['AC_Q_LOAD_R_2'], meas['AC_Q_LOAD_R_3']))
-        ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at capacitive '
-               'load' % (meas['AC_P_LOAD_C_1'], meas['AC_P_LOAD_C_2'], meas['AC_P_LOAD_C_3'],
-                         meas['AC_Q_LOAD_C_1'], meas['AC_Q_LOAD_C_2'], meas['AC_Q_LOAD_C_3']))
-        ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at inductive '
-               'load' % (meas['AC_P_LOAD_L_1'], meas['AC_P_LOAD_L_2'], meas['AC_P_LOAD_L_3'],
-                         meas['AC_Q_LOAD_L_1'], meas['AC_Q_LOAD_L_2'], meas['AC_Q_LOAD_L_3']))
-
-        '''
-        4) Open switch S3. If, after 10 s, the island circuit remains energized, the test setup is considered
-        verified. Measure and record the voltage and frequency of the islanding operation.
-        '''
-        phil.set_params(model_name + '/SM_Source/Phase Angle Phase A0/Value', c)  # open S3
-        ts.sleep(10.)
-        daq.data_sample()
-        meas = daq.data_read()
-        ts.log('Voltage = [%0.1f, %0.1f, %0.1f] and frequency = [%0.1f, %0.1f, %0.1f] of island.'
-               'load' % (meas['AC_VRMS_1'], meas['AC_VRMS_2'], meas['AC_VRMS_3'],
-                         meas['AC_FREQ_PCC'], meas['AC_FREQ_PCC'], meas['AC_FREQ_PCC']))
-        '''
-        5) De-energize the island.
-        '''
-        # phil.stop_simulation()
-        eut.set_p_lim(params={'p_lim_mode_enable_as': True, 'p_lim_w_as': 0.0})
-
-        '''
-        6) Enable the unintentional islanding protection in the EUT.
-        '''
-        eut.set_ui(params={'ui_mode_enable_as': True})
-        ts.log('EUT settings: %s' % eut.get_ui())
-        eut.set_p_lim(params={'p_lim_mode_enable_as': True, 'p_lim_w_as': 100.})
-
-        '''
-        e) Clearing time tests.
-        
-        1) Operate the EUT and load under the conditions established in step c) for each one of the test
-        cases in Table 13 or Table 14 as appropriate for the EUT Category.
-        '''
-
         for test_number in test_num:
             if cat == 'CAT_A':
                 test = str(test_number) + 'A'
@@ -631,8 +457,205 @@ def test_run():
                 test = str(test_number) + 'B'
                 test_params = cat_b_tests[test]  # This is completed by the RT-Lab Code
 
-                # Set test number to initialize the RLC parameter based on Table 12 or 13
-                phil.set_params(model_name + '/SC_InputsandOutputs/Test Num/Value', 0)  # open S3
+            if compilation == 'Yes':
+                ts.sleep(1)
+                ts.log("    Model ID: {}".format(phil.compile_model().get("modelId")))
+            if stop_sim == 'Yes':
+                ts.sleep(1)
+                ts.log("    {}".format(phil.stop_simulation()))
+
+            ts.log('Stop time set to %s' % phil.set_stop_time(1000.))
+
+            if load == 'Yes':
+                ts.sleep(1)
+                ts.log("    {}".format(phil.load_model_on_hil()))
+            if execute == 'Yes':
+                ts.log("    {}".format(phil.start_simulation()))
+                daq.data_capture(True)  # Start RMS data capture
+
+            # Set test number to initialize the RLC parameter based on Table 12 or 13 - done with test num update
+            ctrl_sigs = phil.get_control_signals(details=False)
+            # ts.log_debug('Control signals on load: %s' % str(ctrl_sigs))
+
+            # ctrl_sigs[0] = Control Signal #1 = Test Num
+            # ctrl_sigs[1] = Control Signal #2 = SubTest Num
+            # ctrl_sigs[2] = Control Signal #3 = Islanding Test
+            # ctrl_sigs[3] = Control Signal #4 = Ametek Output
+            # ctrl_sigs[4] = Control Signal #5 = Inv VLL
+            # ctrl_sigs[5] = Control Signal #6 = Inv VAmax
+            # ctrl_sigs[6] = Control Signal #7 = V Trans. Gain
+            # ctrl_sigs[7] = Control Signal #8 = Phase Comp. (Deg)
+            # ctrl_sigs[8] = Control Signal #9 = Resistors Pot
+            # ctrl_sigs[9] = Control Signal #10 = Res Man Test
+            # ctrl_sigs[10] = Control Signal #11 = PR Cust. Test
+            # ctrl_sigs[11] = Control Signal #12 = Rinternal Pot
+            # ctrl_sigs[12] = Control Signal #13 = Rinternal Manual Test
+            # ctrl_sigs[13] = Control Signal #14 = PL Custom Test
+            # ctrl_sigs[14] = Control Signal #15 = Inductor Pot
+            # ctrl_sigs[15] = Control Signal #16 = Inductor Manual Test
+            # ctrl_sigs[16] = Control Signal #17 = QL Custom Test
+            # ctrl_sigs[17] = Control Signal #18 = Capacitor Pot
+            # ctrl_sigs[18] = Control Signal #19 = Cap Man Test
+            # ctrl_sigs[19] = Control Signal #20 = QC Cust. Test
+            ctrl_sigs[0] = test_number  # test num
+            ctrl_sigs[3] = 1  # energize amplifier
+            ctrl_sigs[2] = 0  # open S3 switch (for islanding test execution)
+            ctrl_sigs[4] = v_ll  # set line-line voltage
+            ctrl_sigs[5] = s_rated  # set EUT apparent power
+
+            ts.log_warning('ABOUT TO ENERGIZE AMPLIFIER - STOP NOW IF UNREADY!')
+            for countdown in range(5, 0, -1):
+                ts.log('Engergizing in t-minus %d seconds.' % countdown)
+                ts.sleep(1)
+            # ts.log_debug('ctrl_sigs: %s' % ctrl_sigs)
+            phil.set_control_signals(values=ctrl_sigs)
+            # ctrl_sigs = phil.get_control_signals(details=False)
+            # ts.log_debug('Control signals update: %s' % str(ctrl_sigs))
+
+            # data = daq.data_read()
+            # ts.log_debug('Data = %s' % data)
+            count = 0
+            while count < eut_startup_time:
+                ts.sleep(1)
+                count += 1
+                daq.data_sample()
+                inv_p_pu = daq.data_read()['AC_P']/p_rated
+                ts.log('Waited %s sec for EUT to start. Inverter power is %0.4f pu.' % (count, inv_p_pu))
+                if inv_p_pu > 0.9:
+                    break
+                if count > eut_startup_time:
+                    result = script.RESULT_FAIL
+                    ts.log_error('EUT did not start.')
+                    raise Exception
+
+            # get PS3 and QS3
+            daq.data_sample()
+            meas = daq.data_read()
+            ts.log_debug(pprint.pformat(meas))
+            ps3_pu = meas['AC_P_S3_PU']
+            qs3_pu = meas['AC_Q_S3_PU']
+
+            v_out_of_band = True
+            # tune RLC to get target P/Q levels through switch 3
+            while -0.02 < ps3_pu > 0.02 or -0.02 < qs3_pu > 0.02 or v_out_of_band:
+                # calculations to determine RLC adjustments
+                daq.data_sample()
+                meas = daq.data_read()
+                ts.log_debug('\t\t TARGET \t Value')
+                ts.log_debug('EUT P \t\t %0.2f \t\t %0.2f' % (test_params['p_eut'], meas['AC_P']/p_rated))
+                ts.log_debug('EUT Q \t\t %0.2f \t\t %0.2f' % (test_params['q_eut'], meas['AC_Q']/p_rated))
+                ts.log_debug('PR+PL+PC \t %0.2f \t\t %0.2f' % (test_params['pr_pl_pc'], meas['AC_P_LOAD_PU']))
+                ts.log_debug('QC \t\t %0.2f \t\t %0.2f' % (test_params['qc'], meas['QC']))
+                ts.log_debug('QL \t\t %0.2f \t\t %0.2f' % (test_params['ql'], meas['QL']))
+                ts.log_debug('QF \t\t %0.2f \t\t %0.2f' % (test_params['qf'], meas['QUALITY_FACTOR']))
+
+                ctrl_sigs = phil.get_control_signals()
+                ts.log_debug('ctrl_sigs: %s' % ctrl_sigs)
+                ts.log_debug('Prior R (%% change) = %0.2f, L (%% change) = %0.2f, C (%% change) = %0.2f.' %
+                             (ctrl_sigs[8], ctrl_sigs[14], ctrl_sigs[17]))
+                r, l, c = find_rlc()
+                ts.log('Setting R to change %0.3f%%, L to change %0.3f%%, C to change %0.3f%%' % (r, l, c))
+                ctrl_sigs[8] = r  # Resistors Pot
+                ctrl_sigs[14] = l  # Inductor Pot
+                ctrl_sigs[17] = c  # Capacitor Pot
+                phil.set_control_signals(values=ctrl_sigs)
+                ts.sleep(2)  # wait to see how changes affect P/Q
+                ctrl_sigs = phil.get_control_signals()
+                ts.log_debug('New R (%% change) = %0.2f, L (%% change) = %0.2f, C (%% change) = %0.2f.' %
+                             (ctrl_sigs[8], ctrl_sigs[14], ctrl_sigs[17]))
+
+                # get PS3 and QS3
+                daq.data_sample()
+                meas = daq.data_read()
+                # ts.log_debug(meas)
+                ps3_pu = meas['AC_P_S3_PU']
+                qs3_pu = meas['AC_Q_S3_PU']
+
+                # Verify the voltage are within 5% of each other
+                v1 = meas['AC_VRMS_1']/v_nom
+                v2 = meas['AC_VRMS_2']/v_nom
+                v3 = meas['AC_VRMS_3']/v_nom
+                v_delta = [abs(v1-v2), abs(v2-v3), abs(v1-v3)]
+                if any(v_delta) > 0.05:
+                    ts.log_debug('Voltages are out of band: V1-V2 = %0.2f V2-V3 = %0.2f V1-V3 = %0.2f' %
+                                 (v_delta[0], v_delta[1], v_delta[2]))
+                    v_out_of_band = True
+                else:
+                    ts.log_debug('Voltages are in band: V1-V2 = %0.2f V2-V3 = %0.2f V1-V3 = %0.2f' %
+                                 (v_delta[0], v_delta[1], v_delta[2]))
+                    v_out_of_band = False
+
+            '''
+            d) Verify the test setup can sustain an island.
+            
+            1) Disable the unintentional islanding protection in the EUT.
+            '''
+            ts.log('This EUT supports the following Unintentional Islanding modes: %s' %
+                   eut.get_ui()['ui_capability_er'])
+            ts.log('Disabling the UI on EUT for Step D.1.')
+            eut.set_ui(params={'ui_mode_enable_as': False})
+
+            '''
+            2) Operate the EUT and RLC load under the conditions established in step c) for any one of the
+            test cases in Table 13 or Table 14 as appropriate for the EUT Category.
+            
+            3) With the EUT and load operating at stable conditions, record the voltage and current at switch
+            S3. Record the active and reactive power at switch S3, switch S2, the resistive load, the
+            capacitive load and the inductive load on a net and per phase basis.
+            '''
+            ts.sleep(2.)
+            daq.data_sample()
+            meas = daq.data_read()
+            ts.log_debug(meas)
+            ts.log('Voltages = [%0.1f, %0.1f, %0.1f] and currents = [%0.1f, %0.1f, %0.1f] at switch S3' %
+                   (meas['AC_VRMS_SOURCE_1'], meas['AC_VRMS_SOURCE_2'], meas['AC_VRMS_SOURCE_3'],
+                    meas['AC_IRMS_SOURCE_1'], meas['AC_IRMS_SOURCE_2'], meas['AC_IRMS_SOURCE_3']))
+
+            ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at switch S3' %
+                   (meas['AC_P_S1_1'], meas['AC_P_S1_2'], meas['AC_P_S1_3'], meas['q1_s3'], meas['q2_s3'], meas['q3_s3']))
+            ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at switch S2' %
+                   (meas['p1_s2'], meas['p2_s2'], meas['p3_s2'], meas['q1_s2'], meas['q2_s2'], meas['q3_s2']))
+
+            ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at resistive load'
+                   % (meas['AC_P_LOAD_R_1'], meas['AC_P_LOAD_R_2'], meas['AC_P_LOAD_R_3'],
+                      meas['AC_Q_LOAD_R_1'], meas['AC_Q_LOAD_R_2'], meas['AC_Q_LOAD_R_3']))
+            ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at capacitive '
+                   'load' % (meas['AC_P_LOAD_C_1'], meas['AC_P_LOAD_C_2'], meas['AC_P_LOAD_C_3'],
+                             meas['AC_Q_LOAD_C_1'], meas['AC_Q_LOAD_C_2'], meas['AC_Q_LOAD_C_3']))
+            ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at inductive '
+                   'load' % (meas['AC_P_LOAD_L_1'], meas['AC_P_LOAD_L_2'], meas['AC_P_LOAD_L_3'],
+                             meas['AC_Q_LOAD_L_1'], meas['AC_Q_LOAD_L_2'], meas['AC_Q_LOAD_L_3']))
+
+            '''
+            4) Open switch S3. If, after 10 s, the island circuit remains energized, the test setup is considered
+            verified. Measure and record the voltage and frequency of the islanding operation.
+            '''
+            phil.set_params(model_name + '/SM_Source/Phase Angle Phase A0/Value', c)  # open S3
+            ts.sleep(10.)
+            daq.data_sample()
+            meas = daq.data_read()
+            ts.log('Voltage = [%0.1f, %0.1f, %0.1f] and frequency = [%0.1f, %0.1f, %0.1f] of island.'
+                   'load' % (meas['AC_VRMS_1'], meas['AC_VRMS_2'], meas['AC_VRMS_3'],
+                             meas['AC_FREQ_PCC'], meas['AC_FREQ_PCC'], meas['AC_FREQ_PCC']))
+            '''
+            5) De-energize the island.
+            '''
+            # phil.stop_simulation()
+            eut.set_p_lim(params={'p_lim_mode_enable_as': True, 'p_lim_w_as': 0.0})
+
+            '''
+            6) Enable the unintentional islanding protection in the EUT.
+            '''
+            eut.set_ui(params={'ui_mode_enable_as': True})
+            ts.log('EUT settings: %s' % eut.get_ui())
+            eut.set_p_lim(params={'p_lim_mode_enable_as': True, 'p_lim_w_as': 100.})
+
+            '''
+            e) Clearing time tests.
+            
+            1) Operate the EUT and load under the conditions established in step c) for each one of the test
+            cases in Table 13 or Table 14 as appropriate for the EUT Category.
+            '''
 
             '''
             Table 15 shows the voltage and frequency trip levels and clearing time settings to be used for the
