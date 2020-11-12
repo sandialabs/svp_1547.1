@@ -33,14 +33,264 @@ import script
 import time
 import pprint
 
-def find_rlc():
-    res = 1
-    ind = 1
-    cap = 1
-    return res, ind, cap
+
+def find_rlc(p_utility, q_utility, r_set, l_set, c_set):
+    """
+    Proportional controllers for adjusting the resistance and capacitance values in the RLC load bank
+
+    :param p_utility: utility/source active power in watts
+    :param q_utility: utility/source reactive power in var
+    :param r_set: prior resistor % change
+    :param l_set: prior inductor % change
+    :param c_set: prior capacitor % change
+    :return:
+    """
+
+    smoothing_factor = 0.50  # only move a small percentage of the desired change for stability
+    cap = c_set + (6./1300. * q_utility) * smoothing_factor
+    res = r_set + (50.5/11700. * p_utility) * smoothing_factor
+
+    return res, l_set, cap
 
 
-def run_ui_test(phil, model_name, daq, test_num, t_trips, q_inc, high_freq_count, low_freq_count, result_summary, c):
+def set_grid_support_functions(eut, cat, cat2, test_params):
+    """
+    Configure EUT for experiment
+
+    :param eut: EUT object
+    :param cat: Category A or B
+    :param cat2: Category I, II, or III
+    :param test_params: test parameters for the UI test
+    :return: None
+    """
+
+    '''
+    Table 15 shows the voltage and frequency trip levels and clearing time settings to be used for the
+    unintentional islanding tests. If the EUT is capable of operating at wider voltage and frequency trip
+    settings, then such settings shall be used. The EUT may have additional voltage and frequency trip
+    settings for self-protection, and such settings may remain enabled in the EUT.
+
+            Table 15 —Voltage and frequency trip settings for unintentional islanding testing
+    |--------------------------------------------------------------------------------------------------------
+    | Trip           |             Category I and Category II       |            Category III               |
+    | Function       | Voltage (p.u.)       | Clearing time (s)     | Voltage (p.u.) | Clearing time (s)    |
+    ---------------------------------------------------------------------------------------------------------
+        OV2                 1.2                     0.16                    1.2                 0.16
+        OV1                 1.2                     13                      1.2                 13
+        UV1                 0                       21                      0                   50
+        UV2                 0                       2                       0                   21
+    ---------------------------------------------------------------------------------------------------------
+                       Frequency (Hz)      Clearing time (s)       Frequency (Hz)          Clearing time (s)
+        OF2                 66                      1000                    66                  1000
+        OF1                 66                      1000                    66                  1000
+        UF1                 50                      1000                    50                  1000
+        UF2                 50                      1000                    50                  1000
+    ---------------------------------------------------------------------------------------------------------
+    '''
+
+    if cat2 == 'CAT_I' or cat2 == 'CAT_II':
+        eut.set_ov(params={'ov_trip_v_pts_as': [1.2, 1.2], 'ov_trip_t_pts_as': [0.16, 13]})
+        eut.set_uv(params={'uv_trip_v_pts_as': [0., 0.], 'uv_trip_t_pts_as': [21, 2]})
+        eut.set_of(params={'of_trip_f_pts_as': [66., 66.], 'of_trip_t_pts_as': [1000, 1000]})
+        eut.set_uf(params={'uf_trip_f_pts_as': [50., 50.], 'uf_trip_t_pts_as': [1000, 1000]})
+    else:
+        eut.set_ov(params={'ov_trip_v_pts_as': [1.2, 1.2], 'ov_trip_t_pts_as': [0.16, 13]})
+        eut.set_uv(params={'uv_trip_v_pts_as': [0., 0.], 'uv_trip_t_pts_as': [50, 21]})
+        eut.set_of(params={'of_trip_f_pts_as': [66., 66.], 'of_trip_t_pts_as': [1000, 1000]})
+        eut.set_uf(params={'uf_trip_f_pts_as': [50., 50.], 'uf_trip_t_pts_as': [1000, 1000]})
+
+    '''
+    Table 16 shows the most aggressive settings for the voltage–active power function to be used in
+    these tests. The P2 setting is intentionally set to a low but nonzero value so that the tester can
+    differentiate between when the unit stops operating due to unintentional islanding operation versus
+    power being reduced to zero due to this function response. Testing of a storage system configured
+    with these settings is applicable to this type test.
+
+    Table 16 — Voltage–active power (VW) settings for unintentional islanding testing
+    |-------------------------------------------------------------------------------
+    | Setting        |             Most aggressive       |            Default      |
+    --------------------------------------------------------------------------------
+                                                 Voltage (p.u.)                    
+         V1                             1.05                            1.06
+         V2                             1.06                            1.10
+    --------------------------------------------------------------------------------
+                                                 Active power (p.u.)
+         P1                             1.0                             1.0
+         P2                             0.2                             0.2
+    --------------------------------------------------------------------------------
+                                                 Response time (s)
+    Open Loop Response Time             0.5                             10
+    --------------------------------------------------------------------------------
+    '''
+    if test_params['vw'] == 'Default':
+        eut.set_pv(params={'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.06, 1.10],
+                           'pv_curve_p_pts_as': [1., 0.2], 'pv_olrt_as': 10.})
+    elif test_params['vw'] == 'MA':
+        eut.set_pv(params={'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.05, 1.06],
+                           'pv_curve_p_pts_as': [1., 0.2], 'pv_olrt_as': 0.5})
+    else:
+        eut.set_pv(params={'pv_mode_enable_as': False})
+
+    '''
+    Table 17 shows the settings for the voltage-reactive power function to be used in these tests. The
+    autonomously adjusted reference voltage (VRef) capability of the DER is not enabled for this testing
+    since the fastest time constant is 300 s, far longer than any response that would affect unintentional
+    islanding operation. The values in this table are for VRef = 1.00 p.u. VRef may be adjusted during the
+    power balance setup of the test, as needed, so that the testing is started in the center of the VV
+    curve. If the EUT has a wider range of capability than the settings in Table 17, such wider settings
+    may be used.
+
+    Table 17 — Voltage–reactive power (VV) settings for unintentional islanding testing Setting Category A
+    |-------------------------------------------------------------------------------------------------
+    | Setting           |                  Category A          |                 Category B             |
+    |                   | Most aggressive      | Default       | Most aggressive      | Default         |
+    --------------------------------------------------------------------------------------------------
+                                                 Voltage (p.u.)                    
+    | V1                | 0.98                 | 0.9           | 0.98                  | 0.92           
+    | V2                | 1.00                 | 1.0           | 1.00                  | 0.98           
+    | V3                | 1.00                 | 1.0           | 1.00                  | 1.02          
+    | V4                | 1.02                 | 1.1           | 1.02                  | 1.08           
+    --------------------------------------------------------------------------------------------------
+                                                 Reactive power (p.u.)
+    | Q1                | 0.25                 | 0.25           | 0.44                  | 0.44           
+    | Q2                | 0.00                 | 0              | 0                     | 0   
+    | Q3                | 0.00                 | 0              | 0                     | 0   
+    | Q4                | -0.25                | -0.25          | -0.44                 | -0.44     
+    --------------------------------------------------------------------------------------------------
+                                                 Response time (s)
+    Open Loop Rsp Time  | 1.00                 | 10            | 1                     | 5        
+    --------------------------------------------------------------------------------
+    '''
+    if cat == 'CAT_A':
+        if test_params['vv'] == 'Default':
+            eut.set_qv(params={'qv_mode_enable_as': True, 'qv_vref_as': 1., 'qv_vref_auto_mode_as': 'Off',
+                               'qv_curve_v_pts': [0.9, 1., 1., 1.1],
+                               'qv_curve_q_pts': [0.25, 0., 0., -0.25], 'qv_olrt_as': 10.})
+        elif test_params['vv'] == 'MA':
+            eut.set_qv(params={'qv_mode_enable_as': True, 'qv_vref_as': 1., 'qv_vref_auto_mode_as': 'Off',
+                               'qv_curve_v_pts': [0.98, 1., 1., 1.02],
+                               'qv_curve_q_pts': [0.25, 0., 0., -0.25], 'qv_olrt_as': 1.})
+        else:
+            eut.set_qv(params={'qv_mode_enable_as': False})
+    else:
+        if test_params['vv'] == 'Default':
+            eut.set_qv(params={'qv_mode_enable_as': True, 'qv_vref_as': 1., 'qv_vref_auto_mode_as': 'Off',
+                               'qv_curve_v_pts': [0.92, 0.98, 1.02, 1.08],
+                               'qv_curve_q_pts': [0.44, 0., 0., -0.44], 'qv_olrt_as': 5.})
+        elif test_params['vv'] == 'MA':
+            eut.set_qv(params={'qv_mode_enable_as': True, 'qv_vref_as': 1., 'qv_vref_auto_mode_as': 'Off',
+                               'qv_curve_v_pts': [0.98, 1., 1., 1.02],
+                               'qv_curve_q_pts': [0.44, 0., 0., -0.44], 'qv_olrt_as': 1.})
+        else:
+            eut.set_qv(params={'qv_mode_enable_as': False})
+
+    '''
+
+    Table 18 shows the settings for the active power-reactive power function to be used in these tests.
+
+                            Table 18 — Active power–reactive power settings
+    |-------------------------------------------------------------------------------------------------
+    | Setting           |                  Category A          |                 Category B             |
+    |                   | Most aggressive      | Default       | Most aggressive      | Default         |
+    --------------------------------------------------------------------------------------------------
+                                                 Active power (p.u.)                    
+    | P1                | 0.2                  | 0.2           | 0.2                  | 0.2          
+    | P2                | 0.8                  | 0.5           | 0.9                  | 0.5          
+    | P3                | 0.9                  | 1.0           | 1.0                  | 1.0    
+    |-------------------------------------------------------------------------------------------------
+                                                 Reactive power (p.u.)
+    | Q1                | 0.44                 | 0.0           | 0.44                 | 0.0           
+    | Q1                | 0.44                 | 0.0           | 0.44                 | 0.0           
+    | Q1                | -0.25                | -0.25         | -0.44                | -0.44           
+    |-------------------------------------------------------------------------------------------------
+
+    '''
+    if cat == 'CAT_A':
+        if test_params['wv'] == 'Default':
+            eut.set_qp(params={'qp_mode_enable_as': True, 'qp_curve_p_gen_pts_as': [0.2, 0.5, 1.0],
+                               'qp_curve_q_gen_pts_as': [0., 0., -0.25]})
+        elif test_params['wv'] == 'MA':
+            eut.set_qp(params={'qp_mode_enable_as': True, 'qp_curve_p_gen_pts_as': [0.2, 0.8, 0.9],
+                               'qp_curve_q_gen_pts_as': [0.44, 0.44, -0.25]})
+        else:
+            eut.set_pv(params={'qp_mode_enable_as': False})
+    else:
+        if test_params['wv'] == 'Default':
+            eut.set_qp(params={'qp_mode_enable_as': True, 'qp_curve_p_gen_pts_as': [0.2, 0.5, 1.0],
+                               'qp_curve_q_gen_pts_as': [0., 0., -0.44]})
+        elif test_params['wv'] == 'MA':
+            eut.set_qp(params={'qp_mode_enable_as': True, 'qp_curve_p_gen_pts_as': [0.2, 0.9, 1.0],
+                               'qp_curve_q_gen_pts_as': [0.44, 0.44, -0.44]})
+        else:
+            eut.set_qp(params={'qp_mode_enable_as': False})
+
+    '''
+    Table 19 shows the settings for the frequency-droop function to be used in these tests. Least
+    aggressive, default, and most aggressive settings are used in the test matrix in Table 13 and Table
+    14.
+
+                        Table 19 —Frequency-droop (FW) settings for unintentional islanding testing
+    |---------------------------------------------------------------------------------------------------------------
+    | Setting        |             Category I and Category II       |            Category III               
+    |                | Least aggressive | Default | Most aggressive | Least aggressive | Default | Most aggressive 
+    ----------------------------------------------------------------------------------------------------------------
+        dbOF, dbUF          1.0            0.036        0.017               1.0         0.036       0.017
+        kOF, kUF            0.05            0.05        0.03                0.05        0.05        0.02
+        T_response (s)      0               5             1                 10          5           0.2
+    ----------------------------------------------------------------------------------------------------------------
+    '''
+    if cat2 == 'CAT_I' or cat2 == 'CAT_II':
+        if test_params['fw'] == 'la':
+            eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 1.0, 'pf_dbuf_as': 1.0,
+                               'pf_kof_as': 0.05, 'pf_kuf_as': 0.05, 'pf_olrt_as': 0.})
+        elif test_params['fw'] == 'Default':
+            eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 0.036, 'pf_dbuf_as': 0.036,
+                               'pf_kof_as': 0.05, 'pf_kuf_as': 0.05, 'pf_olrt_as': 5.})
+        else:  # ma
+            eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 0.017, 'pf_dbuf_as': 0.017,
+                               'pf_kof_as': 0.03, 'pf_kuf_as': 0.03, 'pf_olrt_as': 1.})
+    else:
+        if test_params['fw'] == 'la':
+            eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 1.0, 'pf_dbuf_as': 1.0,
+                               'pf_kof_as': 0.05, 'pf_kuf_as': 0.05, 'pf_olrt_as': 10.})
+        elif test_params['fw'] == 'Default':
+            eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 0.036, 'pf_dbuf_as': 0.036,
+                               'pf_kof_as': 0.05, 'pf_kuf_as': 0.05, 'pf_olrt_as': 5.})
+        else:  # ma
+            eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 0.017, 'pf_dbuf_as': 0.017,
+                               'pf_kof_as': 0.02, 'pf_kuf_as': 0.02, 'pf_olrt_as': 0.2})
+
+
+def print_measurements(meas):
+    """
+    Print the UI measurements
+
+    :param meas: daq measurements
+    :return: None
+    """
+
+    ts.log('S3 voltages = [%0.1f, %0.1f, %0.1f] and currents = [%0.1f, %0.1f, %0.1f]' %
+           (meas['AC_VRMS_SOURCE_1'], meas['AC_VRMS_SOURCE_2'], meas['AC_VRMS_SOURCE_3'],
+            meas['AC_IRMS_SOURCE_1'], meas['AC_IRMS_SOURCE_2'], meas['AC_IRMS_SOURCE_3']))
+    ts.log('Switch S3 active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f]' %
+           (meas['AC_SOURCE_P']/3., meas['AC_SOURCE_P']/3., meas['AC_SOURCE_P']/3.,
+            meas['AC_SOURCE_Q']/3., meas['AC_SOURCE_Q']/3., meas['AC_SOURCE_Q']/3.))
+    ts.log('Switch S2 active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f]' %
+           (meas['AC_P']/3., meas['AC_P']/3., meas['AC_P']/3.,
+            meas['AC_Q']/3., meas['AC_Q']/3., meas['AC_Q']/3.))
+    ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
+           'resistive load' % (meas['AC_P_LOAD_R_1'], meas['AC_P_LOAD_R_2'], meas['AC_P_LOAD_R_3'],
+                               meas['AC_Q_LOAD_R_1'], meas['AC_Q_LOAD_R_2'], meas['AC_Q_LOAD_R_3']))
+    ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
+           'capacitive load' % (meas['AC_P_LOAD_C_1'], meas['AC_P_LOAD_C_2'], meas['AC_P_LOAD_C_3'],
+                                meas['AC_Q_LOAD_C_1'], meas['AC_Q_LOAD_C_2'], meas['AC_Q_LOAD_C_3']))
+    ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
+           'inductive load' % (meas['AC_P_LOAD_L_1'], meas['AC_P_LOAD_L_2'], meas['AC_P_LOAD_L_3'],
+                               meas['AC_Q_LOAD_L_1'], meas['AC_Q_LOAD_L_2'], meas['AC_Q_LOAD_L_3']))
+
+
+def run_ui_test(phil, model_name, daq, test_num, t_trips, q_inc, high_freq_count, low_freq_count, result_summary,
+                c_set):
     """
     Run single UI test
 
@@ -53,11 +303,14 @@ def run_ui_test(phil, model_name, daq, test_num, t_trips, q_inc, high_freq_count
     :param high_freq_count: number of over frequency islanding events
     :param low_freq_count: number of under frequency islanding events
     :param result_summary: summary file
+    :param c_set: capacitor setpoint
     :return: t_trips, t_trip, high_freq_count, low_freq_count
     """
 
     # adjust reactive load
-    phil.set_params(model_name + '/SM_Source/Phase Angle Phase A0/Value', c * q_inc)
+    ctrl_sigs = phil.get_control_signals(details=False)
+    ctrl_sigs[17] = c_set * q_inc  # Capacitor Pot
+    phil.set_control_signals(values=ctrl_sigs)
 
     '''
     2) With the EUT and load operating at stable conditions, record the voltage and current at switch
@@ -70,23 +323,7 @@ def run_ui_test(phil, model_name, daq, test_num, t_trips, q_inc, high_freq_count
     ts.sleep(2.)
     daq.data_sample()
     meas = daq.data_read()
-    ts.log('Voltages = [%0.1f, %0.1f, %0.1f] and currents = [%0.1f, %0.1f, %0.1f] at switch S3' %
-           (meas['v1_s3'], meas['v2_s3'], meas['v3_s3'], meas['i1_s3'], meas['i2_s3'], meas['i3_s3']))
-    ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
-           'switch S3' % (meas['p1_s3'], meas['p2_s3'], meas['p3_s3'],
-                          meas['q1_s3'], meas['q2_s3'], meas['q3_s3']))
-    ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
-           'switch S2' % (meas['p1_s2'], meas['p2_s2'], meas['p3_s2'],
-                          meas['q1_s2'], meas['q2_s2'], meas['q3_s2']))
-    ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
-           'resistive load' % (meas['p1_r'], meas['p2_r'], meas['p3_r'],
-                               meas['q1_r'], meas['q2_r'], meas['q3_r']))
-    ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
-           'capacitive load' % (meas['p1_c'], meas['p2_c'], meas['p3_c'],
-                                meas['q1_c'], meas['q2_c'], meas['q3_c']))
-    ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
-           'inductive load' % (meas['p1_l'], meas['p2_l'], meas['p3_l'],
-                               meas['q1_l'], meas['q2_l'], meas['q3_l']))
+    print_measurements(meas)
 
     '''
     3) Open switch S3 and measure the time it takes for the EUT to cease to energize the island.
@@ -94,7 +331,8 @@ def run_ui_test(phil, model_name, daq, test_num, t_trips, q_inc, high_freq_count
     island drops and remains below 0.05 p.u. Record this as the clearing time.
     '''
     # waveform OpWrite configured to capture when S3 is opened
-    phil.set_params(model_name + '/SM_Source/Phase Angle Phase A0/Value', 0)  # open S3
+    ctrl_sigs[2] = 1  # Capacitor Pot
+    phil.set_control_signals(values=ctrl_sigs)
 
     # Complete data capture
     ts.log('Waiting 10 seconds for Opal to save the waveform data.')
@@ -133,6 +371,39 @@ def run_ui_test(phil, model_name, daq, test_num, t_trips, q_inc, high_freq_count
 
     return t_trips, t_trip, high_freq_count, low_freq_count
 
+
+def energize_system(ctrl_sigs, phil, daq, eut_startup_time, p_rated):
+    """
+    Power on amplifier and wait for EUT to start
+
+    :param ctrl_sigs: control signals from Console
+    :param phil: phil object
+    :param daq: daq object
+    :param eut_startup_time: maximum time to wait for EUT start up
+    :param p_rated: power rating of EUT
+    :return: None
+    """
+    ctrl_sigs[2] = 0.  # close S3
+    ctrl_sigs[3] = 1.  # energize amplifier
+    if not ts.confirm('ABOUT TO ENERGIZE AMPLIFIER - OK?'):
+        raise Exception
+    phil.set_control_signals(values=ctrl_sigs)
+
+    count = 0
+    while count < eut_startup_time:
+        ts.sleep(1)
+        count += 1
+        daq.data_sample()
+        inv_p_pu = daq.data_read()['AC_P'] / p_rated
+        ts.log('Waited %s sec for EUT to start. Inverter power is %0.4f pu.' % (count, inv_p_pu))
+        if inv_p_pu > 0.9:
+            break
+        if count >= eut_startup_time:
+            ts.log_error('EUT did not start.')
+            raise Exception
+
+    ts.sleep(10)  # time to allow the console measurements to settle
+
 # The following EUT functions are required for the UI test:
 # eut.get_ui()
 # eut.set_ui()
@@ -145,6 +416,27 @@ def run_ui_test(phil, model_name, daq, test_num, t_trips, q_inc, high_freq_count
 # eut.set_qv()  # Q(V) or VV
 # eut.set_qp()  # Q(P) or Watt-Var
 # eut.set_pf()  # P(f) or Freq-Watt/Freq-Droop
+
+# ctrl_sigs[0] = Control Signal #1 = Test Num
+# ctrl_sigs[1] = Control Signal #2 = SubTest Num
+# ctrl_sigs[2] = Control Signal #3 = Islanding Test
+# ctrl_sigs[3] = Control Signal #4 = Ametek Output
+# ctrl_sigs[4] = Control Signal #5 = Inv VLL
+# ctrl_sigs[5] = Control Signal #6 = Inv VAmax
+# ctrl_sigs[6] = Control Signal #7 = V Trans. Gain
+# ctrl_sigs[7] = Control Signal #8 = Phase Comp. (Deg)
+# ctrl_sigs[8] = Control Signal #9 = Resistors Pot
+# ctrl_sigs[9] = Control Signal #10 = Res Man Test
+# ctrl_sigs[10] = Control Signal #11 = PR Cust. Test
+# ctrl_sigs[11] = Control Signal #12 = Rinternal Pot
+# ctrl_sigs[12] = Control Signal #13 = Rinternal Manual Test
+# ctrl_sigs[13] = Control Signal #14 = PL Custom Test
+# ctrl_sigs[14] = Control Signal #15 = Inductor Pot
+# ctrl_sigs[15] = Control Signal #16 = Inductor Manual Test
+# ctrl_sigs[16] = Control Signal #17 = QL Custom Test
+# ctrl_sigs[17] = Control Signal #18 = Capacitor Pot
+# ctrl_sigs[18] = Control Signal #19 = Cap Man Test
+# ctrl_sigs[19] = Control Signal #20 = QC Cust. Test
 
 
 def test_run():
@@ -212,7 +504,6 @@ def test_run():
 
         # initialize the hardware in the loop
         phil = hil.hil_init(ts)
-        phil.control_panel_info(state=1)
 
         """
         A separate module has been create for the 1547.1 Standard
@@ -226,6 +517,8 @@ def test_run():
         if pv is not None:
             pv.power_on()
             ts.sleep(0.5)
+            ts.log('Setting PV power to %0.2f W' % p_rated)
+            pv.power_set(p_rated)
 
         if phil is not None:
             ts.log("{}".format(phil.info()))
@@ -273,6 +566,7 @@ def test_run():
         -----------------------------------------------------------------------------------------------------------
         '''
         if pv is not None:
+            ts.log('Setting PV power to %0.2f W' % (p_rated*1.25))
             pv.power_set(p_rated*1.25)
 
         '''
@@ -464,7 +758,7 @@ def test_run():
                 ts.sleep(1)
                 ts.log("    {}".format(phil.stop_simulation()))
 
-            ts.log('Stop time set to %s' % phil.set_stop_time(1000.))
+            ts.log('Stop time set to %s' % phil.set_stop_time(phil.hil_stop_time))
 
             if load == 'Yes':
                 ts.sleep(1)
@@ -476,57 +770,20 @@ def test_run():
             # Set test number to initialize the RLC parameter based on Table 12 or 13 - done with test num update
             ctrl_sigs = phil.get_control_signals(details=False)
             # ts.log_debug('Control signals on load: %s' % str(ctrl_sigs))
-
-            # ctrl_sigs[0] = Control Signal #1 = Test Num
-            # ctrl_sigs[1] = Control Signal #2 = SubTest Num
-            # ctrl_sigs[2] = Control Signal #3 = Islanding Test
-            # ctrl_sigs[3] = Control Signal #4 = Ametek Output
-            # ctrl_sigs[4] = Control Signal #5 = Inv VLL
-            # ctrl_sigs[5] = Control Signal #6 = Inv VAmax
-            # ctrl_sigs[6] = Control Signal #7 = V Trans. Gain
-            # ctrl_sigs[7] = Control Signal #8 = Phase Comp. (Deg)
-            # ctrl_sigs[8] = Control Signal #9 = Resistors Pot
-            # ctrl_sigs[9] = Control Signal #10 = Res Man Test
-            # ctrl_sigs[10] = Control Signal #11 = PR Cust. Test
-            # ctrl_sigs[11] = Control Signal #12 = Rinternal Pot
-            # ctrl_sigs[12] = Control Signal #13 = Rinternal Manual Test
-            # ctrl_sigs[13] = Control Signal #14 = PL Custom Test
-            # ctrl_sigs[14] = Control Signal #15 = Inductor Pot
-            # ctrl_sigs[15] = Control Signal #16 = Inductor Manual Test
-            # ctrl_sigs[16] = Control Signal #17 = QL Custom Test
-            # ctrl_sigs[17] = Control Signal #18 = Capacitor Pot
-            # ctrl_sigs[18] = Control Signal #19 = Cap Man Test
-            # ctrl_sigs[19] = Control Signal #20 = QC Cust. Test
-            ctrl_sigs[0] = test_number  # test num
-            ctrl_sigs[3] = 1  # energize amplifier
-            ctrl_sigs[2] = 0  # open S3 switch (for islanding test execution)
+            ctrl_sigs[0] = float(test_number)  # test num
             ctrl_sigs[4] = v_ll  # set line-line voltage
             ctrl_sigs[5] = s_rated  # set EUT apparent power
+            ctrl_sigs[7] = 12  # degrees, must be determined beforehand
+            ctrl_sigs[17] = 0  # cap pot
+            ctrl_sigs[8] = 0  # r pot
+            ts.log_debug('ctrl_sigs: %s' % ctrl_sigs)
 
-            ts.log_warning('ABOUT TO ENERGIZE AMPLIFIER - STOP NOW IF UNREADY!')
-            for countdown in range(5, 0, -1):
-                ts.log('Engergizing in t-minus %d seconds.' % countdown)
-                ts.sleep(1)
-            # ts.log_debug('ctrl_sigs: %s' % ctrl_sigs)
-            phil.set_control_signals(values=ctrl_sigs)
-            # ctrl_sigs = phil.get_control_signals(details=False)
-            # ts.log_debug('Control signals update: %s' % str(ctrl_sigs))
+            energize_system(ctrl_sigs, phil, daq, eut_startup_time, p_rated)
 
-            # data = daq.data_read()
-            # ts.log_debug('Data = %s' % data)
-            count = 0
-            while count < eut_startup_time:
-                ts.sleep(1)
-                count += 1
-                daq.data_sample()
-                inv_p_pu = daq.data_read()['AC_P']/p_rated
-                ts.log('Waited %s sec for EUT to start. Inverter power is %0.4f pu.' % (count, inv_p_pu))
-                if inv_p_pu > 0.9:
-                    break
-                if count > eut_startup_time:
-                    result = script.RESULT_FAIL
-                    ts.log_error('EUT did not start.')
-                    raise Exception
+            '''
+            Set the grid support functions before verifying the RLC tuning
+            '''
+            # set_grid_support_functions(eut, cat, cat2, test_params)
 
             # get PS3 and QS3
             daq.data_sample()
@@ -537,53 +794,74 @@ def test_run():
 
             v_out_of_band = True
             # tune RLC to get target P/Q levels through switch 3
-            while -0.02 < ps3_pu > 0.02 or -0.02 < qs3_pu > 0.02 or v_out_of_band:
+            c = 0
+            while not(-0.02 < ps3_pu < 0.02) or not(-0.02 < qs3_pu < 0.02) or v_out_of_band:
                 # calculations to determine RLC adjustments
                 daq.data_sample()
                 meas = daq.data_read()
-                ts.log_debug('\t\t TARGET \t Value')
-                ts.log_debug('EUT P \t\t %0.2f \t\t %0.2f' % (test_params['p_eut'], meas['AC_P']/p_rated))
-                ts.log_debug('EUT Q \t\t %0.2f \t\t %0.2f' % (test_params['q_eut'], meas['AC_Q']/p_rated))
-                ts.log_debug('PR+PL+PC \t %0.2f \t\t %0.2f' % (test_params['pr_pl_pc'], meas['AC_P_LOAD_PU']))
-                ts.log_debug('QC \t\t %0.2f \t\t %0.2f' % (test_params['qc'], meas['QC']))
-                ts.log_debug('QL \t\t %0.2f \t\t %0.2f' % (test_params['ql'], meas['QL']))
-                ts.log_debug('QF \t\t %0.2f \t\t %0.2f' % (test_params['qf'], meas['QUALITY_FACTOR']))
+                p_load = meas['AC_P_LOAD']
+                q_load = meas['AC_Q_LOAD']
+                p_utility = meas['AC_SOURCE_P']
+                q_utility = meas['AC_SOURCE_Q']
 
+                # Adjust
                 ctrl_sigs = phil.get_control_signals()
                 ts.log_debug('ctrl_sigs: %s' % ctrl_sigs)
-                ts.log_debug('Prior R (%% change) = %0.2f, L (%% change) = %0.2f, C (%% change) = %0.2f.' %
-                             (ctrl_sigs[8], ctrl_sigs[14], ctrl_sigs[17]))
-                r, l, c = find_rlc()
-                ts.log('Setting R to change %0.3f%%, L to change %0.3f%%, C to change %0.3f%%' % (r, l, c))
+                r_set = ctrl_sigs[8]
+                l_set = ctrl_sigs[14]
+                c_set = ctrl_sigs[17]
+                ts.log_debug('Prior p_load = %s W, q_load = %s var, p_utility = %s W, q_utility = %s var, '
+                             'RLC = [%s, %s, %s]%%' % (p_load, q_load, p_utility, q_utility,
+                                                                r_set, l_set, c_set))
+                ts.log_debug('Prior p_load = %0.3f W, q_load = %0.3f var, p_utility = %0.3f W, q_utility = %0.3f var, '
+                             'RLC = [%0.3f, %0.3f, %0.3f]%%' % (p_load, q_load, p_utility, q_utility,
+                                                                r_set, l_set, c_set))
+
+                r, l, c = find_rlc(p_utility, q_utility, r_set, l_set, c_set)
+                # ts.log('Setting R to change %0.3f%%, L to change %0.3f%%, C to change %0.3f%%' % (r, l, c))
                 ctrl_sigs[8] = r  # Resistors Pot
                 ctrl_sigs[14] = l  # Inductor Pot
                 ctrl_sigs[17] = c  # Capacitor Pot
                 phil.set_control_signals(values=ctrl_sigs)
-                ts.sleep(2)  # wait to see how changes affect P/Q
-                ctrl_sigs = phil.get_control_signals()
-                ts.log_debug('New R (%% change) = %0.2f, L (%% change) = %0.2f, C (%% change) = %0.2f.' %
-                             (ctrl_sigs[8], ctrl_sigs[14], ctrl_sigs[17]))
 
-                # get PS3 and QS3
+                ts.sleep(5)  # wait to see how changes affect P/Q
                 daq.data_sample()
                 meas = daq.data_read()
-                # ts.log_debug(meas)
                 ps3_pu = meas['AC_P_S3_PU']
                 qs3_pu = meas['AC_Q_S3_PU']
-
-                # Verify the voltage are within 5% of each other
+                p_load = meas['AC_P_LOAD']
+                q_load = meas['AC_Q_LOAD']
+                p_utility = meas['AC_SOURCE_P']
+                q_utility = meas['AC_SOURCE_Q']
                 v1 = meas['AC_VRMS_1']/v_nom
                 v2 = meas['AC_VRMS_2']/v_nom
                 v3 = meas['AC_VRMS_3']/v_nom
+                ts.log_debug('New p_load = %0.3f W, q_load = %0.3f var, p_utility = %0.3f W, q_utility = %0.3f var, '
+                             'RLC = [%0.3f, %0.3f, %0.3f]%%' % (p_load, q_load, p_utility, q_utility, r, l, c))
+                ts.log('After changes to RLC, the S3 P = %0.4f pu and Q = %0.4f pu.' % (ps3_pu, qs3_pu))
+
+                # Verify the voltage are within 5% of each other
                 v_delta = [abs(v1-v2), abs(v2-v3), abs(v1-v3)]
-                if any(v_delta) > 0.05:
-                    ts.log_debug('Voltages are out of band: V1-V2 = %0.2f V2-V3 = %0.2f V1-V3 = %0.2f' %
-                                 (v_delta[0], v_delta[1], v_delta[2]))
+                if v_delta[0] > 0.05 or v_delta[1] > 0.05 or v_delta[2] > 0.5:
+                    ts.log('Voltages are out of band: V1-V2 = %0.4f V2-V3 = %0.4f V1-V3 = %0.4f' %
+                           (v_delta[0], v_delta[1], v_delta[2]))
                     v_out_of_band = True
                 else:
-                    ts.log_debug('Voltages are in band: V1-V2 = %0.2f V2-V3 = %0.2f V1-V3 = %0.2f' %
-                                 (v_delta[0], v_delta[1], v_delta[2]))
+                    ts.log('Voltages are in band: V1-V2 = %0.4f V2-V3 = %0.4f V1-V3 = %0.4f' %
+                           (v_delta[0], v_delta[1], v_delta[2]))
                     v_out_of_band = False
+
+                ts.log_debug('WHILE LOOP LOGIC: not(-0.02 < ps3_pu < 0.02) = %s' % (not(-0.02 < ps3_pu < 0.02)))
+                ts.log_debug('WHILE LOOP LOGIC: not(-0.02 < ps3_pu < 0.02) = %s' % (not(-0.02 < qs3_pu < 0.02)))
+                ts.log_debug('WHILE LOOP LOGIC: v_out_of_band = %s' % (v_out_of_band))
+
+            ts.log_debug('\t\t TARGET \t Value')
+            ts.log_debug('EUT P \t\t %0.5f \t\t %0.5f' % (test_params['p_eut'], meas['AC_P']/p_rated))
+            ts.log_debug('EUT Q \t\t %0.5f \t\t %0.5f' % (test_params['q_eut'], meas['AC_Q']/p_rated))
+            ts.log_debug('PR+PL+PC \t %0.5f \t\t %0.5f' % (test_params['pr_pl_pc'], meas['AC_P_LOAD_PU']))
+            ts.log_debug('QC \t\t %0.5f \t\t %0.5f' % (test_params['qc'], meas['QC']))
+            ts.log_debug('QL \t\t %0.5f \t\t %0.5f' % (test_params['ql'], meas['QL']))
+            ts.log_debug('QF \t\t %0.5f \t\t %0.5f' % (test_params['qf'], meas['QUALITY_FACTOR']))
 
             '''
             d) Verify the test setup can sustain an island.
@@ -606,49 +884,35 @@ def test_run():
             ts.sleep(2.)
             daq.data_sample()
             meas = daq.data_read()
-            ts.log_debug(meas)
-            ts.log('Voltages = [%0.1f, %0.1f, %0.1f] and currents = [%0.1f, %0.1f, %0.1f] at switch S3' %
-                   (meas['AC_VRMS_SOURCE_1'], meas['AC_VRMS_SOURCE_2'], meas['AC_VRMS_SOURCE_3'],
-                    meas['AC_IRMS_SOURCE_1'], meas['AC_IRMS_SOURCE_2'], meas['AC_IRMS_SOURCE_3']))
-
-            ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at switch S3' %
-                   (meas['AC_P_S1_1'], meas['AC_P_S1_2'], meas['AC_P_S1_3'], meas['q1_s3'], meas['q2_s3'], meas['q3_s3']))
-            ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at switch S2' %
-                   (meas['p1_s2'], meas['p2_s2'], meas['p3_s2'], meas['q1_s2'], meas['q2_s2'], meas['q3_s2']))
-
-            ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at resistive load'
-                   % (meas['AC_P_LOAD_R_1'], meas['AC_P_LOAD_R_2'], meas['AC_P_LOAD_R_3'],
-                      meas['AC_Q_LOAD_R_1'], meas['AC_Q_LOAD_R_2'], meas['AC_Q_LOAD_R_3']))
-            ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at capacitive '
-                   'load' % (meas['AC_P_LOAD_C_1'], meas['AC_P_LOAD_C_2'], meas['AC_P_LOAD_C_3'],
-                             meas['AC_Q_LOAD_C_1'], meas['AC_Q_LOAD_C_2'], meas['AC_Q_LOAD_C_3']))
-            ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at inductive '
-                   'load' % (meas['AC_P_LOAD_L_1'], meas['AC_P_LOAD_L_2'], meas['AC_P_LOAD_L_3'],
-                             meas['AC_Q_LOAD_L_1'], meas['AC_Q_LOAD_L_2'], meas['AC_Q_LOAD_L_3']))
+            print_measurements(meas)
 
             '''
             4) Open switch S3. If, after 10 s, the island circuit remains energized, the test setup is considered
             verified. Measure and record the voltage and frequency of the islanding operation.
             '''
-            phil.set_params(model_name + '/SM_Source/Phase Angle Phase A0/Value', c)  # open S3
+            ctrl_sigs = phil.get_control_signals()
+            ctrl_sigs[2] = 1  # open S3 switch (for islanding test execution)
+            phil.set_control_signals(values=ctrl_sigs)
             ts.sleep(10.)
             daq.data_sample()
             meas = daq.data_read()
-            ts.log('Voltage = [%0.1f, %0.1f, %0.1f] and frequency = [%0.1f, %0.1f, %0.1f] of island.'
-                   'load' % (meas['AC_VRMS_1'], meas['AC_VRMS_2'], meas['AC_VRMS_3'],
-                             meas['AC_FREQ_PCC'], meas['AC_FREQ_PCC'], meas['AC_FREQ_PCC']))
+            ts.log('Voltage = [%0.2f, %0.2f, %0.2f] and frequency = [%0.3f, %0.3f, %0.3f] of island at EUT' %
+                   (meas['AC_VRMS_1'], meas['AC_VRMS_2'], meas['AC_VRMS_3'],
+                    meas['AC_FREQ_PCC'], meas['AC_FREQ_PCC'], meas['AC_FREQ_PCC']))
             '''
             5) De-energize the island.
             '''
+            ctrl_sigs[3] = 0.  # de-energize amplifier
+            phil.set_control_signals(values=ctrl_sigs)
             # phil.stop_simulation()
-            eut.set_p_lim(params={'p_lim_mode_enable_as': True, 'p_lim_w_as': 0.0})
 
             '''
             6) Enable the unintentional islanding protection in the EUT.
             '''
+            # phil.start_simulation()
+            energize_system(ctrl_sigs, phil, daq, eut_startup_time, p_rated)
             eut.set_ui(params={'ui_mode_enable_as': True})
             ts.log('EUT settings: %s' % eut.get_ui())
-            eut.set_p_lim(params={'p_lim_mode_enable_as': True, 'p_lim_w_as': 100.})
 
             '''
             e) Clearing time tests.
@@ -658,210 +922,15 @@ def test_run():
             '''
 
             '''
-            Table 15 shows the voltage and frequency trip levels and clearing time settings to be used for the
-            unintentional islanding tests. If the EUT is capable of operating at wider voltage and frequency trip
-            settings, then such settings shall be used. The EUT may have additional voltage and frequency trip
-            settings for self-protection, and such settings may remain enabled in the EUT.
-        
-                    Table 15 —Voltage and frequency trip settings for unintentional islanding testing
-        |--------------------------------------------------------------------------------------------------------
-        | Trip           |             Category I and Category II       |            Category III               |
-        | Function       | Voltage (p.u.)       | Clearing time (s)     | Voltage (p.u.) | Clearing time (s)    |
-        ---------------------------------------------------------------------------------------------------------
-            OV2                 1.2                     0.16                    1.2                 0.16
-            OV1                 1.2                     13                      1.2                 13
-            UV1                 0                       21                      0                   50
-            UV2                 0                       2                       0                   21
-        ---------------------------------------------------------------------------------------------------------
-                           Frequency (Hz)      Clearing time (s)       Frequency (Hz)          Clearing time (s)
-            OF2                 66                      1000                    66                  1000
-            OF1                 66                      1000                    66                  1000
-            UF1                 50                      1000                    50                  1000
-            UF2                 50                      1000                    50                  1000
-        ---------------------------------------------------------------------------------------------------------
-            '''
-            if cat2 == 'CAT_I' or cat2 == 'CAT_II':
-                eut.set_ov(params={'ov_trip_v_pts_as': [1.2, 1.2], 'ov_trip_t_pts_as': [0.16, 13]})
-                eut.set_uv(params={'uv_trip_v_pts_as': [0., 0.], 'uv_trip_t_pts_as': [21, 2]})
-                eut.set_of(params={'of_trip_f_pts_as': [66., 66.], 'of_trip_t_pts_as': [1000, 1000]})
-                eut.set_uf(params={'uf_trip_f_pts_as': [50., 50.], 'uf_trip_t_pts_as': [1000, 1000]})
-            else:
-                eut.set_ov(params={'ov_trip_v_pts_as': [1.2, 1.2], 'ov_trip_t_pts_as': [0.16, 13]})
-                eut.set_uv(params={'uv_trip_v_pts_as': [0., 0.], 'uv_trip_t_pts_as': [50, 21]})
-                eut.set_of(params={'of_trip_f_pts_as': [66., 66.], 'of_trip_t_pts_as': [1000, 1000]})
-                eut.set_uf(params={'uf_trip_f_pts_as': [50., 50.], 'uf_trip_t_pts_as': [1000, 1000]})
-
-            '''
-            Table 16 shows the most aggressive settings for the voltage–active power function to be used in
-            these tests. The P2 setting is intentionally set to a low but nonzero value so that the tester can
-            differentiate between when the unit stops operating due to unintentional islanding operation versus
-            power being reduced to zero due to this function response. Testing of a storage system configured
-            with these settings is applicable to this type test.
-            
-            Table 16 — Voltage–active power (VW) settings for unintentional islanding testing
-            |-------------------------------------------------------------------------------
-            | Setting        |             Most aggressive       |            Default      |
-            --------------------------------------------------------------------------------
-                                                         Voltage (p.u.)                    
-                 V1                             1.05                            1.06
-                 V2                             1.06                            1.10
-            --------------------------------------------------------------------------------
-                                                         Active power (p.u.)
-                 P1                             1.0                             1.0
-                 P2                             0.2                             0.2
-            --------------------------------------------------------------------------------
-                                                         Response time (s)
-            Open Loop Response Time             0.5                             10
-            --------------------------------------------------------------------------------
-            '''
-            if test_params['vw'] == 'Default':
-                eut.set_pv(params={'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.06, 1.10],
-                                   'pv_curve_p_pts_as': [1., 0.2], 'pv_olrt_as': 10.})
-            elif test_params['vw'] == 'MA':
-                eut.set_pv(params={'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.05, 1.06],
-                                   'pv_curve_p_pts_as': [1., 0.2], 'pv_olrt_as': 0.5})
-            else:
-                eut.set_pv(params={'pv_mode_enable_as': False})
-
-            '''
-            Table 17 shows the settings for the voltage-reactive power function to be used in these tests. The
-            autonomously adjusted reference voltage (VRef) capability of the DER is not enabled for this testing
-            since the fastest time constant is 300 s, far longer than any response that would affect unintentional
-            islanding operation. The values in this table are for VRef = 1.00 p.u. VRef may be adjusted during the
-            power balance setup of the test, as needed, so that the testing is started in the center of the VV
-            curve. If the EUT has a wider range of capability than the settings in Table 17, such wider settings
-            may be used.
-            
-            Table 17 — Voltage–reactive power (VV) settings for unintentional islanding testing Setting Category A
-            |-------------------------------------------------------------------------------------------------
-            | Setting           |                  Category A          |                 Category B             |
-            |                   | Most aggressive      | Default       | Most aggressive      | Default         |
-            --------------------------------------------------------------------------------------------------
-                                                         Voltage (p.u.)                    
-            | V1                | 0.98                 | 0.9           | 0.98                  | 0.92           
-            | V2                | 1.00                 | 1.0           | 1.00                  | 0.98           
-            | V3                | 1.00                 | 1.0           | 1.00                  | 1.02          
-            | V4                | 1.02                 | 1.1           | 1.02                  | 1.08           
-            --------------------------------------------------------------------------------------------------
-                                                         Reactive power (p.u.)
-            | Q1                | 0.25                 | 0.25           | 0.44                  | 0.44           
-            | Q2                | 0.00                 | 0              | 0                     | 0   
-            | Q3                | 0.00                 | 0              | 0                     | 0   
-            | Q4                | -0.25                | -0.25          | -0.44                 | -0.44     
-            --------------------------------------------------------------------------------------------------
-                                                         Response time (s)
-            Open Loop Rsp Time  | 1.00                 | 10            | 1                     | 5        
-            --------------------------------------------------------------------------------
-            '''
-            if cat == 'CAT_A':
-                if test_params['vv'] == 'Default':
-                    eut.set_qv(params={'qv_mode_enable_as': True, 'qv_vref_as': 1., 'qv_vref_auto_mode_as': 'Off',
-                                       'qv_curve_v_pts': [0.9, 1., 1., 1.1],
-                                       'qv_curve_q_pts': [0.25, 0., 0., -0.25], 'qv_olrt_as': 10.})
-                elif test_params['vv'] == 'MA':
-                    eut.set_qv(params={'qv_mode_enable_as': True, 'qv_vref_as': 1., 'qv_vref_auto_mode_as': 'Off',
-                                       'qv_curve_v_pts': [0.98, 1., 1., 1.02],
-                                       'qv_curve_q_pts': [0.25, 0., 0., -0.25], 'qv_olrt_as': 1.})
-                else:
-                    eut.set_qv(params={'qv_mode_enable_as': False})
-            else:
-                if test_params['vv'] == 'Default':
-                    eut.set_qv(params={'qv_mode_enable_as': True, 'qv_vref_as': 1., 'qv_vref_auto_mode_as': 'Off',
-                                       'qv_curve_v_pts': [0.92, 0.98, 1.02, 1.08],
-                                       'qv_curve_q_pts': [0.44, 0., 0., -0.44], 'qv_olrt_as': 5.})
-                elif test_params['vv'] == 'MA':
-                    eut.set_qv(params={'qv_mode_enable_as': True, 'qv_vref_as': 1., 'qv_vref_auto_mode_as': 'Off',
-                                       'qv_curve_v_pts': [0.98, 1., 1., 1.02],
-                                       'qv_curve_q_pts': [0.44, 0., 0., -0.44], 'qv_olrt_as': 1.})
-                else:
-                    eut.set_qv(params={'qv_mode_enable_as': False})
-
-            '''
-        
-            Table 18 shows the settings for the active power-reactive power function to be used in these tests.
-            
-                                    Table 18 — Active power–reactive power settings
-            |-------------------------------------------------------------------------------------------------
-            | Setting           |                  Category A          |                 Category B             |
-            |                   | Most aggressive      | Default       | Most aggressive      | Default         |
-            --------------------------------------------------------------------------------------------------
-                                                         Active power (p.u.)                    
-            | P1                | 0.2                  | 0.2           | 0.2                  | 0.2          
-            | P2                | 0.8                  | 0.5           | 0.9                  | 0.5          
-            | P3                | 0.9                  | 1.0           | 1.0                  | 1.0    
-            |-------------------------------------------------------------------------------------------------
-                                                         Reactive power (p.u.)
-            | Q1                | 0.44                 | 0.0           | 0.44                 | 0.0           
-            | Q1                | 0.44                 | 0.0           | 0.44                 | 0.0           
-            | Q1                | -0.25                | -0.25         | -0.44                | -0.44           
-            |-------------------------------------------------------------------------------------------------
-            
-            '''
-            if cat == 'CAT_A':
-                if test_params['wv'] == 'Default':
-                    eut.set_qp(params={'qp_mode_enable_as': True, 'qp_curve_p_gen_pts_as': [0.2, 0.5, 1.0],
-                                       'qp_curve_q_gen_pts_as': [0., 0., -0.25]})
-                elif test_params['wv'] == 'MA':
-                    eut.set_qp(params={'qp_mode_enable_as': True, 'qp_curve_p_gen_pts_as': [0.2, 0.8, 0.9],
-                                       'qp_curve_q_gen_pts_as': [0.44, 0.44, -0.25]})
-                else:
-                    eut.set_pv(params={'qp_mode_enable_as': False})
-            else:
-                if test_params['wv'] == 'Default':
-                    eut.set_qp(params={'qp_mode_enable_as': True, 'qp_curve_p_gen_pts_as': [0.2, 0.5, 1.0],
-                                       'qp_curve_q_gen_pts_as': [0., 0., -0.44]})
-                elif test_params['wv'] == 'MA':
-                    eut.set_qp(params={'qp_mode_enable_as': True, 'qp_curve_p_gen_pts_as': [0.2, 0.9, 1.0],
-                                       'qp_curve_q_gen_pts_as': [0.44, 0.44, -0.44]})
-                else:
-                    eut.set_qp(params={'qp_mode_enable_as': False})
-
-            '''
-            Table 19 shows the settings for the frequency-droop function to be used in these tests. Least
-            aggressive, default, and most aggressive settings are used in the test matrix in Table 13 and Table
-            14.
-            
-                            Table 19 —Frequency-droop (FW) settings for unintentional islanding testing
-        |---------------------------------------------------------------------------------------------------------------
-        | Setting        |             Category I and Category II       |            Category III               
-        |                | Least aggressive | Default | Most aggressive | Least aggressive | Default | Most aggressive 
-        ----------------------------------------------------------------------------------------------------------------
-            dbOF, dbUF          1.0            0.036        0.017               1.0         0.036       0.017
-            kOF, kUF            0.05            0.05        0.03                0.05        0.05        0.02
-            T_response (s)      0               5             1                 10          5           0.2
-        ----------------------------------------------------------------------------------------------------------------
-            '''
-            if cat2 == 'CAT_I' or cat2 == 'CAT_II':
-                if test_params['fw'] == 'la':
-                    eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 1.0, 'pf_dbuf_as': 1.0,
-                                       'pf_kof_as': 0.05, 'pf_kuf_as': 0.05, 'pf_olrt_as': 0.})
-                elif test_params['fw'] == 'Default':
-                    eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 0.036, 'pf_dbuf_as': 0.036,
-                                       'pf_kof_as': 0.05, 'pf_kuf_as': 0.05, 'pf_olrt_as': 5.})
-                else:  # ma
-                    eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 0.017, 'pf_dbuf_as': 0.017,
-                                       'pf_kof_as': 0.03, 'pf_kuf_as': 0.03, 'pf_olrt_as': 1.})
-            else:
-                if test_params['fw'] == 'la':
-                    eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 1.0, 'pf_dbuf_as': 1.0,
-                                       'pf_kof_as': 0.05, 'pf_kuf_as': 0.05, 'pf_olrt_as': 10.})
-                elif test_params['fw'] == 'Default':
-                    eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 0.036, 'pf_dbuf_as': 0.036,
-                                       'pf_kof_as': 0.05, 'pf_kuf_as': 0.05, 'pf_olrt_as': 5.})
-                else:  # ma
-                    eut.set_pf(params={'pf_mode_enable_as': True, 'pf_dbof_as': 0.017, 'pf_dbuf_as': 0.017,
-                                       'pf_kof_as': 0.02, 'pf_kuf_as': 0.02, 'pf_olrt_as': 0.2})
-
-            '''
             d)4) The test is to be repeated with the reactive load (either capacitive or inductive) adjusted in 1%
             increments from 95% to 105% of the initial balanced load value determined in step c). 
             '''
             # This requires clearing times be calculated while the script is running.  It is suggested that this
             # be completed with logic in the RT-Lab simulation
 
-            eut.set_p_lim(params={'p_lim_mode_enable_as': True, 'p_lim_dbof_as': 0.})  # de-energize island
             ts.log_sleep(2.)  # wait
-            phil.set_params(model_name + '/SM_Source/Phase Angle Phase A0/Value', c)  # close S3
+            ctrl_sigs[2] = 1.  # open S3
+            phil.set_control_signals(values=ctrl_sigs)
 
             counter = 0
             high_freq_count = 0
@@ -908,6 +977,11 @@ def test_run():
                                 q_min -= 0.01
                     else:
                         break
+
+                ctrl_sigs[3] = 0.  # de-energize amplifier
+                phil.set_control_signals(values=ctrl_sigs)
+                # re-energize system and wait for EUT to start for next q_inc
+                energize_system(ctrl_sigs, phil, daq, eut_startup_time, p_rated)
 
             '''
             5) After reviewing the results of the previous step, the 1% setting increments that yielded the
