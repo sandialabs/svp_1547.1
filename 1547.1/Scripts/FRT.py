@@ -164,8 +164,7 @@ def test_run():
         grid = gridsim.gridsim_init(ts, support_interfaces={"hil": phil})  # Turn on AC so the EUT can be initialized
         if grid is not None:
             grid.voltage(v_nom)  
-        # Set the grid simulator rocof to 3Hz/s
-        grid.rocof(FreqRideThrough.get_rocof_dic())
+        
         # pv simulator is initialized with test parameters and enabled
         ts.log_debug(15 * "*" + "PVsim initialization" + 15 * "*")
         pv = pvsim.pvsim_init(ts)
@@ -262,6 +261,8 @@ def test_run():
                     # The driver should take care of this by selecting "Yes" to "Load the model to target?"
                     phil.load_model_on_hil()
                     # You need to first load the model, then configure the parameters
+                    # Set the grid simulator rocof to 3Hz/s
+                    grid.rocof(FreqRideThrough.get_rocof_dic())   
                     # Now that we have all the test_sequences its time to sent them to the model.
                     FreqRideThrough.set_frt_model_parameters(frt_test_sequences)
                     # The driver parameter "Execute the model on target?" should be set to "No"
