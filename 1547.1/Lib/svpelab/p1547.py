@@ -77,6 +77,7 @@ FULL_NAME = {'V': 'Voltage',
 LFRT = "LFRT"
 HFRT = "HFRT"
 
+
 class p1547Error(Exception):
     pass
 
@@ -191,7 +192,7 @@ class UtilParameters:
 
     def reset_pwr(self, pwr=1.0):
         self.pwr = pwr
-        self.ts.log_debug(f'P1547 Librairy power level has been set {round(pwr*100)}%')
+        self.ts.log_debug(f'P1547 Librairy power level has been set {round(pwr * 100)}%')
 
     def reset_filename(self, filename):
         self.filename = filename
@@ -441,7 +442,7 @@ class DataLogging:
                 nb_phases = 2
 
             elif self.phases == 'Three phase':
-                #self.ts.log_debug(f'type_meas={type_meas}')
+                # self.ts.log_debug(f'type_meas={type_meas}')
                 value1 = self.data.get(self.get_measurement_label(type_meas)[0])
                 value2 = self.data.get(self.get_measurement_label(type_meas)[1])
                 value3 = self.data.get(self.get_measurement_label(type_meas)[2])
@@ -541,7 +542,8 @@ class DataLogging:
                 self.initial_value[xs] = {'x_value': self.get_measurement_total(type_meas=xs, log=False)}
                 daq.sc['%s_MEAS' % xs] = self.initial_value[xs]['x_value']
         else:
-            self.initial_value[self.x_criteria] = {'x_value': self.get_measurement_total(type_meas=self.x_criteria, log=False)}
+            self.initial_value[self.x_criteria] = {
+                'x_value': self.get_measurement_total(type_meas=self.x_criteria, log=False)}
             daq.sc['%s_MEAS' % self.x_criteria] = self.initial_value[self.x_criteria]['x_value']
 
         if isinstance(self.y_criteria, dict):
@@ -549,7 +551,8 @@ class DataLogging:
                 self.initial_value[ys] = {'y_value': self.get_measurement_total(type_meas=ys, log=False)}
                 daq.sc['%s_MEAS' % ys] = self.initial_value[ys]["y_value"]
         else:
-            self.initial_value[self.y_criteria] = {'y_value': self.get_measurement_total(type_meas=self.y_criteria, log=False)}
+            self.initial_value[self.y_criteria] = {
+                'y_value': self.get_measurement_total(type_meas=self.y_criteria, log=False)}
             daq.sc['%s_MEAS' % self.y_criteria] = self.initial_value[self.y_criteria]['y_value']
 
         """
@@ -620,7 +623,7 @@ class DataLogging:
 
             # self.tr_value[tr_iter]["timestamp"] = tr_
             self.tr_value[f'timestamp_{tr_iter}'] = tr_
-            self.tr_value['LAST_ITER'] = tr_iter-1
+            self.tr_value['LAST_ITER'] = tr_iter - 1
             tr_iter = tr_iter + 1
 
         self.tr_value['FIRST_ITER'] = 1
@@ -659,7 +662,7 @@ class CriteriaValidation:
         y = list(y_criteria.keys())
         # self.tr = tr
         self.ts.log_debug(f'daq={daq.sc}')
-        for tr_iter in range(self.n_tr+1):
+        for tr_iter in range(self.n_tr + 1):
             self.ts.log_debug(f'tr_iter={tr_iter}')
             # store the daq.sc['Y_TARGET'], daq.sc['Y_TARGET_MIN'], and daq.sc['Y_TARGET_MAX'] in tr_value
             for meas_value in self.meas_values:
@@ -675,7 +678,7 @@ class CriteriaValidation:
 
                     elif meas_value in y:
                         if self.step_dict is not None:
-                            #self.ts.log_debug(f'meas={meas_value} et step_dict={self.step_dict}')
+                            # self.ts.log_debug(f'meas={meas_value} et step_dict={self.step_dict}')
                             self.ts.log_debug(f'function={y_criteria[meas_value]}')
 
                             daq.sc['%s_TARGET' % meas_value] = self.update_target_value(function=y_criteria[meas_value])
@@ -700,11 +703,10 @@ class CriteriaValidation:
                     self.ts.log_error('Test script exception: %s' % traceback.format_exc())
                     self.ts.log_debug('Measured value (%s) not recorded: %s' % (meas_value, e))
 
-
     def update_target_value(self, function, value=None, step_dict=None):
 
         step_dict = self.step_dict
-                                              
+
         if function == VV:
             vv_pairs = self.get_params(function=VV, curve=self.curve)
             x = [vv_pairs['V1'], vv_pairs['V2'],
@@ -719,7 +721,7 @@ class CriteriaValidation:
             return round(q_value, 1)
 
         if function == VW:
-            #self.ts.log_debug(f'VW target calculation')
+            # self.ts.log_debug(f'VW target calculation')
             vw_pairs = self.get_params(function=VW, curve=self.curve)
             self.ts.log_debug(f'vw_pairs={vw_pairs}')
             x = [vw_pairs['V1'], vw_pairs['V2']]
@@ -733,17 +735,17 @@ class CriteriaValidation:
             return round(p_value, 1)
 
         if function == CPF:
-            #self.ts.log_debug(f'CPF target calculation')
+            # self.ts.log_debug(f'CPF target calculation')
             q_value = math.sqrt(pow(step_dict['P'], 2) * ((1 / pow(step_dict['PF'], 2)) - 1))
             return q_value
 
         if function == CRP:
-            #self.ts.log_debug(f'CRP target calculation')
+            # self.ts.log_debug(f'CRP target calculation')
             q_value = step_dict['Q']
             return round(q_value, 1)
 
         if function == WV:
-            #self.ts.log_debug(f'WV target calculation')
+            # self.ts.log_debug(f'WV target calculation')
             x = [self.param[WV][self.curve]['P1'], self.param[WV][self.curve]['P2'], self.param[WV][self.curve]['P3']]
             y = [self.param[WV][self.curve]['Q1'], self.param[WV][self.curve]['Q2'], self.param[WV][self.curve]['Q3']]
             q_value = float(np.interp(step_dict['P'], x, y))
@@ -752,7 +754,7 @@ class CriteriaValidation:
             return q_value
 
         if function == FW:
-            #self.ts.log_debug(f'FW target calculation')
+            # self.ts.log_debug(f'FW target calculation')
             p_targ = None
             fw_pairs = self.get_params(function=FW, curve=self.curve)
             f_dob = self.f_nom + fw_pairs['dbf']
@@ -777,7 +779,7 @@ class CriteriaValidation:
 
         if function == LAP:
             self.ts.log_debug(f'LAP target calculation')
-            p_targ = (step_dict['P']*self.p_rated)+self.MRA['P']
+            p_targ = (step_dict['P'] * self.p_rated) + self.MRA['P']
             return p_targ
 
     def calculate_min_max_values(self, function, meas_value=None):
@@ -788,11 +790,11 @@ class CriteriaValidation:
             f_meas = self.get_measurement_total(type_meas='F', log=False)
 
             target_min_vw = self.update_target_value(value=v_meas + self.MRA['V'] * 1.5, function=VW) - (
-                        self.MRA['P'] * 1.5)
+                    self.MRA['P'] * 1.5)
             target_max_vw = self.update_target_value(value=v_meas - self.MRA['V'] * 1.5, function=VW) + (
-                        self.MRA['P'] * 1.5)
+                    self.MRA['P'] * 1.5)
             target_min_fw = self.update_target_value(value=f_meas + self.MRA['F'] * 1.5, function=FW) - (
-                        self.MRA['P'] * 1.5)
+                    self.MRA['P'] * 1.5)
             target_max_fw = self.update_target_value(value=f_meas - self.MRA['F'] * 1.5, function=FW)
             if (target_max_vw - target_min_vw) > (target_max_fw - target_min_fw):
                 target_min = target_min_vw
@@ -803,13 +805,17 @@ class CriteriaValidation:
 
         if function == VV:
             v_meas = self.get_measurement_total(type_meas='V', log=False)
-            target_min = self.update_target_value(value=v_meas + self.MRA['V'] * 1.5, function=VV) - (self.MRA['Q'] * 1.5)
-            target_max = self.update_target_value(value=v_meas - self.MRA['V'] * 1.5, function=VV) + (self.MRA['Q'] * 1.5)
+            target_min = self.update_target_value(value=v_meas + self.MRA['V'] * 1.5, function=VV) - (
+                        self.MRA['Q'] * 1.5)
+            target_max = self.update_target_value(value=v_meas - self.MRA['V'] * 1.5, function=VV) + (
+                        self.MRA['Q'] * 1.5)
 
         elif function == VW:
             v_meas = self.get_measurement_total(type_meas='V', log=False)
-            target_min = self.update_target_value(value=v_meas + self.MRA['V'] * 1.5, function=VW) - (self.MRA['P'] * 1.5)
-            target_max = self.update_target_value(value=v_meas - self.MRA['V'] * 1.5, function=VW) + (self.MRA['P'] * 1.5)
+            target_min = self.update_target_value(value=v_meas + self.MRA['V'] * 1.5, function=VW) - (
+                        self.MRA['P'] * 1.5)
+            target_max = self.update_target_value(value=v_meas - self.MRA['V'] * 1.5, function=VW) + (
+                        self.MRA['P'] * 1.5)
 
         elif function == CPF:
             p_meas = self.get_measurement_total(type_meas='P', log=False)
@@ -826,16 +832,18 @@ class CriteriaValidation:
 
         elif function == WV:
             p_meas = self.get_measurement_total(type_meas='P', log=False)
-            #q_meas = self.get_measurement_total(data=data, type_meas='Q', log=False)
-            step_min = {'P': p_meas + self.MRA['P']*1.5}
-            step_max = {'P': p_meas - self.MRA['P']*1.5}
+            # q_meas = self.get_measurement_total(data=data, type_meas='Q', log=False)
+            step_min = {'P': p_meas + self.MRA['P'] * 1.5}
+            step_max = {'P': p_meas - self.MRA['P'] * 1.5}
             target_min = self.update_target_value(step_dict=step_min, function=WV) - (self.MRA['Q'] * 1.5)
             target_max = self.update_target_value(step_dict=step_max, function=WV) + (self.MRA['Q'] * 1.5)
 
         elif function == FW:
             f_meas = self.get_measurement_total(type_meas='F', log=False)
-            target_min = self.update_target_value(value=f_meas + self.MRA['F'] * 1.5, function=FW) - (self.MRA['P'] * 1.5)
-            target_max = self.update_target_value(value=f_meas - self.MRA['F'] * 1.5, function=FW) + (self.MRA['P'] * 1.5)
+            target_min = self.update_target_value(value=f_meas + self.MRA['F'] * 1.5, function=FW) - (
+                        self.MRA['P'] * 1.5)
+            target_max = self.update_target_value(value=f_meas - self.MRA['F'] * 1.5, function=FW) + (
+                        self.MRA['P'] * 1.5)
 
         elif function == LAP:
             target_min = self.update_target_value(function=LAP) - (self.MRA['P'] * 1.5)
@@ -844,10 +852,10 @@ class CriteriaValidation:
         return target_min, target_max
 
     def evaluate_criterias(self, daq, step_dict=None, y_criterias_mod=None):
-        
+
         self.step_dict = step_dict
         self.define_target(daq=daq, y_criterias_mod=y_criterias_mod)
-                                              
+
         if self.criteria_mode[0]:
             self.open_loop_resp_criteria()
         if self.criteria_mode[1] or self.criteria_mode[2]:
@@ -907,7 +915,7 @@ class CriteriaValidation:
             y_start = self.initial_value[y]['y_value']
             # y_start = tr_value['%s_INITIAL' % y]
             mra_t = self.MRA['T'] * duration  # MRA(X) = MRA(time) = 0.01*duration
-        #self.ts.log_debug(f'tr_value={self.tr_value}')
+        # self.ts.log_debug(f'tr_value={self.tr_value}')
         y_ss = self.tr_value[f'{y}_TR_TARG_{tr}']
         y_target = self.calculate_open_loop_value(y0=y_start, y_ss=y_ss, duration=duration, tr=tr)  # 90%
         y_meas = self.tr_value[f'{y}_TR_{tr}']
@@ -967,7 +975,6 @@ class CriteriaValidation:
         self.ts.log_debug(f'RESULT_ACCURACY')
         for y in self.y_criteria:
             for tr_iter in range(self.tr_value['FIRST_ITER'], self.tr_value['LAST_ITER'] + 1):
-
 
                 if (self.tr_value['FIRST_ITER'] == tr_iter and self.criteria_mode[1]) or \
                         (self.tr_value['LAST_ITER'] == tr_iter and self.criteria_mode[2]):
@@ -1116,13 +1123,16 @@ class HilModel(object):
         else:
             self.hil = None
         self.set_time_path()
-        self.set_nominal_values()
 
-        self.set_input_scale_offset()
+        # recommend changing these in simulink for each lab to verify the HIL simulation is safe and
+        # operational before executing in the SVP - Jay
+        # self.set_nominal_values()
+        # self.set_input_scale_offset
+
     def set_nominal_values(self):
         parameters = []
-        parameters.append((f"VNOM",1.0))
-        parameters.append((f"FNOM",self.f_nom))
+        parameters.append((f"VNOM", 1.0))
+        parameters.append((f"FNOM", self.f_nom))
         self.hil.set_matlab_variables(parameters)
 
     def set_time_path(self):
@@ -1142,22 +1152,22 @@ class HilModel(object):
         scale_voltage = self.ts.param_value('eut.scale_voltage').replace(" ", "").split(",")
         offset_voltage = self.ts.param_value('eut.offset_voltage').replace(" ", "").split(",")
 
-
         if self.phases == "Single Phase":
             phases = ["A"]
         elif self.phases == "Split phase":
-            phases = ["A","B"]
-        elif self.phases == "Three phase":
-            phases = ["A","B","C"]
+            phases = ["A", "B"]
+        else:
+            phases = ["A", "B", "C"]
 
         parameters = []
-        i=0
+        i = 0
         for ph in phases:
-            parameters.append((f"CURRENT_INPUT_SCALE_PH{ph}",float(scale_current[i])))
-            parameters.append((f"VOLT_INPUT_SCALE_PH{ph}",float(scale_voltage[i])))
-            parameters.append((f"VOLT_INPUT_OFFSET_PH{ph}",float(offset_voltage[i])))
-            parameters.append((f"CURRENT_INPUT_OFFSET_PH{ph}",float(offset_current[i])))
+            parameters.append((f"CURRENT_INPUT_SCALE_PH{ph}", float(scale_current[i])))
+            parameters.append((f"VOLT_INPUT_SCALE_PH{ph}", float(scale_voltage[i])))
+            parameters.append((f"VOLT_INPUT_OFFSET_PH{ph}", float(offset_voltage[i])))
+            parameters.append((f"CURRENT_INPUT_OFFSET_PH{ph}", float(offset_current[i])))
             i = i + 1
+
         self.hil.set_matlab_variables(parameters)
 
     """
@@ -1167,8 +1177,6 @@ class HilModel(object):
     def get_model_parameters(self, current_mode):
         self.ts.log(f'Getting HIL parameters for {current_mode}')
         return self.parameters_dic[current_mode], self.start_time, self.stop_time
-
-    
 
 
 """
@@ -1183,7 +1191,7 @@ class VoltVar(EutParameters, UtilParameters):
     script_complete_name = 'Volt-Var'
 
     def __init__(self, ts):
-        #self.criteria_mode = [True, True, True]
+        # self.criteria_mode = [True, True, True]
         EutParameters.__init__(self, ts)
         UtilParameters.__init__(self)
         VoltVar.set_params(self)
@@ -1312,7 +1320,7 @@ class VoltWatt(EutParameters, UtilParameters):
 
     def __init__(self, ts):
         self.ts = ts
-        #self.criteria_mode = [True, True, True]
+        # self.criteria_mode = [True, True, True]
         EutParameters.__init__(self, ts)
         UtilParameters.__init__(self)
         VoltWatt.set_params(self)
@@ -1510,16 +1518,15 @@ class FrequencyWatt(EutParameters, UtilParameters):
 
         return f_steps_dict[mode]
 
-                                              
-class Interoperability(EutParameters):
 
+class Interoperability(EutParameters):
     meas_values = ['V', 'P', 'F']  # Values to be recorded
     x_criteria = ['V']  # Values defined as target/step values which will be controlled as step
     y_criteria = {'P': IOP}  # Values defined as values which will be controlled as step
 
     def __init__(self, ts):
         self.eut_params = EutParameters.__init__(self, ts)
-        #self.datalogging = DataLogging.__init__(self)
+        # self.datalogging = DataLogging.__init__(self)
         self.pairs = {}
         self.param = {}
         self.target_dict = []
@@ -1647,7 +1654,7 @@ class WattVar(EutParameters, UtilParameters):
 
         return p_steps_dict
 
-                                              
+
 class LimitActivePower(EutParameters, UtilParameters):
     meas_values = ['F', 'V', 'P', 'Q']
     x_criteria = ['V', 'F']
@@ -1657,7 +1664,7 @@ class LimitActivePower(EutParameters, UtilParameters):
     def __init__(self, ts):
         EutParameters.__init__(self, ts)
         UtilParameters.__init__(self)
-        #LimitActivePower.set_params(self)
+        # LimitActivePower.set_params(self)
 
 
 class UnintentionalIslanding(EutParameters, UtilParameters):
@@ -1687,14 +1694,14 @@ class Prioritization(EutParameters, UtilParameters):
         v_nom = self.v_nom
         i = 0
 
-        step_dicts = [{'V': 1.00*v_nom, 'F': 60.00, 'P': 0.5*p_rated},
-                       {'V': 1.09*v_nom, 'F': 60.00, 'P': 0.4*p_rated},
-                       {'V': 1.09*v_nom, 'F': 60.33, 'P': 0.3*p_rated},
-                       {'V': 1.09*v_nom, 'F': 60.00, 'P': 0.4*p_rated},
-                       {'V': 1.09*v_nom, 'F': 59.36, 'P': 0.4*p_rated},
-                       {'V': 1.00*v_nom, 'F': 59.36, 'P': 0.6*p_rated},
-                       {'V': 1.00*v_nom, 'F': 60.00, 'P': 0.5*p_rated},
-                       {'V': 1.00*v_nom, 'F': 59.36, 'P': 0.7*p_rated}]
+        step_dicts = [{'V': 1.00 * v_nom, 'F': 60.00, 'P': 0.5 * p_rated},
+                      {'V': 1.09 * v_nom, 'F': 60.00, 'P': 0.4 * p_rated},
+                      {'V': 1.09 * v_nom, 'F': 60.33, 'P': 0.3 * p_rated},
+                      {'V': 1.09 * v_nom, 'F': 60.00, 'P': 0.4 * p_rated},
+                      {'V': 1.09 * v_nom, 'F': 59.36, 'P': 0.4 * p_rated},
+                      {'V': 1.00 * v_nom, 'F': 59.36, 'P': 0.6 * p_rated},
+                      {'V': 1.00 * v_nom, 'F': 60.00, 'P': 0.5 * p_rated},
+                      {'V': 1.00 * v_nom, 'F': 59.36, 'P': 0.7 * p_rated}]
 
         if function == VV:
             self.ts.log_debug(f'adding VV in dict step')
@@ -1702,7 +1709,7 @@ class Prioritization(EutParameters, UtilParameters):
                 self.ts.log_debug(f'step_dict_before={step_dict}')
 
                 if i > 0 or i < 5:
-                    step_dict.update({'Q': -0.44*q_rated})
+                    step_dict.update({'Q': -0.44 * q_rated})
                     self.ts.log_debug(f'i={i} and step_dict={step_dict}')
 
                 else:
@@ -1812,6 +1819,7 @@ class ActiveFunction(DataLogging, CriteriaValidation, ImbalanceComponent, VoltWa
         DataLogging.__init__(self)
         ImbalanceComponent.__init__(self)
 
+
 class NormalOperation(HilModel, EutParameters, DataLogging):
     def __init__(self, ts, support_interfaces):
         EutParameters.__init__(self, ts)
@@ -1822,9 +1830,11 @@ class NormalOperation(HilModel, EutParameters, DataLogging):
         self.set_normal_params()
         self.set_vrt_modes()
 
+
 """
 This section is for Ride-Through test
 """
+
 
 class VoltageRideThrough(HilModel, EutParameters, DataLogging):
     def __init__(self, ts, support_interfaces):
@@ -1857,27 +1867,26 @@ class VoltageRideThrough(HilModel, EutParameters, DataLogging):
             self.params["dataset"] = self.ts.param_value('vrt.dataset_type')
             self.params["consecutive_ena"] = self.ts.param_value('vrt.consecutive_ena')
 
-            
-
         except Exception as e:
             self.ts.log_error('Incorrect Parameter value : %s' % e)
             raise
 
     def extend_list_end(self, _list, extend_value, final_length):
         list_length = len(_list)
-        _list.extend([float(extend_value)] * ( final_length - list_length ))
+        _list.extend([float(extend_value)] * (final_length - list_length))
         return _list
-    
-    def set_vrt_model_parameters(self, test_sequence):
-        model_name = self.params["model_name"]
-        parameters = []
-        # Enable VRT mode in the IEEE1547_fast_functions model
-        parameters.append(("MODE",3.0))
 
+    def set_vrt_model_parameters(self, test_sequence):
+        parameters = []
+
+        # Enable VRT mode in the IEEE1547_fast_functions model
+        parameters.append(("MODE", 3.0))
 
         # Add ROCOM only for LVRT CAT II
-        self.ts.log_debug(test_sequence)
-        # if self.params["lv_mode"] == 'Enabled' and (self.params["categories"] == CAT_2 or self.params["categories"] == 'Both'):
+        for test_set in str(test_sequence).splitlines():
+            self.ts.log_debug(test_set)
+        # if self.params["lv_mode"] == 'Enabled' and
+        #     (self.params["categories"] == CAT_2 or self.params["categories"] == 'Both'):
         #     parameters.append(("ROCOF_ENABLE", 1))
         #     parameters.append(("ROCOF_VALUE", 0.115))
         #     parameters.append(("ROCOF_INIT", test_sequence.loc["D"]["Voltage"].item()))
@@ -1891,35 +1900,36 @@ class VoltageRideThrough(HilModel, EutParameters, DataLogging):
         parameters.append(("VRT_CONDITION", vrt_condition_list))
 
         vrt_start_timing_list = self.extend_list_end(test_sequence["VRT_START_TIMING"].to_list(), 0.0, 20)
-        parameters.append(("VRT_START_TIMING",vrt_start_timing_list))
+        parameters.append(("VRT_START_TIMING", vrt_start_timing_list))
 
         vrt_end_timing_list = self.extend_list_end(test_sequence["VRT_END_TIMING"].to_list(), 0.0, 20)
-        parameters.append(("VRT_END_TIMING",vrt_end_timing_list))
+        parameters.append(("VRT_END_TIMING", vrt_end_timing_list))
 
         vrt_values_list = self.extend_list_end(test_sequence["VRT_VALUES"].to_list(), 0.0, 20)
-        parameters.append(("VRT_VALUES",vrt_values_list))
+        parameters.append(("VRT_VALUES", vrt_values_list))
         self.hil.set_matlab_variables(parameters)
 
     def set_phase_combination(self, phase):
         parameters = []
 
-        for ph in phase :
-            parameters.append((f"VRT_PH{ph}_ENABLE",1.0))
+        for ph in phase:
+            parameters.append((f"VRT_PH{ph}_ENABLE", 1.0))
         self.hil.set_matlab_variables(parameters)
 
     def set_wfm_file_header(self):
-        self.wfm_header  = ['TIME', 
-                'AC_V_1', 'AC_V_2', 'AC_V_3', 
-                'AC_I_1', 'AC_I_2', 'AC_I_3',
-                'AC_P_1', 'AC_P_2', 'AC_P_3', 
-                'AC_Q_1', 'AC_Q_2', 'AC_Q_3',
-                'AC_V_CMD_1', 'AC_V_CMD_2', 'AC_V_CMD_3',
-                "TRIGGER"]
+        self.wfm_header = ['TIME',
+                           'AC_V_1', 'AC_V_2', 'AC_V_3',
+                           'AC_I_1', 'AC_I_2', 'AC_I_3',
+                           'AC_P_1', 'AC_P_2', 'AC_P_3',
+                           'AC_Q_1', 'AC_Q_2', 'AC_Q_3',
+                           'AC_V_CMD_1', 'AC_V_CMD_2', 'AC_V_CMD_3',
+                           "TRIGGER"]
+
     def set_test_conditions(self, current_mode):
         # Set useful variables
         mra_v_pu = self.MRA["V"] / self.v_nom
         RANGE_STEPS = self.params["range_steps"]
-        index=['VRT_CONDITION', 'MIN_DURATION', 'VRT_VALUES']
+        index = ['VRT_CONDITION', 'MIN_DURATION', 'VRT_VALUES']
         TEST_CONDITION = {}
         # each condition are set with a pandas series as follow:
         # pd.Series([test condition, minimum duration(s), Residual Voltage (p.u.)], index=index)
@@ -1929,69 +1939,72 @@ class VoltageRideThrough(HilModel, EutParameters, DataLogging):
             # The possible test conditions are ABCDD'EF
             if RANGE_STEPS == "Figure":
                 # Using value of Figure 2 - CATEGORY II LVRT test signal
-                TEST_CONDITION["A"] = pd.Series([1,10,0.94], index=index)
-                TEST_CONDITION["B"] = pd.Series([2,0.160,0.3 - 2 * mra_v_pu], index=index)
-                TEST_CONDITION["C"] = pd.Series([3,0.160,0.45 - 2 * mra_v_pu], index=index)
-                TEST_CONDITION["D"] = pd.Series([4,2.68,0.65], index=index)
-                TEST_CONDITION["D'"]= pd.Series([4+10,7.68,0.67 + 2 * mra_v_pu], index=index)
-                TEST_CONDITION["E"] = pd.Series([5,2.0,0.88], index=index)
-                TEST_CONDITION["F"] = pd.Series([6,120.0,0.94], index=index)
+                TEST_CONDITION["A"] = pd.Series([1, 10, 0.94], index=index)
+                TEST_CONDITION["B"] = pd.Series([2, 0.160, 0.3 - 2 * mra_v_pu], index=index)
+                TEST_CONDITION["C"] = pd.Series([3, 0.160, 0.45 - 2 * mra_v_pu], index=index)
+                TEST_CONDITION["D"] = pd.Series([4, 2.68, 0.65], index=index)
+                TEST_CONDITION["D'"] = pd.Series([4 + 10, 7.68, 0.67 + 2 * mra_v_pu], index=index)
+                TEST_CONDITION["E"] = pd.Series([5, 2.0, 0.88], index=index)
+                TEST_CONDITION["F"] = pd.Series([6, 120.0, 0.94], index=index)
             elif RANGE_STEPS == "Random":
-                TEST_CONDITION["A"] = pd.Series([1,10,random.uniform(0.88 + 2 * mra_v_pu, 1.0)], index=index)
-                TEST_CONDITION["B"] = pd.Series([2,0.160,random.uniform(0.0, 0.3 - 2 * mra_v_pu)], index=index)
-                TEST_CONDITION["C"] = pd.Series([3,0.160,random.uniform(0.0, 0.45 - 2 * mra_v_pu)], index=index)
-                TEST_CONDITION["D"] = pd.Series([4,2.68,random.uniform(0.45 + 2 * mra_v_pu, 0.65 - 2 * mra_v_pu)], index=index)
-                TEST_CONDITION["D'"]= pd.Series([4+10,7.68,random.uniform(0.67, 0.88 - 2 * mra_v_pu)], index=index)
-                TEST_CONDITION["E"] = pd.Series([5,2.0,random.uniform(0.65 + 2 * mra_v_pu, 0.88 - 2 * mra_v_pu)], index=index)
-                TEST_CONDITION["F"] = pd.Series([6,120.0,random.uniform(0.88 + 2 * mra_v_pu, 1.0)], index=index)
+                TEST_CONDITION["A"] = pd.Series([1, 10, random.uniform(0.88 + 2 * mra_v_pu, 1.0)], index=index)
+                TEST_CONDITION["B"] = pd.Series([2, 0.160, random.uniform(0.0, 0.3 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["C"] = pd.Series([3, 0.160, random.uniform(0.0, 0.45 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["D"] = pd.Series([4, 2.68, random.uniform(0.45 + 2 * mra_v_pu, 0.65 - 2 * mra_v_pu)],
+                                                index=index)
+                TEST_CONDITION["D'"] = pd.Series([4 + 10, 7.68, random.uniform(0.67, 0.88 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["E"] = pd.Series([5, 2.0, random.uniform(0.65 + 2 * mra_v_pu, 0.88 - 2 * mra_v_pu)],
+                                                index=index)
+                TEST_CONDITION["F"] = pd.Series([6, 120.0, random.uniform(0.88 + 2 * mra_v_pu, 1.0)], index=index)
 
         # TABLE 5 - CATEGORY III LVRT TEST CONDITION
         elif CAT_3 in current_mode and LV in current_mode:
             # The possible test conditions are ABCC'DE
             if RANGE_STEPS == "Figure":
-                TEST_CONDITION["A"] = pd.Series([1,5,0.94], index=index)
-                TEST_CONDITION["B"] = pd.Series([2,1,0.05 - 2 * mra_v_pu], index=index)
-                TEST_CONDITION["C"] = pd.Series([3,9,0.5 - 2 * mra_v_pu], index=index)
-                TEST_CONDITION["C'"] = pd.Series([3+10,9,0.52 + 2 * mra_v_pu], index=index)
-                TEST_CONDITION["D"] = pd.Series([4,10.0,0.7], index=index)
-                TEST_CONDITION["E"] = pd.Series([5,120.0, 0.94], index=index)
+                TEST_CONDITION["A"] = pd.Series([1, 5, 0.94], index=index)
+                TEST_CONDITION["B"] = pd.Series([2, 1, 0.05 - 2 * mra_v_pu], index=index)
+                TEST_CONDITION["C"] = pd.Series([3, 9, 0.5 - 2 * mra_v_pu], index=index)
+                TEST_CONDITION["C'"] = pd.Series([3 + 10, 9, 0.52 + 2 * mra_v_pu], index=index)
+                TEST_CONDITION["D"] = pd.Series([4, 10.0, 0.7], index=index)
+                TEST_CONDITION["E"] = pd.Series([5, 120.0, 0.94], index=index)
             elif RANGE_STEPS == "Random":
-                TEST_CONDITION["A"] = pd.Series([1,5,random.uniform(0.88 + 2 * mra_v_pu, 1.0)], index=index)
-                TEST_CONDITION["B"] = pd.Series([2,1,random.uniform(0.0, 0.05 - 2 * mra_v_pu)], index=index)
-                TEST_CONDITION["C"] = pd.Series([3,9,random.uniform(0.0, 0.5- 2 * mra_v_pu)], index=index)
-                TEST_CONDITION["C'"] = pd.Series([3+10,9,random.uniform(0.52, 0.7- 2 * mra_v_pu)], index=index)
-                TEST_CONDITION["D"] = pd.Series([4,10.0,random.uniform(0.5 + 2 * mra_v_pu, 0.7 - 2 * mra_v_pu)], index=index)
-                TEST_CONDITION["E"] = pd.Series([5,120.0, random.uniform(0.88 + 2 * mra_v_pu, 1.0)], index=index)
+                TEST_CONDITION["A"] = pd.Series([1, 5, random.uniform(0.88 + 2 * mra_v_pu, 1.0)], index=index)
+                TEST_CONDITION["B"] = pd.Series([2, 1, random.uniform(0.0, 0.05 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["C"] = pd.Series([3, 9, random.uniform(0.0, 0.5 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["C'"] = pd.Series([3 + 10, 9, random.uniform(0.52, 0.7 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["D"] = pd.Series([4, 10.0, random.uniform(0.5 + 2 * mra_v_pu, 0.7 - 2 * mra_v_pu)],
+                                                index=index)
+                TEST_CONDITION["E"] = pd.Series([5, 120.0, random.uniform(0.88 + 2 * mra_v_pu, 1.0)], index=index)
 
         # TABLE 7 - CATEGORY II HVRT TEST CONDITION
         elif CAT_2 in current_mode and HV in current_mode:
-            #ABCDE
+            # ABCDE
             if RANGE_STEPS == "Figure":
-                TEST_CONDITION["A"] = pd.Series([1,10,1.0], index=index)
-                TEST_CONDITION["B"] = pd.Series([2,0.2,1.2 - 2 * mra_v_pu], index=index)
-                TEST_CONDITION["C"] = pd.Series([3,0.3,1.175], index=index)
-                TEST_CONDITION["D"] = pd.Series([4,0.5,1.15], index=index)
-                TEST_CONDITION["E"] = pd.Series([5,120.0, 1.0], index=index)
+                TEST_CONDITION["A"] = pd.Series([1, 10, 1.0], index=index)
+                TEST_CONDITION["B"] = pd.Series([2, 0.2, 1.2 - 2 * mra_v_pu], index=index)
+                TEST_CONDITION["C"] = pd.Series([3, 0.3, 1.175], index=index)
+                TEST_CONDITION["D"] = pd.Series([4, 0.5, 1.15], index=index)
+                TEST_CONDITION["E"] = pd.Series([5, 120.0, 1.0], index=index)
             elif RANGE_STEPS == "Random":
-                TEST_CONDITION["A"] = pd.Series([1,10, random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
-                TEST_CONDITION["B"] = pd.Series([2,0.2, random.uniform(1.18, 1.2 )], index=index)
-                TEST_CONDITION["C"] = pd.Series([3,0.3, random.uniform(1.155, 1.175)], index=index)
-                TEST_CONDITION["D"] = pd.Series([4,0.5, random.uniform(1.13, 1.15)], index=index)
-                TEST_CONDITION["E"] = pd.Series([5,120.0, random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["A"] = pd.Series([1, 10, random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["B"] = pd.Series([2, 0.2, random.uniform(1.18, 1.2)], index=index)
+                TEST_CONDITION["C"] = pd.Series([3, 0.3, random.uniform(1.155, 1.175)], index=index)
+                TEST_CONDITION["D"] = pd.Series([4, 0.5, random.uniform(1.13, 1.15)], index=index)
+                TEST_CONDITION["E"] = pd.Series([5, 120.0, random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
 
         # TABLE 8 - CATEGORY III HVRT TEST CONDITION
         elif CAT_3 in current_mode and HV in current_mode:
-            #ABB'C
+            # ABB'C
             if RANGE_STEPS == "Figure":
-                TEST_CONDITION["A"] = pd.Series([1,5,1.05], index=index)
-                TEST_CONDITION["B"] = pd.Series([2,12,1.2- 2 * mra_v_pu], index=index)
-                TEST_CONDITION["B'"] = pd.Series([2+10,12,1.12 ], index=index)
-                TEST_CONDITION["C"] = pd.Series([3,120,1.05], index=index)
+                TEST_CONDITION["A"] = pd.Series([1, 5, 1.05], index=index)
+                TEST_CONDITION["B"] = pd.Series([2, 12, 1.2 - 2 * mra_v_pu], index=index)
+                TEST_CONDITION["B'"] = pd.Series([2 + 10, 12, 1.12], index=index)
+                TEST_CONDITION["C"] = pd.Series([3, 120, 1.05], index=index)
             elif RANGE_STEPS == "Random":
-                TEST_CONDITION["A"] = pd.Series([1,5,random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
-                TEST_CONDITION["B"] = pd.Series([2,12,random.uniform(1.18, 1.2)], index=index)
-                TEST_CONDITION["B'"] = pd.Series([2+10,12,random.uniform(1.12, 1.2)], index=index)
-                TEST_CONDITION["C"] = pd.Series([3,120,random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["A"] = pd.Series([1, 5, random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
+                TEST_CONDITION["B"] = pd.Series([2, 12, random.uniform(1.18, 1.2)], index=index)
+                TEST_CONDITION["B'"] = pd.Series([2 + 10, 12, random.uniform(1.12, 1.2)], index=index)
+                TEST_CONDITION["C"] = pd.Series([3, 120, random.uniform(1.0, 1.1 - 2 * mra_v_pu)], index=index)
         '''
         Get the full test sequence :
         Example for CAT_2 + LV + Not Consecutive
@@ -2023,136 +2036,137 @@ class VoltageRideThrough(HilModel, EutParameters, DataLogging):
         just add the value 10.0. The value 12.0 is for B', 13 is for C' and so on.
         The idea is just to show this on the data.
         '''
-        test_sequences_df = self.get_test_sequence(current_mode,TEST_CONDITION)
-
-        
+        test_sequences_df = self.get_test_sequence(current_mode, TEST_CONDITION)
 
         return test_sequences_df
+
     def get_vrt_stop_time(self, test_sequences_df):
         return test_sequences_df["VRT_END_TIMING"].iloc[-1]
-        
+
     def get_test_sequence(self, current_mode, test_condition):
-        index=['VRT_CONDITION', 'MIN_DURATION', 'VRT_VALUES']
+        index = ['VRT_CONDITION', 'MIN_DURATION', 'VRT_VALUES']
         T0 = self.params["eut_startup_time"]
-        if self.params["consecutive_ena"] == "Enabled" :
-            CONSECUTIVE = True  
+        if self.params["consecutive_ena"] == "Enabled":
+            CONSECUTIVE = True
         else:
-            CONSECUTIVE = False  
+            CONSECUTIVE = False
         test_sequences_df = pd.DataFrame(columns=index)
         if CAT_2 in current_mode and LV in current_mode:
             if CONSECUTIVE:
                 # ABCDE
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"], ignore_index=True)
                 # ABCDEF
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["F"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["F"], ignore_index=True)
                 # ABCD'F
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["D'"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["F"],ignore_index=True)
-                
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D'"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["F"], ignore_index=True)
+
             else:
                 # ABCDEF 
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["F"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["F"], ignore_index=True)
         elif CAT_3 in current_mode and LV in current_mode:
             if CONSECUTIVE:
                 # ABCD
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"], ignore_index=True)
                 # ABCD
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"], ignore_index=True)
                 # ABCDE
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"], ignore_index=True)
                 # ABC'DE
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["C'"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C'"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"], ignore_index=True)
             else:
                 # ABCDE
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)   
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"], ignore_index=True)
         elif CAT_2 in current_mode and HV in current_mode:
             if CONSECUTIVE:
-                #ABCD
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
+                # ABCD
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"], ignore_index=True)
 
-                #ABCDE
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)
+                # ABCDE
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"], ignore_index=True)
             else:
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["D"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["E"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["D"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["E"], ignore_index=True)
                 pass
         elif CAT_3 in current_mode and HV in current_mode:
             if CONSECUTIVE:
-                #AB
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                
-                #AB
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                
-                #ABC
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+                # AB
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
 
-                #AB'C
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B'"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+                # AB
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
+
+                # ABC
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"], ignore_index=True)
+
+                # AB'C
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B'"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"], ignore_index=True)
             else:
-                test_sequences_df = test_sequences_df.append(test_condition["A"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["B"],ignore_index=True)
-                test_sequences_df = test_sequences_df.append(test_condition["C"],ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["A"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["B"], ignore_index=True)
+                test_sequences_df = test_sequences_df.append(test_condition["C"], ignore_index=True)
                 pass
-            
+
         test_sequences_df.loc[0, 'VRT_START_TIMING'] = T0
         # Calculate the timing sequences
         test_sequences_df.loc[0, 'VRT_END_TIMING'] = T0 + test_sequences_df.loc[0, 'MIN_DURATION']
         for i in range(1, len(test_sequences_df)):
-            test_sequences_df.loc[i, 'VRT_START_TIMING'] = test_sequences_df.loc[i-1, 'VRT_END_TIMING']
-            test_sequences_df.loc[i, 'VRT_END_TIMING'] = test_sequences_df.loc[i,'VRT_START_TIMING'] + test_sequences_df.loc[i, 'MIN_DURATION']
+            test_sequences_df.loc[i, 'VRT_START_TIMING'] = test_sequences_df.loc[i - 1, 'VRT_END_TIMING']
+            test_sequences_df.loc[i, 'VRT_END_TIMING'] = test_sequences_df.loc[i, 'VRT_START_TIMING'] + \
+                                                         test_sequences_df.loc[i, 'MIN_DURATION']
         return test_sequences_df
+
     def set_vrt_modes(self):
         modes = []
         if self.params["lv_mode"] == 'Enabled' and (
@@ -2170,8 +2184,6 @@ class VoltageRideThrough(HilModel, EutParameters, DataLogging):
         self.params["modes"] = modes
         self.ts.log_debug(self.params)
 
-    
-
     """
     Getter functions
     """
@@ -2186,6 +2198,7 @@ class VoltageRideThrough(HilModel, EutParameters, DataLogging):
 class FrequencyRideThrough(HilModel, EutParameters, DataLogging):
     def __init__(self, ts, support_interfaces):
         EutParameters.__init__(self, ts)
+        self.params = {}
         HilModel.__init__(self, ts, support_interfaces)
         self.wfm_header = None
         self._config()
@@ -2209,7 +2222,7 @@ class FrequencyRideThrough(HilModel, EutParameters, DataLogging):
             self.params["hf_parameter"] = self.ts.param_value('frt.hf_parameter')
             self.params["hf_period"] = self.ts.param_value('frt.hf_period')
             self.params["eut_startup_time"] = self.ts.param_value('eut.startup_time')
-            self.params["model_name"] = self.hil.rt_lab_model
+            # self.params["model_name"] = self.hil.rt_lab_model
 
         except Exception as e:
             self.ts.log_error('Incorrect Parameter value : %s' % e)
@@ -2223,87 +2236,95 @@ class FrequencyRideThrough(HilModel, EutParameters, DataLogging):
         if self.params["hf_mode"] == "Enabled":
             modes.append(HFRT)
         self.params["modes"] = modes
+
     def set_wfm_file_header(self):
-        self.wfm_header  = ['TIME', 
-                        'AC_V_1', 'AC_V_2', 'AC_V_3', 
-                        'AC_I_1', 'AC_I_2', 'AC_I_3',
-                        'AC_FREQ_CMD', "TRIGGER"]
+        self.wfm_header = ['TIME',
+                           'AC_V_1', 'AC_V_2', 'AC_V_3',
+                           'AC_I_1', 'AC_I_2', 'AC_I_3',
+                           'AC_FREQ_CMD', "TRIGGER"]
+
     def set_test_conditions(self, current_mode):
         # Set useful variables
         mra_f = self.MRA["F"]
-        index=['FRT_CONDITION', 'MIN_DURATION', 'FRT_VALUES']
+        index = ['FRT_CONDITION', 'MIN_DURATION', 'FRT_VALUES']
         TEST_CONDITION = {}
         # Test Procedure 5.5.3.4
-        if LFRT in current_mode :
-            TEST_CONDITION["Step E"] = pd.Series([1,1,self.f_nom], index=index)
-            TEST_CONDITION["Step G"] = pd.Series([2, self.params["lf_period"], self.params["lf_parameter"]], index=index)
-            TEST_CONDITION["Step H"] = pd.Series([1,1,self.f_nom], index=index)
+        if LFRT in current_mode:
+            TEST_CONDITION["Step E"] = pd.Series([1, 1, self.f_nom], index=index)
+            TEST_CONDITION["Step G"] = pd.Series([2, self.params["lf_period"], self.params["lf_parameter"]],
+                                                 index=index)
+            TEST_CONDITION["Step H"] = pd.Series([1, 1, self.f_nom], index=index)
 
         # TABLE 5 - CATEGORY III LVRT TEST CONDITION
-        elif HFRT in current_mode :
-            TEST_CONDITION["Step E"] = pd.Series([1,1,self.f_nom], index=index)
-            TEST_CONDITION["Step G"] = pd.Series([2, self.params["hf_period"], self.params["hf_parameter"]], index=index)
-            TEST_CONDITION["Step H"] = pd.Series([1,1,self.f_nom], index=index)
-        test_sequences_df = self.get_test_sequence(current_mode,TEST_CONDITION)
+        elif HFRT in current_mode:
+            TEST_CONDITION["Step E"] = pd.Series([1, 1, self.f_nom], index=index)
+            TEST_CONDITION["Step G"] = pd.Series([2, self.params["hf_period"], self.params["hf_parameter"]],
+                                                 index=index)
+            TEST_CONDITION["Step H"] = pd.Series([1, 1, self.f_nom], index=index)
+        test_sequences_df = self.get_test_sequence(current_mode, TEST_CONDITION)
 
         return test_sequences_df
+
     def set_frt_model_parameters(self, test_sequence):
-        model_name = self.params["model_name"]
+
         parameters = []
         # Enable FRT mode in the IEEE1547_fast_functions model
-        parameters.append(("MODE",4.0))
-
-
-       
+        parameters.append(("MODE", 4.0))
 
         condition_list = self.extend_list_end(test_sequence["FRT_CONDITION"].to_list(), 0.0, 4)
         parameters.append(("FRT_CONDITION", condition_list))
 
         start_timing_list = self.extend_list_end(test_sequence["FRT_START_TIMING"].to_list(), 0.0, 4)
-        parameters.append(("FRT_START_TIMING",start_timing_list))
+        parameters.append(("FRT_START_TIMING", start_timing_list))
 
         end_timing_list = self.extend_list_end(test_sequence["FRT_END_TIMING"].to_list(), 0.0, 4)
         parameters.append(("FRT_END_TIMING", end_timing_list))
 
         values_list = self.extend_list_end(test_sequence["FRT_VALUES"].to_list(), 0.0, 4)
-        parameters.append(("FRT_VALUES",values_list))
+        parameters.append(("FRT_VALUES", values_list))
         self.hil.set_matlab_variables(parameters)
 
     """
     Getter functions
     """
-    def get_rocof_dic(self,):
-        params = {  "ROCOF_ENABLE"  : 1.0,
-                    "ROCOF_VALUE"   : 3.0,
-                    "ROCOF_INIT"    : 60.0}
+
+    def get_rocof_dic(self, ):
+        params = {"ROCOF_ENABLE": 1.0,
+                  "ROCOF_VALUE": 3.0,
+                  "ROCOF_INIT": 60.0}
         return params
+
     def get_test_sequence(self, current_mode, test_condition):
-        index=['FRT_CONDITION', 'MIN_DURATION', 'FRT_VALUES']
-        T0 = self.params["eut_startup_time"]  
+        index = ['FRT_CONDITION', 'MIN_DURATION', 'FRT_VALUES']
+        T0 = self.params["eut_startup_time"]
         test_sequences_df = pd.DataFrame(columns=index)
-        test_sequences_df = test_sequences_df.append(test_condition["Step E"],ignore_index=True)
-        test_sequences_df = test_sequences_df.append(test_condition["Step G"],ignore_index=True)
-        test_sequences_df = test_sequences_df.append(test_condition["Step H"],ignore_index=True)
-           
+        test_sequences_df = test_sequences_df.append(test_condition["Step E"], ignore_index=True)
+        test_sequences_df = test_sequences_df.append(test_condition["Step G"], ignore_index=True)
+        test_sequences_df = test_sequences_df.append(test_condition["Step H"], ignore_index=True)
+
         test_sequences_df.loc[0, 'FRT_START_TIMING'] = T0
         # Calculate the timing sequences
         test_sequences_df.loc[0, 'FRT_END_TIMING'] = T0 + test_sequences_df.loc[0, 'MIN_DURATION']
         for i in range(1, len(test_sequences_df)):
-            test_sequences_df.loc[i, 'FRT_START_TIMING'] = test_sequences_df.loc[i-1, 'FRT_END_TIMING']
-            test_sequences_df.loc[i, 'FRT_END_TIMING'] = test_sequences_df.loc[i,'FRT_START_TIMING'] + test_sequences_df.loc[i, 'MIN_DURATION']
+            test_sequences_df.loc[i, 'FRT_START_TIMING'] = test_sequences_df.loc[i - 1, 'FRT_END_TIMING']
+            test_sequences_df.loc[i, 'FRT_END_TIMING'] = test_sequences_df.loc[i, 'FRT_START_TIMING'] + \
+                                                         test_sequences_df.loc[i, 'MIN_DURATION']
         return test_sequences_df
-  
 
     def get_frt_stop_time(self, test_sequences_df):
         return test_sequences_df["FRT_END_TIMING"].iloc[-1]
 
     def get_modes(self):
         return self.params["modes"]
+
     def get_wfm_file_header(self):
         return self.wfm_header
+
     def extend_list_end(self, _list, extend_value, final_length):
-            list_length = len(_list)
-            _list.extend([float(extend_value)] * ( final_length - list_length ))
-            return _list
+        list_length = len(_list)
+        _list.extend([float(extend_value)] * (final_length - list_length))
+        return _list
+
+
 if __name__ == "__main__":
     pass
