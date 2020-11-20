@@ -269,22 +269,22 @@ def print_measurements(meas):
     :return: None
     """
 
-    ts.log('S3 voltages = [%0.1f, %0.1f, %0.1f] and currents = [%0.1f, %0.1f, %0.1f]' %
+    ts.log('\tS3 voltages = [%0.1f, %0.1f, %0.1f] and currents = [%0.1f, %0.1f, %0.1f]' %
            (meas['AC_VRMS_SOURCE_1'], meas['AC_VRMS_SOURCE_2'], meas['AC_VRMS_SOURCE_3'],
             meas['AC_IRMS_SOURCE_1'], meas['AC_IRMS_SOURCE_2'], meas['AC_IRMS_SOURCE_3']))
-    ts.log('Switch S3 active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f]' %
+    ts.log('\tSwitch S3 active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f]' %
            (meas['AC_SOURCE_P']/3., meas['AC_SOURCE_P']/3., meas['AC_SOURCE_P']/3.,
             meas['AC_SOURCE_Q']/3., meas['AC_SOURCE_Q']/3., meas['AC_SOURCE_Q']/3.))
-    ts.log('Switch S2 active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f]' %
+    ts.log('\tSwitch S2 active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f]' %
            (meas['AC_P']/3., meas['AC_P']/3., meas['AC_P']/3.,
             meas['AC_Q']/3., meas['AC_Q']/3., meas['AC_Q']/3.))
-    ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
+    ts.log('\tActive powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
            'resistive load' % (meas['AC_P_LOAD_R_1'], meas['AC_P_LOAD_R_2'], meas['AC_P_LOAD_R_3'],
                                meas['AC_Q_LOAD_R_1'], meas['AC_Q_LOAD_R_2'], meas['AC_Q_LOAD_R_3']))
-    ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
+    ts.log('\tActive powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
            'capacitive load' % (meas['AC_P_LOAD_C_1'], meas['AC_P_LOAD_C_2'], meas['AC_P_LOAD_C_3'],
                                 meas['AC_Q_LOAD_C_1'], meas['AC_Q_LOAD_C_2'], meas['AC_Q_LOAD_C_3']))
-    ts.log('Active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
+    ts.log('\tActive powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
            'inductive load' % (meas['AC_P_LOAD_L_1'], meas['AC_P_LOAD_L_2'], meas['AC_P_LOAD_L_3'],
                                meas['AC_Q_LOAD_L_1'], meas['AC_Q_LOAD_L_2'], meas['AC_Q_LOAD_L_3']))
 
@@ -323,6 +323,7 @@ def run_ui_test(phil, model_name, daq, test_num, t_trips, q_inc, high_freq_count
     ts.sleep(2.)
     daq.data_sample()
     meas = daq.data_read()
+    ts.log('Step e)2) Print system measurements:')
     print_measurements(meas)
 
     '''
@@ -330,17 +331,43 @@ def run_ui_test(phil, model_name, daq, test_num, t_trips, q_inc, high_freq_count
     This is the time from when S3 opens to when instantaneous voltage and EUT current in the
     island drops and remains below 0.05 p.u. Record this as the clearing time.
     '''
+    ts.log('Step e)3) Opening switch s3')
     # waveform OpWrite configured to capture when S3 is opened
-    ctrl_sigs[2] = 1  # Capacitor Pot
+    ctrl_sigs[2] = 1  #3 = Islanding Test
     phil.set_control_signals(values=ctrl_sigs)
 
+    ts.log('Waiting 10 seconds to determine trip time and island frequency.')
+    ts.sleep(10)
+
+    # Get console data
+    daq.data_sample()
+    t_trip = daq.data_read()['TRIP_TIME']
+    freq = daq.data_read()['ISLAND_FREQ']  # calculate fundamental frequency after S3 is open
+    t_trips[q_inc] = t_trip  # append trip time in dict with reactive power increment value key
+    ts.log('For reactive power setpoint %0.3f, the island frequency was %0.2f Hz and the trip time was %0.2f s' %
+           (q_inc, freq, t_trip))
+
     # Complete data capture
+    '''
+    RTLab OpWriteFile Math using worst case scenario of 5.5 seconds, 8 signals and Ts = 40e-6
+    Duration of acquisition in number of points: Npoints = Nbss = (Tend-Tstart)/(Ts*dec) = (5.5)/(0.000040*5) = 27500
+   
+    Nbss = number of samples per signal (signal = acquisition frame) 
+    Acquisition frame duration: Tframe = Nbss * Ts * dec = 1000*0.000040*5 = 2 sec
+   
+    Number of buffers to be acquired: Nbuffers = Npoints / Nbss = (Tend - Tstart) / Tframe = 2.75
+   
+    Minimum file size: MinSize = Nbuffers x SizeBuf = [(Tend - Tstart) / Ts ] * (Nsig+1) * 8 * Nbss
+        = (5.5/40e-6)*(8)*8*1000 = 8.8e10
+   
+    SizeBuf = 1/Nbuffers * {[(Tend - Tstart) / Ts ]*(Nsig+1)*8*Nbss} = [(5.5/40e-6)*(8)*8*1000]/16 = 1375000
+    Size of one buffer in bytes (SizeBuf) = (Nsig+1) * 8 * Nbss (Minimum) = (7+1)*8*1000 = 64000
+    '''
     ts.log('Waiting 10 seconds for Opal to save the waveform data.')
     ts.sleep(10)
 
-    test_filename = 'PhaseJump_Test%s' % test_num
+    test_filename = 'UI_Test%s' % test_num
     ts.log('------------{}------------'.format(test_filename))
-
     # Convert and save the .mat file that contains the phase jump start
     ts.log('Processing waveform dataset(s)')
     ds = daq.waveform_capture_dataset()  # returns list of databases of waveforms (overloaded)
@@ -348,11 +375,6 @@ def run_ui_test(phil, model_name, daq, test_num, t_trips, q_inc, high_freq_count
     ts.log('Saving file: %s' % ui_wave)
     ds[0].to_csv(ts.result_file_path(ui_wave))
     ts.result_file(ui_wave)
-
-    # Values returned from RT-Lab analysis
-    t_trip = 0.0
-    freq = 60.  # todo: calculate fundamental frequency after S3 is open
-    t_trips[q_inc] = t_trip  # append trip time in dict with reactive power increment value key
 
     '''
     If at any point at least three test instances show island frequency increasing above the
@@ -788,7 +810,7 @@ def test_run():
             # get PS3 and QS3
             daq.data_sample()
             meas = daq.data_read()
-            ts.log_debug(pprint.pformat(meas))
+            # ts.log_debug(pprint.pformat(meas))
             ps3_pu = meas['AC_P_S3_PU']
             qs3_pu = meas['AC_Q_S3_PU']
 
@@ -868,6 +890,7 @@ def test_run():
             
             1) Disable the unintentional islanding protection in the EUT.
             '''
+            ts.log(15 * '-' + 'STEP D: VERIFY TEST SETUP CAN ISLAND' + 15 * '-')
             ts.log('This EUT supports the following Unintentional Islanding modes: %s' %
                    eut.get_ui()['ui_capability_er'])
             ts.log('Disabling the UI on EUT for Step D.1.')
@@ -882,6 +905,7 @@ def test_run():
             capacitive load and the inductive load on a net and per phase basis.
             '''
             ts.sleep(2.)
+            ts.log('Step 3: Recording power measurements at switches and loads.')
             daq.data_sample()
             meas = daq.data_read()
             print_measurements(meas)
@@ -891,17 +915,24 @@ def test_run():
             verified. Measure and record the voltage and frequency of the islanding operation.
             '''
             ctrl_sigs = phil.get_control_signals()
+            ts.log('Step d)4): Opening switch S3 to verify the EUT will island for 10 seconds.')
             ctrl_sigs[2] = 1  # open S3 switch (for islanding test execution)
             phil.set_control_signals(values=ctrl_sigs)
-            ts.sleep(10.)
-            daq.data_sample()
-            meas = daq.data_read()
-            ts.log('Voltage = [%0.2f, %0.2f, %0.2f] and frequency = [%0.3f, %0.3f, %0.3f] of island at EUT' %
-                   (meas['AC_VRMS_1'], meas['AC_VRMS_2'], meas['AC_VRMS_3'],
-                    meas['AC_FREQ_PCC'], meas['AC_FREQ_PCC'], meas['AC_FREQ_PCC']))
+            start = time.time()
+            end = start + 10
+            ts.log('Step d)4): Measuring voltage and frequency of the island.')
+            while time.time() < end:
+                daq.data_sample()
+                meas = daq.data_read()
+                ts.log('\tVoltage = [%0.2f, %0.2f, %0.2f] and frequency = [%0.3f, %0.3f, %0.3f] of island at EUT' %
+                       (meas['AC_VRMS_1'], meas['AC_VRMS_2'], meas['AC_VRMS_3'],
+                        meas['AC_FREQ_PCC'], meas['AC_FREQ_PCC'], meas['AC_FREQ_PCC']))
+                ts.log('\tIslanded for %s seconds' % (time.time() - start))
+
             '''
             5) De-energize the island.
             '''
+            ts.log('Step d)5): De-energizing the island.')
             ctrl_sigs[3] = 0.  # de-energize amplifier
             phil.set_control_signals(values=ctrl_sigs)
             # phil.stop_simulation()
@@ -910,7 +941,7 @@ def test_run():
             6) Enable the unintentional islanding protection in the EUT.
             '''
             # phil.start_simulation()
-            energize_system(ctrl_sigs, phil, daq, eut_startup_time, p_rated)
+            ts.log('Step d)6): Enable the unintentional islanding protection in the EUT.')
             eut.set_ui(params={'ui_mode_enable_as': True})
             ts.log('EUT settings: %s' % eut.get_ui())
 
@@ -920,15 +951,18 @@ def test_run():
             1) Operate the EUT and load under the conditions established in step c) for each one of the test
             cases in Table 13 or Table 14 as appropriate for the EUT Category.
             '''
+            ts.log(15*'-' + 'STEP E: CLEARING TIME TESTS' + 15*'-')
+            ts.log('Step e)1): Running test cases from Table 13 or 14.')
+            energize_system(ctrl_sigs, phil, daq, eut_startup_time, p_rated)
 
             '''
-            d)4) The test is to be repeated with the reactive load (either capacitive or inductive) adjusted in 1%
+            e)4) The test is to be repeated with the reactive load (either capacitive or inductive) adjusted in 1%
             increments from 95% to 105% of the initial balanced load value determined in step c). 
             '''
             # This requires clearing times be calculated while the script is running.  It is suggested that this
             # be completed with logic in the RT-Lab simulation
 
-            ts.log_sleep(2.)  # wait
+            ts.sleep(2.)  # wait
             ctrl_sigs[2] = 1.  # open S3
             phil.set_control_signals(values=ctrl_sigs)
 
@@ -937,13 +971,14 @@ def test_run():
             low_freq_count = 0
             t_trips = {}
             for q_inc in [1.0, 0.99, 0.98, 0.97, 0.96, 0.95, 1.01, 1.02, 1.03, 1.04, 1.05]:
+                ts.log('Running step e)4) with reactive power setpoint = %0.3f' % q_inc)
                 counter += 1
                 t_trips, t_trip, high_freq_count, low_freq_count = \
                     run_ui_test(phil, model_name, daq, test_num, t_trips, q_inc, high_freq_count,
                                 low_freq_count, result_summary, c)
 
                 ''' 
-                d)4) If clearing times are still increasing at the 95% or 105% points, additional 1% increments 
+                e)4) If clearing times are still increasing at the 95% or 105% points, additional 1% increments 
                 shall be taken until clearing times begin decreasing.
                 '''
                 min_unreached = True

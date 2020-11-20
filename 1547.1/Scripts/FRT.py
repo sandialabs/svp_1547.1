@@ -37,7 +37,7 @@ from svpelab import gridsim
 from svpelab import loadsim
 from svpelab import pvsim
 from svpelab import das
-from svpelab import der
+from svpelab import der1547
 from svpelab import hil
 from svpelab import p1547
 import script
@@ -96,8 +96,6 @@ def test_run():
         p_min_prime = ts.param_value('eut.p_min_prime')
         phases = ts.param_value('eut.phases')
 
-    
-
         # Pass/fail accuracies
         pf_msa = ts.param_value('eut.pf_msa')
 
@@ -107,64 +105,38 @@ def test_run():
         absorb['p_rated_prime'] = ts.param_value('eut_cpf.p_rated_prime')
         absorb['p_min_prime'] = ts.param_value('eut_cpf.p_min_prime')
 
-       
-        
-
-
-
         # initialize HIL environment, if necessary
         ts.log_debug(15 * "*" + "HIL initialization" + 15 * "*")
 
         phil = hil.hil_init(ts)
         if phil is not None:
-            # return self.ts.param_value(self.group_name + '.' + GROUP_NAME + '.' + name)
-            open_proj = phil._param_value('hil_config_open')
-            compilation = phil._param_value('hil_config_compile')
-            stop_sim = phil._param_value('hil_config_stop_sim')
-            load = phil._param_value('hil_config_load')
-            execute = phil._param_value('hil_config_execute')
-            model_name = phil._param_value('hil_config_model_name')
-            phil.config()
-
-        ''' RTLab OpWriteFile Math using worst case scenario of 160 seconds, 14 signals and Ts = 40e-6
-        Duration of acquisition in number of points: Npoints = (Tend-Tstart)/(Ts*dec) = (350)/(0.000040*25) = 1350e3
-        
-        Acquisition frame duration: Tframe = Nbss * Ts * dec = 1000*0.000040*250 = 10 sec
-        
-        Number of buffers to be acquired: Nbuffers = Npoints / Nbss = (Tend - Tstart) / Tframe = 16
-        
-        Minimum file size: MinSize= Nbuffers x SizeBuf = [(Tend - Tstart) / Ts ] * (Nsig+1) * 8 * Nbss 
-            = (160/40e-6)*(14+1)*8*1000 = 4.8e11
-        
-        SizeBuf = 1/Nbuffers * {[(Tend - Tstart) / Ts ]*(Nsig+1)*8*Nbss} = [(160/0.000040)*(14+1)*8*1e3]/16 = 30e9
-        Size of one buffer in bytes (SizeBuf) = (Nsig+1) * 8 * Nbss (Minimum) = (14+1)*8*1000 = 120e3
-        '''
-
+            phil.open()  # must load model here
+            # phil.load_model_on_hil()
+            # phil.start_simulation()
 
         """
         Configure settings in 1547.1 Standard module for the Frequency Ride Through Tests
         """
         pwr = float(ts.param_value('frt.high_pwr_value'))
         repetitions = ts.param_value('frt.repetitions')
-        if ts.param_value('frt.wav_ena') == "Yes" :
+        if ts.param_value('frt.wav_ena') == "Yes":
             wav_ena = True
-        else :
+        else:
             wav_ena = False
-        if ts.param_value('frt.data_ena') == "Yes" :
+        if ts.param_value('frt.data_ena') == "Yes":
             data_ena = True
-        else :
+        else:
             data_ena = False
+
         FreqRideThrough = p1547.FrequencyRideThrough(ts=ts, support_interfaces={"hil": phil})
         # result params
         # result_params = lib_1547.get_rslt_param_plot()
-        # ts.log(result_params
+        # ts.log(result_params)
 
         # grid simulator is initialized with test parameters and enabled
         ts.log_debug(15 * "*" + "Gridsim initialization" + 15 * "*")
         grid = gridsim.gridsim_init(ts, support_interfaces={"hil": phil})  # Turn on AC so the EUT can be initialized
-        if grid is not None:
-            grid.voltage(v_nom)  
-        
+
         # pv simulator is initialized with test parameters and enabled
         ts.log_debug(15 * "*" + "PVsim initialization" + 15 * "*")
         pv = pvsim.pvsim_init(ts)
@@ -175,12 +147,11 @@ def test_run():
         # initialize data acquisition
         ts.log_debug(15 * "*" + "DAS initialization" + 15 * "*")
         daq = das.das_init(ts, support_interfaces={"hil": phil, "pvsim": pv})
-        daq.waveform_config({"mat_file_name":"WAV.mat",
-                            "wfm_channels": FreqRideThrough.get_wfm_file_header()})
+        daq.waveform_config({"mat_file_name": "WAV.mat",
+                             "wfm_channels": FreqRideThrough.get_wfm_file_header()})
 
         if daq is not None:
             daq.sc['F_MEAS'] = 100
-
 
         # open result summary file
         result_summary_filename = 'result_summary.csv'
@@ -193,7 +164,7 @@ def test_run():
         frequency as small as possible.
         """
         # Wait to establish communications with the EUT after AC and DC power are provided
-        eut = der.der_init(ts)
+        eut = der1547.der1547_init(ts)
         if eut is not None:
             eut.config()
 
@@ -201,22 +172,22 @@ def test_run():
         fw_curve = 1
         ActiveFunction = p1547.ActiveFunction(ts=ts,
                                               script_name='Freq-Watt',
-                                              functions=[FW],                                              
+                                              functions=[FW],
                                               criteria_mode=[True, True, True])
         fw_param = ActiveFunction.get_params(function=FW, curve=fw_curve)
-        ts.log_debug('fw_param:%s' % fw_param)
+        ts.log_debug('fw_params: %s' % fw_param)
 
         if eut is not None:
-            params = {     'Ena': True,
-                            'curve': fw_curve,
-                            'dbf': fw_param['dbf'],
-                            'kof': fw_param['kof'],
-                            'RspTms': fw_param['tr']
-                        }
-            settings = eut.freq_watt(params)
-            ts.log_debug('Initial EUT FW settings are %s' % settings)
-
-       
+            params = {'pf_mode_enable_as': False,
+                      'pf_dbof_as': fw_param['dbf'],
+                      'pf_dbuf_as': fw_param['dbf'],
+                      'pf_kof_as': fw_param['kof'],
+                      'pf_kuf_as': fw_param['kof']
+                      }
+            # set before running experiment
+            # settings = eut.set_pf(params=params)
+            # ts.log_debug('Initial EUT FW settings are %s' % settings)
+            # ts.confirm('Set EUT FW settings to %s' % params)
 
         """
         Set or verify that all frequency trip settings are set to not influence the outcome of the test.
@@ -232,11 +203,11 @@ def test_run():
         # Initial loop for all mode that will be executed
         modes = FreqRideThrough.get_modes()  # Options: LFRT, HFRT
         ts.log(f"FRT modes tested : '{modes}'")
-        for current_mode in modes:        
-            for repetition in range(1,repetitions+1):        
-                dataset_filename = f'{current_mode}_{round(pwr*100)}PCT_{repetition}'
+        for current_mode in modes:
+            for repetition in range(1, repetitions + 1):
+                dataset_filename = f'{current_mode}_{round(pwr * 100)}PCT_{repetition}'
                 ts.log_debug(15 * "*" + f"Starting {dataset_filename}" + 15 * "*")
-                if data_ena :
+                if data_ena:
                     daq.data_capture(True)
 
                 """
@@ -244,10 +215,8 @@ def test_run():
                 """
                 if pv is not None:
                     ts.log_debug(f'Setting power level to {pwr}')
-                    pv.iv_curve_config(pmp=p_rated, vmp=v_nom_in)
-                    pv.irradiance_set(1000.)
                     pv.power_set(p_rated * pwr)
-                        
+
                 """
                 Initiating voltage sequence for FRT
                 """
@@ -258,15 +227,19 @@ def test_run():
                     # This adds 5 seconds of nominal behavior for EUT normal shutdown. This 5 sec is not recorded.
                     frt_stop_time = frt_stop_time + 5
                     ts.log('Stop time set to %s' % phil.set_stop_time(frt_stop_time))
+
                     # The driver should take care of this by selecting "Yes" to "Load the model to target?"
                     phil.load_model_on_hil()
-                    # You need to first load the model, then configure the parameters
+
                     # Set the grid simulator rocof to 3Hz/s
-                    grid.rocof(FreqRideThrough.get_rocof_dic())   
+                    grid.rocof(FreqRideThrough.get_rocof_dic())
+
+                    # You need to first load the model, then configure the parameters
                     # Now that we have all the test_sequences its time to sent them to the model.
                     FreqRideThrough.set_frt_model_parameters(frt_test_sequences)
+
                     # The driver parameter "Execute the model on target?" should be set to "No"
-                    phil.start_simulation() 
+                    phil.start_simulation()
                     ts.sleep(0.5)
                     sim_time = phil.get_time()
                     while (frt_stop_time - sim_time) > 1.0:  # final sleep will get to stop_time.
@@ -275,8 +248,8 @@ def test_run():
                             sim_time, frt_stop_time - sim_time))
                         ts.sleep(5)
 
-                    rms_dataset_filename = "No File"   
-                    wave_start_filename = "No File"        
+                    rms_dataset_filename = "No File"
+                    wave_start_filename = "No File"
                     if data_ena:
                         rms_dataset_filename = dataset_filename + "_RMS.csv"
                         daq.data_capture(False)
@@ -323,16 +296,15 @@ def test_run():
             ts.log_error(reason)
 
     except Exception as e:
-        ts.log_error((e, traceback.format_exc()))
-
+        ts.log_error(e)
         ts.log_error('Test script exception: %s' % traceback.format_exc())
 
     finally:
         if grid is not None:
             grid.close()
         if pv is not None:
-            if p_rated is not None:
-                pv.power_set(p_rated)
+            # if p_rated is not None:
+            #     pv.power_set(p_rated)
             pv.close()
         if daq is not None:
             daq.close()
@@ -387,18 +359,21 @@ info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.4.
 # PRI test parameters
 info.param_group('frt', label='Test Parameters')
 info.param('frt.lf_ena', label='Low frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
-info.param('frt.lf_parameter', label='Low frequency parameter (Hz):', default=57.0,active='frt.lf_ena', active_value=['Enabled'])
-info.param('frt.lf_period', label='Low frequency period (s):', default=299.0,active='frt.lf_ena', active_value=['Enabled'])
+info.param('frt.lf_parameter', label='Low frequency parameter (Hz):', default=57.0, active='frt.lf_ena',
+           active_value=['Enabled'])
+info.param('frt.lf_period', label='Low frequency period (s):', default=299.0, active='frt.lf_ena',
+           active_value=['Enabled'])
 
 info.param('frt.hf_ena', label='High frequency mode settings:', default='Enabled', values=['Disabled', 'Enabled'])
-info.param('frt.hf_parameter', label='High frequency parameter (Hz):', default=61.8,active='frt.hf_ena', active_value=['Enabled'])
-info.param('frt.hf_period', label='High frequency period (s):', default=299.0,active='frt.hf_ena', active_value=['Enabled'])
+info.param('frt.hf_parameter', label='High frequency parameter (Hz):', default=61.8, active='frt.hf_ena',
+           active_value=['Enabled'])
+info.param('frt.hf_period', label='High frequency period (s):', default=299.0, active='frt.hf_ena',
+           active_value=['Enabled'])
 info.param('frt.high_pwr_value', label='Power Output level (Over 90%):', default=0.9)
 info.param('frt.repetitions', label='Number of repetitions', default=3)
-info.param('frt.wav_ena', label='Waveform acquisition needed (.mat->.csv)  ?', default='Yes', values=['Yes', 'No'])
-info.param('frt.data_ena', label='RMS acquisition needed (SVP creates .csv from block queries))?', default='No', values=['Yes', 'No'])
-
-
+info.param('frt.wav_ena', label='Waveform acquisition needed (.mat->.csv)?', default='Yes', values=['Yes', 'No'])
+info.param('frt.data_ena', label='RMS acquisition needed (SVP creates .csv from block queries))?', default='No',
+           values=['Yes', 'No'])
 
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)
@@ -413,7 +388,8 @@ info.param('eut.v_high', label='Maximum AC voltage (V)', default=132.0)
 info.param('eut.v_in_nom', label='V_in_nom: Nominal input voltage (Vdc)', default=400)
 info.param('eut.f_nom', label='Nominal AC frequency (Hz)', default=60.0)
 info.param('eut.startup_time', label='EUT Startup time', default=10)
-info.param('eut.scale_current', label='EUT Current scale input string (e.g. 30.0,30.0,30.0)', default="33.3400,33.3133,33.2567")
+info.param('eut.scale_current', label='EUT Current scale input string (e.g. 30.0,30.0,30.0)',
+           default="33.3400,33.3133,33.2567")
 info.param('eut.offset_current', label='EUT Current offset input string (e.g. 0,0,0)', default="0,0,0")
 info.param('eut.scale_voltage', label='EUT Voltage scale input string (e.g. 30.0,30.0,30.0)', default="20.0,20.0,20.0")
 info.param('eut.offset_voltage', label='EUT Voltage offset input string (e.g. 0,0,0)', default="0,0,0")
@@ -422,7 +398,7 @@ info.param('eut.offset_voltage', label='EUT Voltage offset input string (e.g. 0,
 info.logo('sirfn.png')
 
 # Other equipment parameters
-der.params(info)
+der1547.params(info)
 gridsim.params(info)
 pvsim.params(info)
 das.params(info)
@@ -446,6 +422,3 @@ if __name__ == "__main__":
     test_script.log('log it')
 
     run(test_script)
-
-
-
