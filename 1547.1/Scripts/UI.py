@@ -269,22 +269,22 @@ def print_measurements(meas):
     :return: None
     """
 
-    ts.log('\tS3 voltages = [%0.1f, %0.1f, %0.1f] and currents = [%0.1f, %0.1f, %0.1f]' %
+    ts.log('\tS3 voltages = [%0.1f, %0.1f, %0.1f] V and currents = [%0.1f, %0.1f, %0.1f] A' %
            (meas['AC_VRMS_SOURCE_1'], meas['AC_VRMS_SOURCE_2'], meas['AC_VRMS_SOURCE_3'],
             meas['AC_IRMS_SOURCE_1'], meas['AC_IRMS_SOURCE_2'], meas['AC_IRMS_SOURCE_3']))
-    ts.log('\tSwitch S3 active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f]' %
+    ts.log('\tSwitch S3 active powers = [%0.3f, %0.3f, %0.3f] W and reactive powers = [%0.3f, %0.3f, %0.3f] var' %
            (meas['AC_SOURCE_P']/3., meas['AC_SOURCE_P']/3., meas['AC_SOURCE_P']/3.,
             meas['AC_SOURCE_Q']/3., meas['AC_SOURCE_Q']/3., meas['AC_SOURCE_Q']/3.))
-    ts.log('\tSwitch S2 active powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f]' %
+    ts.log('\tSwitch S2 active powers = [%0.3f, %0.3f, %0.3f] W and reactive powers = [%0.3f, %0.3f, %0.3f] var' %
            (meas['AC_P']/3., meas['AC_P']/3., meas['AC_P']/3.,
             meas['AC_Q']/3., meas['AC_Q']/3., meas['AC_Q']/3.))
-    ts.log('\tActive powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
+    ts.log('\tActive powers = [[%0.3f, %0.3f, %0.3f] W and reactive powers = [%0.3f, %0.3f, %0.3f] var at '
            'resistive load' % (meas['AC_P_LOAD_R_1'], meas['AC_P_LOAD_R_2'], meas['AC_P_LOAD_R_3'],
                                meas['AC_Q_LOAD_R_1'], meas['AC_Q_LOAD_R_2'], meas['AC_Q_LOAD_R_3']))
-    ts.log('\tActive powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
+    ts.log('\tActive powers = [%0.3f, %0.3f, %0.3f] W and reactive powers = [%0.3f, %0.3f, %0.3f] var at '
            'capacitive load' % (meas['AC_P_LOAD_C_1'], meas['AC_P_LOAD_C_2'], meas['AC_P_LOAD_C_3'],
                                 meas['AC_Q_LOAD_C_1'], meas['AC_Q_LOAD_C_2'], meas['AC_Q_LOAD_C_3']))
-    ts.log('\tActive powers = [%0.1f, %0.1f, %0.1f] and reactive powers = [%0.1f, %0.1f, %0.1f] at '
+    ts.log('\tActive powers = [%0.3f, %0.3f, %0.3f] W and reactive powers = [%0.3f, %0.3f, %0.3f] var at '
            'inductive load' % (meas['AC_P_LOAD_L_1'], meas['AC_P_LOAD_L_2'], meas['AC_P_LOAD_L_3'],
                                meas['AC_Q_LOAD_L_1'], meas['AC_Q_LOAD_L_2'], meas['AC_Q_LOAD_L_3']))
 
@@ -366,10 +366,10 @@ def run_ui_test(phil, model_name, daq, test_num, t_trips, q_inc, high_freq_count
     ts.log('Waiting 10 seconds for Opal to save the waveform data.')
     ts.sleep(10)
 
-    test_filename = 'UI_Test%s' % test_num
+    test_filename = 'UI_Test_%s_Q%0.2f' % (test_num, q_inc)
     ts.log('------------{}------------'.format(test_filename))
     # Convert and save the .mat file that contains the phase jump start
-    ts.log('Processing waveform dataset(s)')
+    ts.log('Processing waveform dataset')
     ds = daq.waveform_capture_dataset()  # returns list of databases of waveforms (overloaded)
     ui_wave = '%s.csv' % test_filename
     ts.log('Saving file: %s' % ui_wave)
@@ -407,8 +407,8 @@ def energize_system(ctrl_sigs, phil, daq, eut_startup_time, p_rated):
     """
     ctrl_sigs[2] = 0.  # close S3
     ctrl_sigs[3] = 1.  # energize amplifier
-    if not ts.confirm('ABOUT TO ENERGIZE AMPLIFIER - OK?'):
-        raise Exception
+    # if not ts.confirm('ABOUT TO ENERGIZE AMPLIFIER - OK?'):
+    #     raise Exception
     phil.set_control_signals(values=ctrl_sigs)
 
     count = 0
@@ -893,7 +893,7 @@ def test_run():
             ts.log(15 * '-' + 'STEP D: VERIFY TEST SETUP CAN ISLAND' + 15 * '-')
             ts.log('This EUT supports the following Unintentional Islanding modes: %s' %
                    eut.get_ui()['ui_capability_er'])
-            ts.log('Disabling the UI on EUT for Step D.1.')
+            ts.log('Step d)1): Disabling the UI on EUT')
             eut.set_ui(params={'ui_mode_enable_as': False})
 
             '''
@@ -905,7 +905,7 @@ def test_run():
             capacitive load and the inductive load on a net and per phase basis.
             '''
             ts.sleep(2.)
-            ts.log('Step 3: Recording power measurements at switches and loads.')
+            ts.log('Step d)3): Recording power measurements at switches and loads.')
             daq.data_sample()
             meas = daq.data_read()
             print_measurements(meas)
