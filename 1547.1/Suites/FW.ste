@@ -1,9 +1,9 @@
 <suite globals="True" name="FW">
   <members>
-    <member name="FW_1_ABOVE.tst" />
-    <member name="FW_2_ABOVE.tst" />
-    <member name="FW_1_BELOW.tst" />
-    <member name="FW_2_BELOW.tst" />
+    <member name="FW\FW_1_ABOVE.tst" />
+    <member name="FW\FW_2_ABOVE.tst" />
+    <member name="FW\FW_1_BELOW.tst" />
+    <member name="FW\FW_2_BELOW.tst" />
   </members>
   <params>
     <param name="eut_fw.p_small" type="float">0.05</param>

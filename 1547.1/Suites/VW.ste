@@ -1,11 +1,11 @@
 <suite globals="True" name="VW">
   <members>
-    <member name="VW_1.tst" />
-    <member name="VW_2.tst" />
-    <member name="VW_3.tst" />
-    <member name="VW_IMBALANCE.tst" />
-    <member name="VW_IMBALANCE_FIX.tst" />
-    <member name="VW_MANUAL.tst" />
+    <member name="VW\VW_1.tst" />
+    <member name="VW\VW_2.tst" />
+    <member name="VW\VW_3.tst" />
+    <member name="VW\VW_IMBALANCE.tst" />
+    <member name="VW\VW_IMBALANCE_FIX.tst" />
+    <member name="VW\VW_MANUAL.tst" />
   </members>
   <params>
     <param name="eut.f_min" type="float">56.0</param>

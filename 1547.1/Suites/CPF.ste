@@ -1,8 +1,8 @@
 <suite globals="True" name="CPF">
   <members>
-    <member name="CPF.tst" />
-    <member name="CPF_FIX.tst" />
-    <member name="CPF_MANUAL.tst" />
+    <member name="CPF\CPF.tst" />
+    <member name="CPF\CPF_FIX.tst" />
+    <member name="CPF\CPF_MANUAL.tst" />
   </members>
   <params>
     <param name="eut.f_min" type="float">56.0</param>

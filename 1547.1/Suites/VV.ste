@@ -1,10 +1,10 @@
 <suite globals="True" name="VV">
   <members>
-    <member name="VV_1.tst" />
-    <member name="VV_2.tst" />
-    <member name="VV_3.tst" />
-    <member name="VV_IMBALANCE.tst" />
-    <member name="VV_IMBALANCE_FIX.tst" />
+    <member name="VV\VV_1.tst" />
+    <member name="VV\VV_2.tst" />
+    <member name="VV\VV_3.tst" />
+    <member name="VV\VV_IMBALANCE.tst" />
+    <member name="VV\VV_IMBALANCE_FIX.tst" />
   </members>
   <params>
     <param name="der.fronius.slave_id" type="int">1</param>

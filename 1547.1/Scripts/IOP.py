@@ -145,7 +145,7 @@ def test_run():
 
     try:
 
-        settings_test = ts.param_value('iop_params.settings_test') == 'Yes'
+        configuration_test = ts.param_value('iop_params.configuration_test') == 'Yes'
         monitoring_test = ts.param_value('iop_params.monitoring_test') == 'Yes'
 
         v_nom = float(ts.param_value('eut.v_nom'))
@@ -207,9 +207,9 @@ def test_run():
         else:
             ts.log_warning('DER Nameplate Information not supported')
 
-        if settings_test:  # Not supported by DNP3 App Note
+        if configuration_test:  # Not supported by DNP3 App Note
             '''
-            6.5 Basic settings information test
+            6.5 Configuration information test
 
             a) Read from the DER each parameter identified in Table 42.
             b) For each, verify that the value reported matches the behavior of the DER measured though independent test
@@ -445,7 +445,7 @@ def test_run():
 
                 # Test Const PF functionality
                 '''
-                for pf in [(0.10, 'inj'), (-0.10, 'abs'), (0.85, 'inj')]:
+                for pf in [(0.90, 'inj'), (-0.90, 'abs'), (0.85, 'inj')]:
                     ts.log_debug('Test Read: %s' % eut.get_const_pf())
                     ts.log_debug('Test Write: %s' % eut.set_const_pf(params={"const_pf_mode_enable_as": True,
                                                                              # "const_pf_abs_as": pf[0],
@@ -851,15 +851,15 @@ def test_run():
         # ES Permit Service
         '''
         ts.log_debug('Test Read: %s' % eut.get_es_permit_service())
-        params = {'es_permit_service_as': True, 'es_v_low_as': 0.9, 'es_v_high_as': 1.1,
-                  'es_f_low_as': 59.3, 'es_f_high_as': 60.5, 'es_randomized_delay_as': 50, 'es_delay_as': 62,
-                  'es_ramp_rate_as': 30}
+        params = {'es_permit_service_as': True, 'es_v_low_as': 0.917, 'es_v_high_as': 1.05,
+                  'es_f_low_as': 59.5, 'es_f_high_as': 60.1, 'es_randomized_delay_as': 300, 'es_delay_as': 300,
+                  'es_ramp_rate_as': 300}
         ts.log_debug('Test Write: %s' % eut.set_es_permit_service(params=params))
         ts.sleep(2)
         ts.log_debug('Test Read: %s' % eut.get_es_permit_service())
-        params = {'es_permit_service_as': True, 'es_v_low_as': 0.89, 'es_v_high_as': 1.11,
-                  'es_f_low_as': 59.4, 'es_f_high_as': 60.8, 'es_randomized_delay_as': 60, 'es_delay_as': 30,
-                  'es_ramp_rate_as': 25}
+        params = {'es_permit_service_as': True, 'es_v_low_as': 0.88, 'es_v_high_as': 1.06,
+                  'es_f_low_as': 59.9, 'es_f_high_as': 61.0, 'es_randomized_delay_as': 600, 'es_delay_as': 1,
+                  'es_ramp_rate_as': 1000}
         ts.log_debug('Test Write: %s' % eut.set_es_permit_service(params=params))
         ts.sleep(2)
         ts.log_debug('Test Read: %s' % eut.get_es_permit_service())
@@ -898,7 +898,7 @@ def test_run():
         # ts.sleep(2)
         # ts.log_debug('OV MC Test Read: %s' % eut.get_ov_mc())
 
-        # Undervoltage Trip
+        # Undervoltage Momentary Cessation
         # ts.log_debug('UV MC Test Read: %s' % eut.get_uv_mc())
         # params = {'uv_mc_v_pts_as': [0.88, 0.50], 'uv_mc_t_pts_as': [21.0, 2.0]}
         # ts.log_debug('UV MC Test Write: %s' % eut.set_uv_mc(params=params))
@@ -922,7 +922,7 @@ def test_run():
 
         # Underfrequency Trip
         # ts.log_debug('UF Trip Test Read: %s' % eut.get_uf())
-        # params = {'uf_trip_f_pts_as': [59.2, 58.5], 'uf_trip_t_pts_as': [299, 5]}
+        # params = {'uf_trip_f_pts_as': [59.2, 58.5], 'uf_trip_t_pts_as': [100, 10]}
         # ts.log_debug('UF Trip Test Write: %s' % eut.set_uf(params=params))
         # ts.sleep(2)
         # ts.log_debug('UF Trip Test Read: %s' % eut.get_uf())
@@ -990,8 +990,8 @@ def run(test_script):
 info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.0.0')
 
 info.param_group('iop_params', label='Test Parameters')
-info.param('iop_params.settings_test', label='Run Settings Test', default='No', values=['Yes', 'No'])
-info.param('iop_params.monitoring_test', label='Run Monitoring Test', default='Yes', values=['Yes', 'No'])
+info.param('iop_params.configuration_test', label='Run Configuration Test?', default='No', values=['Yes', 'No'])
+info.param('iop_params.monitoring_test', label='Run Monitoring Test?', default='Yes', values=['Yes', 'No'])
 
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)
