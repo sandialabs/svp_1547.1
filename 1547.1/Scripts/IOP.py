@@ -81,9 +81,9 @@ PARAM_MAP = {'np_p_max': 'Active power rating at unity power factor (nameplate a
              'mn_var': 'Reactive Power (kVAr)',
              'mn_v': 'Voltage (list) (V)',
              'mn_hz': 'Frequency (Hz)',
-             'mn_st': 'Operational State (dict of bools)',
+             'mn_st': 'Operational State (bool)',
              'mn_conn': 'Connection State (bool)',
-             'mn_alrm': 'Alarm Status (str)',
+             'mn_alrm': 'Alarm Status (dict)',
              'mn_soc_pct': 'Operational State of Charge (%)',
              }
 
@@ -149,24 +149,20 @@ def test_run():
         monitoring_test = ts.param_value('iop_params.monitoring_test') == 'Yes'
 
         v_nom = float(ts.param_value('eut.v_nom'))
-        # va_max = float(ts.param_value('eut.s_rated'))
-        # va_crg_max = va_max
-        # f_nom = float(ts.param_value('eut.f_nom'))
-        phases = ts.param_value('eut.phases')
         p_rated = float(ts.param_value('eut.p_rated'))
         w_max = p_rated
-        va_max = p_rated
-        p_min = p_rated
-        w_crg_max = p_rated
+        s_rated = float(ts.param_value('eut.s_rated'))
         var_rated = float(ts.param_value('eut.var_rated'))
         var_max = var_rated
+        wait_time = float(ts.param_value('eut.wait_time'))
 
         # initialize DER configuration
         eut = der1547.der1547_init(ts)
         eut.config()
 
-        # if callable(getattr(eut, "print_modbus_map", None)):
-        #     ts.log_debug('SunSpec info: %s' % eut.print_modbus_map(w_labels=True))
+        if ts.param_value('iop_params.print_comm_map') == 'Yes':
+            if callable(getattr(eut, "print_modbus_map", None)):
+                ts.log_debug('SunSpec info: %s' % eut.print_modbus_map(w_labels=True))
 
         das_points = {'sc': ('event')}
         daq = das.das_init(ts, sc_points=das_points['sc'])
@@ -369,19 +365,6 @@ def test_run():
                                                                                 tested can be set and cleared.
             '''
 
-            # Test p_lim functionality
-            '''
-            for p in [0.25, 0.59, 0.87, 0.45]:
-                ts.log_debug('Test Read: %s' % eut.get_p_lim())
-                ts.log_debug('Test Write: %s' % eut.set_p_lim(params={"p_lim_mode_enable_as": True, "p_lim_w_as": p}))
-                ts.sleep(10)
-                mn_w = eut.get_monitoring().get("mn_w")
-                ts.log_debug('mn_w: %s' % mn_w)
-                ts.log_debug('w_max: %s' % w_max)
-                ts.log_debug('eval: %s' % (1e5 * (mn_w / w_max)))
-            eut.set_p_lim(params={"p_lim_mode_enable_as": False, "p_lim_w_as": 1.})
-            '''
-
             m = eut.get_monitoring()
             if m is not None:
                 ts.log('-' * 30)
@@ -399,67 +382,38 @@ def test_run():
                                     factor.”                factor.”                IEEE Std 1547-2018.
                 '''
 
-                accuracy = 5.
-                ts.log('Starting Monitoring Assessment. Active Power reported from the EUT is: %s' % m.get('mn_w'))
-                for setpoint in [0.25, 0.95]:  # test_pts (pu)
-                    setpoint_pct = setpoint * 100.
-                    ts.log_debug('    ****Configuring Experiment. Executing: p_lim = %s' % setpoint)
-                    eut.set_p_lim(params={"p_lim_mode_enable_as": True, "p_lim_w_as": setpoint})
-                    ts.sleep(2)
-                    inaccurate_measurement = True
-                    timeout = 5
-                    test_pass_fail = 'FAIL'
-                    while inaccurate_measurement and timeout > 0:
-                        timeout -= 1
-                        value = 1e5*(eut.get_monitoring().get("mn_w")/var_max)
-                        # ts.log_debug('    ****Returned Value: %s' % value)
-                        ts.log('    EUT Active Power is currently %0.1f%% Prated, waiting another %0.1f sec' %
-                               (value, timeout))
-                        if setpoint_pct - accuracy <= value <= setpoint_pct + accuracy:  # +/- accuracy in pct
-                            ts.log('    EUT has recorded power +/- %s%% as required by IEEE 1547-2018.' % accuracy)
-                            ts.log('    Returning EUT to rated power.')
-                            test_pass_fail = 'PASS'
-                            inaccurate_measurement = False
-                        else:
-                            ts.log('    EUT outside the IEEE 1547-2018 requirements. Bounds = [%0.1f, %0.1f], '
-                                   'Value = %0.1f' % (setpoint_pct - accuracy, setpoint_pct + accuracy, value))
-                            ts.sleep(1)
-                    ts.log('RESULT = %s' % test_pass_fail)
+                if ts.param_value('iop_params.mon.monitor_p') == 'Yes':
+                    ts.log('Starting Monitoring Assessment. Active Power reported from the EUT is: %s W' %
+                           (m.get('mn_w') * 1.e3))
+                    accuracy = 5.  # percent
+                    for setpoint in [0.25, 0.95]:  # test_pts (pu)
+                        setpoint_pct = setpoint * 100.
+                        ts.log_debug('    ****Configuring Experiment. Executing: p_lim = %s' % setpoint)
+                        eut.set_p_lim(params={"p_lim_mode_enable_as": True, "p_lim_w_as": setpoint})
+                        ts.sleep(2)
+                        inaccurate_measurement = True
+                        timeout = 5
+                        test_pass_fail = 'FAIL'
+                        while inaccurate_measurement and timeout > 0:
+                            timeout -= 1
+                            power_measured = eut.get_monitoring().get("mn_w")*1000.
+                            value = 100.*(power_measured/p_rated)  # percentage
+                            # ts.log_debug('    ****Returned Value: %s %%' % value)
+                            ts.log('    EUT Active Power is currently %0.1f%% Prated, waiting another %0.1f sec' %
+                                   (value, timeout))
+                            if setpoint_pct - accuracy <= value <= setpoint_pct + accuracy:  # +/- accuracy in pct
+                                ts.log('    EUT has recorded power +/- %s%% as required by IEEE 1547-2018.' % accuracy)
+                                ts.log('    Returning EUT to rated power.')
+                                test_pass_fail = 'PASS'
+                                inaccurate_measurement = False
+                            else:
+                                ts.log('    EUT outside the IEEE 1547-2018 requirements. Bounds = [%0.1f, %0.1f], '
+                                       'Value = %0.1f' % (setpoint_pct - accuracy, setpoint_pct + accuracy, value))
+                                ts.sleep(1)
+                        ts.log('RESULT = %s' % test_pass_fail)
 
-                ts.log_debug('    ****Resetting Function p_lim')
-                eut.set_p_lim(params={"p_lim_mode_enable_as": False, "p_lim_w_as": 1.})
-
-                # Test Const Q functionality
-                '''
-                for q in [0.25, 0.59, 0.87, 0.45]:
-                    ts.log_debug('Test Read: %s' % eut.get_const_q())
-                    ts.log_debug('Test Write: %s' % eut.set_const_q(params={"const_q_mode_enable_as": True,
-                                                                            "const_q_as": q}))
-                    ts.sleep(10)
-                    mn_var = eut.get_monitoring().get("mn_var")
-                    ts.log_debug('mn_var: %s' % mn_var)
-                    ts.log_debug('var_max: %s' % var_max)
-                    ts.log_debug('eval: %s' % (1e5 * (mn_var / var_max)))
-                eut.set_const_q(params={"const_q_mode_enable_as": False})
-                '''
-
-                # Test Const PF functionality
-                '''
-                for pf in [(0.90, 'inj'), (-0.90, 'abs'), (0.85, 'inj')]:
-                    ts.log_debug('Test Read: %s' % eut.get_const_pf())
-                    ts.log_debug('Test Write: %s' % eut.set_const_pf(params={"const_pf_mode_enable_as": True,
-                                                                             # "const_pf_abs_as": pf[0],
-                                                                             "const_pf_inj_as": pf[0],
-                                                                             "const_pf_excitation_as": pf[1]}))
-                    ts.sleep(20)
-                    ts.log_debug('Test Read: %s' % eut.get_const_pf())
-                    ts.log_debug('----')
-                    mn_var = eut.get_monitoring().get("mn_var")
-                    ts.log_debug('mn_var: %s' % mn_var)
-                    # ts.log_debug('var_max: %s' % var_max)
-                    ts.log_debug('eval: %s' % (1e5 * (mn_var / var_max)))
-                eut.set_const_pf(params={"const_pf_mode_enable_as": False})
-                '''
+                    ts.log_debug('    ****Resetting Function p_lim')
+                    eut.set_p_lim(params={"p_lim_mode_enable_as": False, "p_lim_w_as": 1.})
 
                 '''
                 ________________________________________________________________________________________________________
@@ -478,67 +432,57 @@ def test_run():
                                     rating.”                rating.”                IEEE Std 1547-2018.
                 '''
 
-                accuracy = 5.
-                ts.log('Starting Monitoring Assessment. Reactive Power reported from the EUT is: %s' %
-                       eut.get_monitoring().get('mn_var'))
-                for setpoint in [0.25, 0.95]:
-                    setpoint_pct = setpoint * 100.
-                    pf = math.sqrt(1. - (setpoint ** 2))
-                    ts.log_debug('     ****Configuring Experiment. Executing: Const PF = %s' % setpoint)
-                    eut.set_const_pf(params={"const_pf_mode_enable_as": True, "const_pf_abs_as": pf,
-                                             "const_pf_excitation_as": "inj"})
-                    ts.sleep(2)
-                    inaccurate_measurement = True
-                    timeout = 5
-                    test_pass_fail = 'FAIL'
-                    while inaccurate_measurement and timeout > 0:
-                        timeout -= 1
-                        value = 1e5*(eut.get_monitoring().get("mn_var")/var_max)
-                        # ts.log_debug('    ****Returned Value: %s' % value)
-                        ts.log('    EUT Reactive Power is currently %0.1f%%, waiting another %0.1f sec' %
-                               (value, timeout))
-                        if setpoint_pct - accuracy <= value <= setpoint_pct + accuracy:  # +/- accuracy in pct
-                            ts.log('    EUT has recorded value of +/- %s%% as required by IEEE 1547-2018.' % accuracy)
-                            test_pass_fail = 'PASS'
-                            inaccurate_measurement = False
-                        else:
-                            ts.log('    EUT outside the IEEE 1547-2018 requirements. Bounds = [%0.1f, %0.1f], '
-                                   'Value = %0.1f' % (setpoint_pct - accuracy, setpoint_pct + accuracy, value))
-                            ts.sleep(1)
-                    ts.log('RESULT = %s' % test_pass_fail)
+                if ts.param_value('iop_params.mon.monitor_q') == 'Yes':
+                    accuracy = 5.
+                    ts.log('Starting Monitoring Assessment. Reactive Power reported from the EUT is: %s' %
+                           eut.get_monitoring().get('mn_var'))
+                    for excitation in ['inj','abs']:
+                        for setpoint in [0.25, 0.95]:
+                            try:
+                                ts.log_debug('     ****Configuring Experiment. Executing: CRP = %s' % setpoint)
+                                eut.set_const_q(params={"const_q_mode_enable_as": True,
+                                                        "const_q_mode_excitation_as": excitation,
+                                                        "const_q_as": abs(100.*setpoint)})
+                                ts.log_debug('     ****New CRP = %s' % eut.get_const_q())
+                                crp = True
+                            except Exception as e:  # fallback plan if CRP doesn't work
+                                ts.log_warning('Unable to use CRP: %s' % e)
+                                pf = math.sqrt(1. - (setpoint ** 2))
+                                ts.log_debug('     ****Configuring Experiment. Executing: Const PF = %s' % setpoint)
+                                eut.set_const_pf(params={"const_pf_mode_enable_as": True, "const_pf_abs_as": pf,
+                                                         "const_pf_excitation_as": excitation})
+                            ts.sleep(2)
+                            inaccurate_measurement = True
+                            timeout = 5
+                            test_pass_fail = 'FAIL'
+                            while inaccurate_measurement and timeout > 0:
+                                timeout -= 1
+                                value = 1.0e5*(eut.get_monitoring().get("mn_var")/var_max) # percentage
+                                # ts.log_debug('    ****Returned Value: %s' % value)
+                                ts.log('    EUT Reactive Power is currently %0.1f%%, waiting another %0.1f sec' %
+                                       (value, timeout))
+                                if excitation == 'inj':
+                                    sign = 1
+                                else:
+                                    sign = -1
+                                setpoint_pct = setpoint * 100. * sign
+                                if setpoint_pct - accuracy <= value <= setpoint_pct + accuracy:  # +/- accuracy in pct
+                                    ts.log('    EUT has recorded value of +/- %s%% as required by IEEE 1547-2018.' %
+                                           accuracy)
+                                    test_pass_fail = 'PASS'
+                                    inaccurate_measurement = False
+                                else:
+                                    ts.log('    EUT outside the IEEE 1547-2018 requirements. Bounds = [%0.1f, %0.1f], '
+                                           'Value = %0.1f' % (setpoint_pct - accuracy, setpoint_pct + accuracy, value))
+                                    ts.sleep(1)
+                            ts.log('RESULT = %s' % test_pass_fail)
 
-                ts.log_debug('    ****Resetting Function Executing: Const PF')
-                eut.set_const_pf(params={"const_pf_mode_enable_as": False})
+                    ts.log_debug('    ****Resetting Function **** ')
+                    if crp:
+                        eut.set_const_q(params={"const_q_mode_enable_as": False})
+                    else:
+                        eut.set_const_pf(params={"const_pf_mode_enable_as": False})
 
-                # Absorbed Reactive Power
-                for setpoint in [-0.25, -0.95]:
-                    setpoint_pct = setpoint * 100.
-                    pf = math.sqrt(1. - (setpoint ** 2))
-                    ts.log_debug('****Configuring Experiment. Executing: Const PF')
-                    eut.set_const_pf(params={"const_pf_mode_enable_as": True, "const_pf_abs_as": pf,
-                                             "const_pf_excitation_as": "abs"})
-                    ts.sleep(2)
-                    inaccurate_measurement = True
-                    timeout = 5
-                    test_pass_fail = 'FAIL'
-                    while inaccurate_measurement and timeout > 0:
-                        timeout -= 1
-                        value = 1e5*(eut.get_monitoring().get("mn_var")/var_max)
-                        # ts.log_debug('    ****Returned Value: %s' % value)
-                        ts.log('    EUT Reactive Power is currently %0.1f%%, waiting another %0.1f sec' %
-                               (value, timeout))
-                        if setpoint_pct - accuracy <= value <= setpoint_pct + accuracy:  # +/- accuracy in pct
-                            ts.log('    EUT has recorded value of +/- %s%% as required by IEEE 1547-2018.' % accuracy)
-                            test_pass_fail = 'PASS'
-                            inaccurate_measurement = False
-                        else:
-                            ts.log('    EUT outside the IEEE 1547-2018 requirements. Bounds = [%0.1f, %0.1f], '
-                                   'Value = %0.1f' % (setpoint_pct - accuracy, setpoint_pct + accuracy, value))
-                            ts.sleep(1)
-                    ts.log('RESULT = %s' % test_pass_fail)
-
-                ts.log_debug('    ****Resetting Function Executing: Const PF')
-                eut.set_const_pf(params={"const_pf_mode_enable_as": False})
 
                 '''
                 ________________________________________________________________________________________________________
@@ -551,40 +495,43 @@ def test_run():
                                     nominal rating).        rating).                requirements specified in Table 3 in
                                                                                     IEEE Std 1547-2018. (+/-1% Vnom)
                 '''
-
-                accuracy = 1.
-                ts.log('Starting Monitoring Assessment. Voltage reported from the EUT is: %s' %
-                       eut.get_monitoring().get('mn_v'))
-                for setpoint in [89, 109]:
-                    v_grid = setpoint * 0.01 * v_nom
+                if ts.param_value('iop_params.mon.monitor_v') == 'Yes':
+                    accuracy = 1.
+                    ts.log('Starting Monitoring Assessment. Voltage reported from the EUT is: %s' %
+                           eut.get_monitoring().get('mn_v'))
+                    for setpoint in [89., 109.]:  # pu
+                        v_grid = setpoint * 0.01 * v_nom  # V
+                        if grid is not None:
+                            grid.voltage(v_grid)
+                        ts.log_debug('****Configuring Experiment. Setting grid voltage to %s V' % v_grid)
+                        ts.sleep(2)
+                        inaccurate_measurement = True
+                        timeout = 5
+                        test_pass_fail = 'FAIL'
+                        while inaccurate_measurement and timeout > 0:
+                            timeout -= 1
+                            if grid is not None:
+                                voltages = grid.meas_voltage()
+                            else:
+                                voltages = [v_grid, v_grid, v_grid]
+                            meas_volt_mean_pct = ((sum(voltages)/len(voltages))/v_nom)*100.
+                            eut_volt = list(eut.get_monitoring().get("mn_v"))
+                            # ts.log_debug('voltages: %s, vnom = %s' % (eut_volt, v_nom))
+                            eut_volt_mean_pct = ((sum(eut_volt)/len(eut_volt))/v_nom)*100.
+                            ts.log('    EUT-reported voltage is currently %0.1f%%, real voltage = %s%%, '
+                                   'waiting another %0.1f sec' % (eut_volt_mean_pct, meas_volt_mean_pct, timeout))
+                            if meas_volt_mean_pct - accuracy <= eut_volt_mean_pct <= meas_volt_mean_pct + accuracy:
+                                ts.log('    EUT has recorded value of +/- %s%% as required by IEEE 1547-2018.' % accuracy)
+                                test_pass_fail = 'PASS'
+                                inaccurate_measurement = False
+                            else:
+                                ts.log('    EUT outside the IEEE 1547-2018 requirements. Bounds = [%0.1f, %0.1f], '
+                                       'Value = %0.1f' % (meas_volt_mean_pct - accuracy, meas_volt_mean_pct + accuracy,
+                                                          eut_volt_mean_pct))
+                                ts.sleep(1)
+                        ts.log('RESULT = %s' % test_pass_fail)
                     if grid is not None:
-                        grid.voltage(v_grid)
-                    ts.log_debug('****Configuring Experiment. Setting grid voltage to %s V' % v_grid)
-                    ts.sleep(2)
-                    inaccurate_measurement = True
-                    timeout = 5
-                    test_pass_fail = 'FAIL'
-                    while inaccurate_measurement and timeout > 0:
-                        timeout -= 1
-                        # voltages = grid.meas_voltage()
-                        voltages = [v_grid, v_grid, v_grid]
-                        meas_volt_mean_pct = (sum(voltages)/len(voltages)/v_nom)*100.
-                        eut_volt = [eut.get_monitoring().get("mn_v")]
-                        eut_volt_mean_pct = (sum(eut_volt)/len(eut_volt)/v_nom)*100.
-                        ts.log('    EUT-reported voltage is currently %0.1f%%, real voltage = %s%%, '
-                               'waiting another %0.1f sec' % (eut_volt_mean_pct, meas_volt_mean_pct, timeout))
-                        if meas_volt_mean_pct - accuracy <= eut_volt_mean_pct <= meas_volt_mean_pct + accuracy:
-                            ts.log('    EUT has recorded value of +/- %s%% as required by IEEE 1547-2018.' % accuracy)
-                            test_pass_fail = 'PASS'
-                            inaccurate_measurement = False
-                        else:
-                            ts.log('    EUT outside the IEEE 1547-2018 requirements. Bounds = [%0.1f, %0.1f], '
-                                   'Value = %0.1f' % (meas_volt_mean_pct - accuracy, meas_volt_mean_pct + accuracy,
-                                                      eut_volt_mean_pct))
-                            ts.sleep(1)
-                    ts.log('RESULT = %s' % test_pass_fail)
-                if grid is not None:
-                    grid.voltage(v_nom)
+                        grid.voltage(v_nom)
 
                 '''
                 ________________________________________________________________________________________________________
@@ -597,34 +544,35 @@ def test_run():
                                                                                     requirements specified in Table 3 in 
                                                                                     IEEE Std 1547-2018. (10 mHz)
                 '''
-
-                accuracy = (0.010/60.)*100.  # 10 mHz
-                ts.log('Starting Monitoring Assessment. Frequency reported from the EUT is: %s' %
-                       eut.get_monitoring().get('mn_hz'))
-                for setpoint in [57., 61.8]:
+                if ts.param_value('iop_params.mon.monitor_f') == 'Yes':
+                    accuracy = 0.01  # 10 mHz
+                    ts.log('Starting Monitoring Assessment. Frequency reported from the EUT is: %s' %
+                           eut.get_monitoring().get('mn_hz'))
+                    for setpoint in [57., 61.8]:
+                        if grid is not None:
+                            grid.freq(setpoint)
+                        ts.log_debug('****Configuring Experiment. Setting grid frequency to %s Hz' % setpoint)
+                        ts.sleep(2)
+                        inaccurate_measurement = True
+                        timeout = 5
+                        test_pass_fail = 'FAIL'
+                        while inaccurate_measurement and timeout > 0:
+                            timeout -= 1
+                            eut_freq = eut.get_monitoring().get("mn_hz")
+                            ts.log('    EUT-reported freq is currently %0.3f Hz, real freq = %0.3f Hz, '
+                                   'waiting another %0.1f sec' % (eut_freq, setpoint, timeout))
+                            if setpoint - accuracy <= eut_freq <= setpoint + accuracy:
+                                ts.log('    EUT has recorded value of +/- %s%% as required by IEEE 1547-2018.' %
+                                       accuracy)
+                                test_pass_fail = 'PASS'
+                                inaccurate_measurement = False
+                            else:
+                                ts.log('    EUT outside the IEEE 1547-2018 requirements. Bounds = [%0.3f, %0.3f], '
+                                       'Value = %0.3f' % (setpoint - accuracy, setpoint + accuracy, eut_freq))
+                                ts.sleep(1)
+                        ts.log('RESULT = %s' % test_pass_fail)
                     if grid is not None:
-                        grid.freq(setpoint)
-                    ts.log_debug('****Configuring Experiment. Setting grid frequency to %s Hz' % setpoint)
-                    ts.sleep(2)
-                    inaccurate_measurement = True
-                    timeout = 5
-                    test_pass_fail = 'FAIL'
-                    while inaccurate_measurement and timeout > 0:
-                        timeout -= 1
-                        eut_freq = eut.get_monitoring().get("mn_hz")
-                        ts.log('    EUT-reported freq is currently %0.1f, real freq = %s%%, '
-                               'waiting another %0.1f sec' % (eut_freq, setpoint, timeout))
-                        if eut_freq - accuracy <= setpoint <= eut_freq + accuracy:
-                            ts.log('    EUT has recorded value of +/- %s%% as required by IEEE 1547-2018.' % accuracy)
-                            test_pass_fail = 'PASS'
-                            inaccurate_measurement = False
-                        else:
-                            ts.log('    EUT outside the IEEE 1547-2018 requirements. Bounds = [%0.1f, %0.1f], '
-                                   'Value = %0.1f' % (eut_freq - accuracy, setpoint + accuracy, eut_freq))
-                            ts.sleep(1)
-                    ts.log('RESULT = %s' % test_pass_fail)
-                if grid is not None:
-                    grid.freq(60.)
+                        grid.freq(60.)
 
                 '''
                 ________________________________________________________________________________________________________
@@ -639,28 +587,29 @@ def test_run():
                                                             communicating but not
                                                             capable of generating.
                 '''
-                ts.log('Starting Monitoring Assessment. State reported from the EUT is: %s' %
-                       eut.get_monitoring().get('mn_st'))
-                for state in [True, False]:
-                    eut.set_conn(params={'conn_as': state})
-                    ts.log_debug('****Configuring Experiment. Setting EUT Operational State to %s' % setpoint)
-                    ts.sleep(2)
-                    inaccurate_measurement = True
-                    timeout = 5
-                    test_pass_fail = 'FAIL'
-                    while inaccurate_measurement and timeout > 0:
-                        timeout -= 1
-                        eut_conn = eut.get_monitoring().get('mn_conn').get('mn_op_started')
-                        ts.log('    EUT-reported connection = %s, State setting = %s, waiting another %0.1f sec' %
-                               (eut_conn, state, timeout))
-                        if eut_conn == state:
-                            test_pass_fail = 'PASS'
-                            inaccurate_measurement = False
-                        else:
-                            ts.log('    EUT outside IEEE 1547-2018 requirements.')
-                            ts.sleep(1)
-                    ts.log('RESULT = %s' % test_pass_fail)
-                eut.set_conn(params={'conn_as': True})
+                if ts.param_value('iop_params.mon.monitor_st') == 'Yes':
+                    ts.log('Starting Monitoring Assessment. State reported from the EUT is: %s' %
+                           eut.get_monitoring().get('mn_st'))
+                    for state in [True, False]:
+                        eut.set_conn(params={'conn_as': state})
+                        ts.log_debug('****Configuring Experiment. Setting EUT Operational State to %s' % state)
+                        ts.sleep(2)
+                        inaccurate_measurement = True
+                        timeout = 5
+                        test_pass_fail = 'FAIL'
+                        while inaccurate_measurement and timeout > 0:
+                            timeout -= 1
+                            eut_conn = eut.get_monitoring().get('mn_st')
+                            ts.log('    EUT-reported connection = %s, State setting = %s, waiting another %0.1f sec' %
+                                   (eut_conn, state, timeout))
+                            if eut_conn == state:
+                                test_pass_fail = 'PASS'
+                                inaccurate_measurement = False
+                            else:
+                                ts.log('    EUT Operational State did not match per IEEE 1547-2018 requirements.')
+                                ts.sleep(1)
+                        ts.log('RESULT = %s' % test_pass_fail)
+                    eut.set_conn(params={'conn_as': True})
 
                 '''
                 ________________________________________________________________________________________________________
@@ -673,28 +622,29 @@ def test_run():
                                     DER is generating.      permit service is       condition.
                                                             disabled.
                 '''
-                ts.log('Starting Monitoring Assessment. Connection Status reported from the EUT is: %s' %
-                       eut.get_monitoring().get('mn_conn'))
-                for conn in [True, False]:
-                    eut.set_conn(params={'conn_as': conn})
-                    ts.log_debug('****Configuring Experiment. Setting EUT connection status to %s' % setpoint)
-                    ts.sleep(2)
-                    inaccurate_measurement = True
-                    timeout = 5
-                    test_pass_fail = 'FAIL'
-                    while inaccurate_measurement and timeout > 0:
-                        timeout -= 1
-                        eut_conn = eut.get_monitoring().get('mn_st').get('mn_conn_connected_generating')
-                        ts.log('    EUT-reported Status = %s, Connection Status = %s, waiting another %0.1f sec' %
-                               (eut_conn, conn, timeout))
-                        if eut_conn == conn:
-                            test_pass_fail = 'PASS'
-                            inaccurate_measurement = False
-                        else:
-                            ts.log('    EUT outside IEEE 1547-2018 requirements.')
-                            ts.sleep(1)
-                    ts.log('RESULT = %s' % test_pass_fail)
-                eut.set_conn(params={'conn_as': True})
+                if ts.param_value('iop_params.mon.monitor_conn') == 'Yes':
+                    ts.log('Starting Monitoring Assessment. Connection Status reported from the EUT is: %s' %
+                           eut.get_monitoring().get('mn_conn'))
+                    for conn in [True, False]:
+                        eut.set_es_permit_service(params={'es_permit_service_as': conn})
+                        ts.log_debug('****Configuring Experiment. Setting EUT connection status to %s' % conn)
+                        ts.sleep(2)
+                        inaccurate_measurement = True
+                        timeout = 5
+                        test_pass_fail = 'FAIL'
+                        while inaccurate_measurement and timeout > 0:
+                            timeout -= 1
+                            eut_conn = eut.get_monitoring().get('mn_conn')
+                            ts.log('    EUT-reported Status = %s, Connection Status = %s, waiting another %0.1f sec' %
+                                   (eut_conn, conn, timeout))
+                            if eut_conn == conn:
+                                test_pass_fail = 'PASS'
+                                inaccurate_measurement = False
+                            else:
+                                ts.log('    EUT Connection State did not match per IEEE 1547-2018 requirements.')
+                                ts.sleep(1)
+                        ts.log('RESULT = %s' % test_pass_fail)
+                    eut.set_conn(params={'conn_as': True})
 
                 '''
                 ________________________________________________________________________________________________________
@@ -711,225 +661,312 @@ def test_run():
                                                                                     is supported in the protocol being 
                                                                                     tested can be set and cleared.
                 '''
-
-                for error in [True, False]:
-                    eut.set_error(params={'error_as': error})  # configure and error state
-                    ts.log_debug('****Configuring Experiment. Setting EUT error to %s' % setpoint)
-                    ts.sleep(2)
-                    inaccurate_measurement = True
-                    timeout = 5.
-                    test_pass_fail = 'FAIL'
-                    while inaccurate_measurement and timeout > 0:
-                        timeout -= 1
-                        eut_error = eut.get_monitoring().get('mn_alrm').get('mn_alm_priority_1')
-                        ts.log('    EUT-reported Status = %s, Error Status = %s, waiting another %0.1f sec' %
-                               (eut_error, error, timeout))
-                        if eut_error == error:
-                            test_pass_fail = 'PASS'
-                            inaccurate_measurement = False
+                if ts.param_value('iop_params.mon.monitor_alrm') == 'Yes':
+                    for error in [True, False]:
+                        if error:
+                            if grid is not None:
+                                ts.log_debug('Setting grid voltage to v_nom * 1.25 to trigger overvoltage alarm.')
+                                grid.voltage(v_nom * 1.25)  # configure a high voltage error state
+                                ts.log_debug('Waiting 5 sec to allow alarm to be enabled.')
+                                ts.sleep(5.)
                         else:
-                            ts.log('    EUT outside non-compliant to IEEE 1547-2018 requirements.')
-                            ts.sleep(1)
-                    ts.log('RESULT = %s' % test_pass_fail)
-                eut.set_error(params={'error_as': False})  # configure and error state
+                            if grid is not None:
+                                grid.voltage(v_nom)  # disable a high voltage error state
+                        ts.log_debug('****Configuring Experiment. Setting EUT error to %s' % error)
+                        ts.sleep(2)
+                        inaccurate_measurement = True
+                        timeout = 5.
+                        test_pass_fail = 'FAIL'
+                        while inaccurate_measurement and timeout > 0:
+                            timeout -= 1
+                            # over voltage alarm isn't supported in DNP3
+                            eut_error = eut.get_monitoring().get('mn_alrm').get('mn_alm_over_volt')
+                            ts.log('    EUT-reported Status = %s, Error Status = %s, waiting another %0.1f sec' %
+                                   (eut_error, error, timeout))
+                            if eut_error == error:
+                                test_pass_fail = 'PASS'
+                                inaccurate_measurement = False
+                            else:
+                                ts.log('    EUT Overvoltage Alarm did not match per IEEE 1547-2018 requirements.')
+                                ts.sleep(1)
+                        ts.log('RESULT = %s' % test_pass_fail)
+                    if grid is not None:
+                        grid.voltage(v_nom)  # disable an error state
 
             else:
                 ts.log_warning('DER measurements testing not supported')
         else:
             ts.log('Skipping DER monitoring test')
 
-        # Spot checks for other functionality
+        # ########### Spot checks for other functionality ###############
+
+        # Test Const PF functionality
+        if ts.param_value('spot_checks.cpf') == 'Yes':
+            ts.log('********* Constant PF Spot Check *********')
+            for pf in [(0.90, 'inj'), (-0.90, 'abs'), (0.85, 'inj')]:
+                ts.log('Test PF Read: %s' % eut.get_const_pf())
+                ts.log('Test PF Write: %s' % eut.set_const_pf(params={"const_pf_mode_enable_as": True,
+                                                                         # "const_pf_abs_as": pf[0],
+                                                                         "const_pf_inj_as": pf[0],
+                                                                         "const_pf_excitation_as": pf[1]}))
+                ts.sleep(wait_time)
+                ts.log('Test PF Read: %s' % eut.get_const_pf())
+                mn_var = eut.get_monitoring().get("mn_var")
+                ts.log('Measured reactive power: %s kVar' % mn_var)
+                # ts.log_debug('var_max: %s' % var_max)
+                ts.log('Test evaluation. DER reactive power is %0.2f%% of var max' % (1.e5 * (mn_var / var_max)))
+                ts.log('----')
+            ts.log('Disabling PF')
+            eut.set_const_pf(params={"const_pf_mode_enable_as": False})
+            ts.log('Test PF Read: %s' % eut.get_const_pf())
+        else:
+            ts.log('Skipping CPF Spot Check')
 
         # Volt-Var
-        '''
-        vv_data = eut.get_qv()
-        ts.log_debug('Test Read: %s' % vv_data)
-        print_params(vv_data)
+        if ts.param_value('spot_checks.vv') == 'Yes':
+            ts.log('********* VV Spot Check *********')
+            vv_data = eut.get_qv()
+            # ts.log('Test VV Read: %s' % vv_data)
+            print_params(vv_data)
 
-        params = {'qv_mode_enable_as': True, 'qv_vref_as': v_nom, 'qv_vref_auto_mode_as': False,
-                  'qv_vref_olrt_as': 1.0, 'qv_curve_v_pts': [0.95, 0.99, 1.01, 1.05],
-                  'qv_curve_q_pts': [1., 0., 0., -1.],  'qv_olrt_as': 5.}
-        ts.log_debug('Test Write: %s' % eut.set_qv(params=params))
-        ts.sleep(10)
-        vv_data = eut.get_qv()
-        ts.log_debug('Test Read: %s' % vv_data)
-        print_params(vv_data)
-
-        params = {'qv_mode_enable_as': True, 'qv_curve_v_pts': [0.93, 0.98, 1.02, 1.08],
-                  'qv_curve_q_pts': [0.3, 0., 0., -0.5]}
-        ts.log_debug('Test Write: %s' % eut.set_qv(params=params))
-        ts.sleep(10)
-        vv_data = eut.get_qv()
-        ts.log_debug('Test Read: %s' % vv_data)
-        print_params(vv_data)
-        # ts.log_debug('Test Write: %s' % eut.set_qv(params={'qv_mode_enable_as': False}))
-        '''
+            params = {'qv_mode_enable_as': True, 'qv_vref_as': v_nom, 'qv_vref_auto_mode_as': False,
+                      'qv_vref_olrt_as': 1.0, 'qv_curve_v_pts': [0.95, 0.99, 1.01, 1.05],
+                      'qv_curve_q_pts': [1., 0., 0., -1.],  'qv_olrt_as': 5.}
+            ts.log_debug('Test VV Write: %s' % eut.set_qv(params=params))
+            ts.sleep(wait_time)
+            vv_data = eut.get_qv()
+            ts.log_debug('Test VV Read: %s' % vv_data)
+            print_params(vv_data)
+            ts.log('----')
+            params = {'qv_mode_enable_as': True, 'qv_curve_v_pts': [0.93, 0.98, 1.02, 1.08],
+                      'qv_curve_q_pts': [0.3, 0., 0., -0.5]}
+            ts.log('Test VV Write: %s' % eut.set_qv(params=params))
+            ts.sleep(wait_time)
+            vv_data = eut.get_qv()
+            ts.log('Test VV Read: %s' % vv_data)
+            print_params(vv_data)
+            ts.log('----')
+            ts.log('Disabling VV')
+            ts.log('Test VV Write: %s' % eut.set_qv(params={'qv_mode_enable_as': False}))
+        else:
+            ts.log('Skipping VV Spot Check')
 
         # Watt-Var
-        '''
-        wv_data = eut.get_qp()
-        ts.log_debug('Test Read: %s' % wv_data)
-        print_params(wv_data)
+        if ts.param_value('spot_checks.wv') == 'Yes':
+            ts.log('********* WV Spot Check *********')
+            wv_data = eut.get_qp()
+            ts.log_debug('Test WV Read: %s' % wv_data)
+            print_params(wv_data)
 
-        params = {'qp_mode_enable_as': True,
-                  'qp_curve_p_gen_pts_as': [0.2, 0.5, 1.0],
-                  'qp_curve_q_gen_pts_as': [0., 0., -0.44],
-                  'qp_curve_p_load_pts_as': [-0.2, -0.5, -1.0],
-                  'qp_curve_q_load_pts_as': [0., 0., 0.44]}
-        ts.log_debug('Test Write: %s' % eut.set_qp(params=params))
-        ts.sleep(2)
-        wv_data = eut.get_qp()
-        ts.log_debug('Test Read: %s' % wv_data)
-        print_params(wv_data)
+            params = {'qp_mode_enable_as': True,
+                      'qp_curve_p_gen_pts_as': [0.2, 0.5, 1.0],
+                      'qp_curve_q_gen_pts_as': [0., 0., -0.44],
+                      'qp_curve_p_load_pts_as': [-0.2, -0.5, -1.0],
+                      'qp_curve_q_load_pts_as': [0., 0., 0.44]}
+            ts.log_debug('Test WV Write: %s' % eut.set_qp(params=params))
+            ts.sleep(wait_time)
+            wv_data = eut.get_qp()
+            ts.log_debug('Test WV Read: %s' % wv_data)
+            print_params(wv_data)
 
-        params = {'qp_mode_enable_as': True,
-                  'qp_curve_p_gen_pts_as': [0.1, 0.6, 1.0],
-                  'qp_curve_q_gen_pts_as': [0., -0.1, -0.25],
-                  'qp_curve_p_load_pts_as': [-0.1, -0.6, -1.0],
-                  'qp_curve_q_load_pts_as': [0., 0.1, 0.25]}
-        ts.log_debug('Test Write: %s' % eut.set_qp(params=params))
-        ts.sleep(2)
-        wv_data = eut.get_qp()
-        ts.log_debug('Test Read: %s' % wv_data)
-        print_params(wv_data)
-        ts.log_debug('Test Write: %s' % eut.set_qp(params={'qp_mode_enable_as': False}))
-        '''
+            params = {'qp_mode_enable_as': True,
+                      'qp_curve_p_gen_pts_as': [0.1, 0.6, 1.0],
+                      'qp_curve_q_gen_pts_as': [0., -0.1, -0.25],
+                      'qp_curve_p_load_pts_as': [-0.1, -0.6, -1.0],
+                      'qp_curve_q_load_pts_as': [0., 0.1, 0.25]}
+            ts.log_debug('Test WV Write: %s' % eut.set_qp(params=params))
+            ts.sleep(wait_time)
+            wv_data = eut.get_qp()
+            ts.log_debug('Test WV Read: %s' % wv_data)
+            print_params(wv_data)
+            ts.log_debug('Test WV Write: %s' % eut.set_qp(params={'qp_mode_enable_as': False}))
+        else:
+            ts.log('Skipping WV Spot Check')
+
+        # Test Const Q functionality
+        if ts.param_value('spot_checks.crp') == 'Yes':
+            ts.log('********* CRP Spot Check *********')
+            for q in [0.25, 0.59, 0.87, 0.45]:
+                ts.log_debug('Test CRP Read: %s' % eut.get_const_q())
+                ts.log_debug('Test CRP Write: %s' % eut.set_const_q(params={"const_q_mode_enable_as": True,
+                                                                        "const_q_as": q}))
+                ts.sleep(wait_time)
+                mn_var = eut.get_monitoring().get("mn_var")
+                ts.log_debug('mn_var: %s' % mn_var)
+                ts.log_debug('var_max: %s' % var_max)
+                ts.log_debug('eval: %s' % (1e5 * (mn_var / var_max)))
+            eut.set_const_q(params={"const_q_mode_enable_as": False})
+        else:
+            ts.log('Skipping CRP Spot Check')
 
         # Volt-Watt
-        '''
-        vw_data = eut.get_pv()
-        ts.log_debug('Test Read: %s' % vw_data)
-        print_params(vw_data)
+        if ts.param_value('spot_checks.vw') == 'Yes':
+            ts.log('********* VW Spot Check *********')
+            vw_data = eut.get_pv()
+            ts.log_debug('Test VW Read: %s' % vw_data)
+            print_params(vw_data)
 
-        params = {'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.03, 1.05],
-                  'pv_curve_p_pts_as': [1.0, 0.2], 'pv_olrt_as': 5.}
-        ts.log_debug('Test Write: %s' % eut.set_pv(params=params))
-        ts.sleep(2)
-        vw_data = eut.get_pv()
-        ts.log_debug('Test Read: %s' % vw_data)
-        print_params(vw_data)
+            params = {'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.03, 1.05],
+                      'pv_curve_p_pts_as': [1.0, 0.2], 'pv_olrt_as': 5.}
+            ts.log_debug('Test VW Write: %s' % eut.set_pv(params=params))
+            ts.sleep(wait_time)
+            vw_data = eut.get_pv()
+            ts.log_debug('Test VW Read: %s' % vw_data)
+            print_params(vw_data)
 
-        params = {'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.05, 1.08],
-                  'pv_curve_p_pts_as': [1.0, 0.5]}
-        ts.log_debug('Test Write: %s' % eut.set_pv(params=params))
-        ts.sleep(2)
-        vw_data = eut.get_pv()
-        ts.log_debug('Test Read: %s' % vw_data)
-        print_params(vw_data)
-        ts.log_debug('Test Write: %s' % eut.set_pv(params={'pv_mode_enable_as': False}))
-        '''
+            params = {'pv_mode_enable_as': True, 'pv_curve_v_pts_as': [1.05, 1.08],
+                      'pv_curve_p_pts_as': [1.0, 0.5]}
+            ts.log_debug('Test VW Write: %s' % eut.set_pv(params=params))
+            ts.sleep(wait_time)
+            vw_data = eut.get_pv()
+            ts.log_debug('Test VW Read: %s' % vw_data)
+            print_params(vw_data)
+            ts.log_debug('Test VW Write: %s' % eut.set_pv(params={'pv_mode_enable_as': False}))
+        else:
+            ts.log('Skipping VW Spot Check')
 
-        # FW
-        '''
-        ts.log_debug('Test Read: %s' % eut.get_pf())
-        params = {'pf_mode_enable_as': True, 'pf_dbof_as': 0.02, 'pf_dbuf_as': 0.02,
-                  'pf_kof_as': 0.05, 'pf_kuf_as': 0.05, 'pf_olrt_as': 5.}
-        ts.log_debug('Test Write: %s' % eut.set_pf(params=params))
-        ts.sleep(10)
-        ts.log_debug('Test Read: %s' % eut.get_pf())
+        # Overvoltage Trip and Undervoltage Trip
+        if ts.param_value('spot_checks.vt') == 'Yes':
+            ts.log('********* VT Spot Check *********')
+            ts.log_debug('OV Trip Test OV Read: %s' % eut.get_ov())
+            params = {'ov_trip_v_pts_as': [1.10, 1.20], 'ov_trip_t_pts_as': [13, 0.16]}
+            ts.log_debug('OV Trip Test Write: %s' % eut.set_ov(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('OV Trip Test OV Read: %s' % eut.get_ov())
+            params = {'ov_trip_v_pts_as': [1.17, 1.25], 'ov_trip_t_pts_as': [15, 1.2]}
+            ts.log_debug('OV Trip Test Write: %s' % eut.set_ov(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('OV Trip Test OV Read: %s' % eut.get_ov())
 
-        ts.log_debug('Test Read: %s' % eut.get_pf())
-        params = {'pf_mode_enable_as': True, 'pf_dbof_as': 0.036, 'pf_dbuf_as': 0.036,
-                  'pf_kof_as': 0.08, 'pf_kuf_as': 0.08, 'pf_olrt_as': 5.}
-        ts.log_debug('Test Write: %s' % eut.set_pf(params=params))
-        ts.sleep(10)
-        ts.log_debug('Test Read: %s' % eut.get_pf())
-        eut.set_pf(params={'pf_mode_enable_as': False})
-        '''
+            ts.log_debug('UV Trip Test UV Read: %s' % eut.get_uv())
+            params = {'uv_trip_v_pts_as': [0.88, 0.50], 'uv_trip_t_pts_as': [21.0, 2.0]}
+            ts.log_debug('UV Trip Test Write: %s' % eut.set_uv(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('UV Trip Test UV Read: %s' % eut.get_uv())
+            params = {'uv_trip_v_pts_as': [0.86, 0.55], 'uv_trip_t_pts_as': [20.0, 3.0]}
+            ts.log_debug('UV Trip Test Write: %s' % eut.set_uv(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('UV Trip Test UV Read: %s' % eut.get_uv())
+        else:
+            ts.log('Skipping VT Spot Check')
 
-        # Connect/Disconnect
-        '''
-        ts.log_debug('Test Read: %s' % eut.get_conn())
-        ts.log_debug('Test Write: %s' % eut.set_conn(params={'conn_as': False}))
-        ts.sleep(10)
-        ts.log_debug('Test Read: %s' % eut.get_conn())
-        ts.log_debug('Test Write: %s' % eut.set_conn(params={'conn_as': True}))
-        ts.sleep(10)
-        ts.log_debug('Test Read: %s' % eut.get_conn())
-        '''
+        # Overfrequency Trip and Underfrequency Trip
+        if ts.param_value('spot_checks.ft') == 'Yes':
+            ts.log('********* FT Spot Check *********')
+            ts.log_debug('OF Trip Test Read: %s' % eut.get_of())
+            params = {'of_trip_f_pts_as': [61.8, 62.0], 'of_trip_t_pts_as': [299, 5]}
+            ts.log_debug('OF Trip Test Write: %s' % eut.set_of(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('OF Trip Test Read: %s' % eut.get_of())
+            params = {'of_trip_f_pts_as': [61.5, 63.8], 'of_trip_t_pts_as': [384, 0.5]}
+            ts.log_debug('OF Trip Test Write: %s' % eut.set_of(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('OF Trip Test Read: %s' % eut.get_of())
+
+            ts.log_debug('UF Trip Test Read: %s' % eut.get_uf())
+            params = {'uf_trip_f_pts_as': [59.2, 58.5], 'uf_trip_t_pts_as': [100, 10]}
+            ts.log_debug('UF Trip Test Write: %s' % eut.set_uf(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('UF Trip Test Read: %s' % eut.get_uf())
+            params = {'uf_trip_f_pts_as': [59.6, 57.8], 'uf_trip_t_pts_as': [299, 5]}
+            ts.log_debug('UF Trip Test Write: %s' % eut.set_uf(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('UF Trip Test Read: %s' % eut.get_uf())
+        else:
+            ts.log('Skipping FT Spot Check')
+
+        # Frequency Droop
+        if ts.param_value('spot_checks.fw') == 'Yes':
+            ts.log('********* Freq Droop Spot Check *********')
+            ts.log_debug('Test FW Read: %s' % eut.get_pf())
+            params = {'pf_mode_enable_as': True, 'pf_dbof_as': 0.02, 'pf_dbuf_as': 0.02,
+                      'pf_kof_as': 0.05, 'pf_kuf_as': 0.05, 'pf_olrt_as': 5.}
+            ts.log_debug('Test FW Write: %s' % eut.set_pf(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('Test FW Read: %s' % eut.get_pf())
+
+            ts.log_debug('Test FW Read: %s' % eut.get_pf())
+            params = {'pf_mode_enable_as': True, 'pf_dbof_as': 0.036, 'pf_dbuf_as': 0.036,
+                      'pf_kof_as': 0.08, 'pf_kuf_as': 0.08, 'pf_olrt_as': 5.}
+            ts.log_debug('Test FW Write: %s' % eut.set_pf(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('Test FW Read: %s' % eut.get_pf())
+            eut.set_pf(params={'pf_mode_enable_as': False})
+        else:
+            ts.log('Skipping FW Spot Check')
 
         # ES Permit Service
-        '''
-        ts.log_debug('Test Read: %s' % eut.get_es_permit_service())
-        params = {'es_permit_service_as': True, 'es_v_low_as': 0.917, 'es_v_high_as': 1.05,
-                  'es_f_low_as': 59.5, 'es_f_high_as': 60.1, 'es_randomized_delay_as': 300, 'es_delay_as': 300,
-                  'es_ramp_rate_as': 300}
-        ts.log_debug('Test Write: %s' % eut.set_es_permit_service(params=params))
-        ts.sleep(2)
-        ts.log_debug('Test Read: %s' % eut.get_es_permit_service())
-        params = {'es_permit_service_as': True, 'es_v_low_as': 0.88, 'es_v_high_as': 1.06,
-                  'es_f_low_as': 59.9, 'es_f_high_as': 61.0, 'es_randomized_delay_as': 600, 'es_delay_as': 1,
-                  'es_ramp_rate_as': 1000}
-        ts.log_debug('Test Write: %s' % eut.set_es_permit_service(params=params))
-        ts.sleep(2)
-        ts.log_debug('Test Read: %s' % eut.get_es_permit_service())
-        '''
+        if ts.param_value('spot_checks.es') == 'Yes':
+            ts.log('********* ES Spot Check *********')
+            ts.log_debug('Test ES Read: %s' % eut.get_es_permit_service())
+            params = {'es_permit_service_as': True, 'es_v_low_as': 0.917, 'es_v_high_as': 1.05,
+                      'es_f_low_as': 59.5, 'es_f_high_as': 60.1, 'es_randomized_delay_as': 300, 'es_delay_as': 300,
+                      'es_ramp_rate_as': 300}
+            ts.log_debug('Test ES Write: %s' % eut.set_es_permit_service(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('Test ES Read: %s' % eut.get_es_permit_service())
+            params = {'es_permit_service_as': True, 'es_v_low_as': 0.88, 'es_v_high_as': 1.06,
+                      'es_f_low_as': 59.9, 'es_f_high_as': 61.0, 'es_randomized_delay_as': 600, 'es_delay_as': 1,
+                      'es_ramp_rate_as': 1000}
+            ts.log_debug('Test ES Write: %s' % eut.set_es_permit_service(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('Test ES Read: %s' % eut.get_es_permit_service())
+        else:
+            ts.log('Skipping ES Spot Check')
 
-        # Overvoltage Trip
-        # ts.log_debug('OV Trip Test Read: %s' % eut.get_ov())
-        # params = {'ov_trip_v_pts_as': [1.10, 1.20], 'ov_trip_t_pts_as': [13, 0.16]}
-        # ts.log_debug('OV Trip Test Write: %s' % eut.set_ov(params=params))
-        # ts.sleep(2)
-        # ts.log_debug('OV Trip Test Read: %s' % eut.get_ov())
-        # params = {'ov_trip_v_pts_as': [1.17, 1.25], 'ov_trip_t_pts_as': [15, 1.2]}
-        # ts.log_debug('OV Trip Test Write: %s' % eut.set_ov(params=params))
-        # ts.sleep(2)
-        # ts.log_debug('OV Trip Test Read: %s' % eut.get_ov())
+        # Voltage Momentary Cessation
+        if ts.param_value('spot_checks.cte') == 'Yes':
+            ts.log('********* Momentary Cessation / Cease to Energize Spot Check *********')
+            ts.log_debug('OV MC Test Read: %s' % eut.get_ov_mc())
+            params = {'ov_mc_v_pts_as': [1.10, 1.20], 'ov_mc_t_pts_as': [13, 0.16]}
+            ts.log_debug('OV MC Test Write: %s' % eut.set_ov_mc(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('OV MC Test Read: %s' % eut.get_ov_mc())
+            params = {'ov_mc_v_pts_as': [1.15, 1.25], 'ov_mc_t_pts_as': [15, 1.2]}
+            ts.log_debug('OV MC Test Write: %s' % eut.set_ov_mc(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('OV MC Test Read: %s' % eut.get_ov_mc())
 
-        # Undervoltage Trip
-        # ts.log_debug('UV Trip Test Read: %s' % eut.get_uv())
-        # params = {'uv_trip_v_pts_as': [0.88, 0.50], 'uv_trip_t_pts_as': [21.0, 2.0]}
-        # ts.log_debug('UV Trip Test Write: %s' % eut.set_uv(params=params))
-        # ts.sleep(2)
-        # ts.log_debug('UV Trip Test Read: %s' % eut.get_uv())
-        # params = {'uv_trip_v_pts_as': [0.86, 0.55], 'uv_trip_t_pts_as': [20.0, 3.0]}
-        # ts.log_debug('UV Trip Test Write: %s' % eut.set_uv(params=params))
-        # ts.sleep(2)
-        # ts.log_debug('UV Trip Test Read: %s' % eut.get_uv())
+            ts.log_debug('UV MC Test Read: %s' % eut.get_uv_mc())
+            params = {'uv_mc_v_pts_as': [0.88, 0.50], 'uv_mc_t_pts_as': [21.0, 2.0]}
+            ts.log_debug('UV MC Test Write: %s' % eut.set_uv_mc(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('UV MC Test Read: %s' % eut.get_uv_mc())
+            params = {'uv_mc_v_pts_as': [0.86, 0.55], 'uv_mc_t_pts_as': [20.0, 3.0]}
+            ts.log_debug('UV MC Test Write: %s' % eut.set_uv_mc(params=params))
+            ts.sleep(wait_time)
+            ts.log_debug('UV MC Test Read: %s' % eut.get_uv_mc())
+        else:
+            ts.log('Skipping CTE Spot Check')
 
-        # Overvoltage Momentary Cessation
-        # ts.log_debug('OV MC Test Read: %s' % eut.get_ov_mc())
-        # params = {'ov_mc_v_pts_as': [1.10, 1.20], 'ov_mc_t_pts_as': [13, 0.16]}
-        # ts.log_debug('OV MC Test Write: %s' % eut.set_ov_mc(params=params))
-        # ts.sleep(2)
-        # ts.log_debug('OV MC Test Read: %s' % eut.get_ov_mc())
-        # params = {'ov_mc_v_pts_as': [1.15, 1.25], 'ov_mc_t_pts_as': [15, 1.2]}
-        # ts.log_debug('OV MC Test Write: %s' % eut.set_ov_mc(params=params))
-        # ts.sleep(2)
-        # ts.log_debug('OV MC Test Read: %s' % eut.get_ov_mc())
+        # Test limit active power functionality
+        if ts.param_value('spot_checks.lap') == 'Yes':
+            ts.log('********* LAP Spot Check *********')
+            for p in [0.25, 0.59, 0.87, 0.45]:
+                ts.log_debug('Test LAP Read: %s' % eut.get_p_lim())
+                ts.log_debug('Test LAP Write: %s' % eut.set_p_lim(params={"p_lim_mode_enable_as": True,
+                                                                          "p_lim_w_as": p}))
+                ts.sleep(wait_time)
+                mn_w = eut.get_monitoring().get("mn_w")
+                ts.log_debug('mn_w: %s' % mn_w)
+                ts.log_debug('w_max: %s' % w_max)
+                ts.log_debug('eval: %s' % (1e5 * (mn_w / w_max)))
+            ts.sleep(wait_time)
+            eut.set_p_lim(params={"p_lim_mode_enable_as": False, "p_lim_w_as": 1.})
+        else:
+            ts.log('Skipping LAP Spot Check')
 
-        # Undervoltage Momentary Cessation
-        # ts.log_debug('UV MC Test Read: %s' % eut.get_uv_mc())
-        # params = {'uv_mc_v_pts_as': [0.88, 0.50], 'uv_mc_t_pts_as': [21.0, 2.0]}
-        # ts.log_debug('UV MC Test Write: %s' % eut.set_uv_mc(params=params))
-        # ts.sleep(2)
-        # ts.log_debug('UV MC Test Read: %s' % eut.get_uv_mc())
-        # params = {'uv_mc_v_pts_as': [0.86, 0.55], 'uv_mc_t_pts_as': [20.0, 3.0]}
-        # ts.log_debug('UV MC Test Write: %s' % eut.set_uv_mc(params=params))
-        # ts.sleep(2)
-        # ts.log_debug('UV MC Test Read: %s' % eut.get_uv_mc())
-
-        # Overfrequency Trip
-        # ts.log_debug('OF Trip Test Read: %s' % eut.get_of())
-        # params = {'of_trip_f_pts_as': [61.8, 62.0], 'of_trip_t_pts_as': [299, 5]}
-        # ts.log_debug('OF Trip Test Write: %s' % eut.set_of(params=params))
-        # ts.sleep(2)
-        # ts.log_debug('OF Trip Test Read: %s' % eut.get_of())
-        # params = {'of_trip_f_pts_as': [61.5, 63.8], 'of_trip_t_pts_as': [384, 0.5]}
-        # ts.log_debug('OF Trip Test Write: %s' % eut.set_of(params=params))
-        # ts.sleep(2)
-        # ts.log_debug('OF Trip Test Read: %s' % eut.get_of())
-
-        # Underfrequency Trip
-        # ts.log_debug('UF Trip Test Read: %s' % eut.get_uf())
-        # params = {'uf_trip_f_pts_as': [59.2, 58.5], 'uf_trip_t_pts_as': [100, 10]}
-        # ts.log_debug('UF Trip Test Write: %s' % eut.set_uf(params=params))
-        # ts.sleep(2)
-        # ts.log_debug('UF Trip Test Read: %s' % eut.get_uf())
-        # params = {'uf_trip_f_pts_as': [59.6, 57.8], 'uf_trip_t_pts_as': [299, 5]}
-        # ts.log_debug('UF Trip Test Write: %s' % eut.set_uf(params=params))
-        # ts.sleep(2)
-        # ts.log_debug('UF Trip Test Read: %s' % eut.get_uf())
+        # Connect/Disconnect
+        if ts.param_value('spot_checks.conn') == 'Yes':
+            ts.log_debug('Test Conn/Disconn Read: %s' % eut.get_conn())
+            ts.log_debug('Test Conn/Disconn Write: %s' % eut.set_conn(params={'conn_as': False}))
+            ts.sleep(wait_time)
+            ts.log_debug('Test Conn/Disconn Read: %s' % eut.get_conn())
+            ts.log_debug('Test Conn/Disconn Write: %s' % eut.set_conn(params={'conn_as': True}))
+            ts.sleep(wait_time)
+            ts.log_debug('Test Conn/Disconn Read: %s' % eut.get_conn())
+        else:
+            ts.log('Skipping Connect/Disconnect Spot Check')
 
         return script.RESULT_COMPLETE
 
@@ -990,28 +1027,43 @@ def run(test_script):
 info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.0.0')
 
 info.param_group('iop_params', label='Test Parameters')
+info.param('iop_params.print_comm_map', label='Print communication map of EUT', default='No', values=['Yes', 'No'])
 info.param('iop_params.configuration_test', label='Run Configuration Test?', default='No', values=['Yes', 'No'])
 info.param('iop_params.monitoring_test', label='Run Monitoring Test?', default='Yes', values=['Yes', 'No'])
 
+info.param_group('iop_params.mon', label='Monitoring Tests', active='iop_params.monitoring_test', active_value='Yes')
+info.param('iop_params.mon.monitor_p', label='Power Monitoring Test?', default='Yes', values=['Yes', 'No'])
+info.param('iop_params.mon.monitor_q', label='Reactive Power Monitoring Test?', default='Yes', values=['Yes', 'No'])
+info.param('iop_params.mon.monitor_v', label='Voltage Monitoring Test?', default='Yes', values=['Yes', 'No'])
+info.param('iop_params.mon.monitor_f', label='Frequency Monitoring Test?', default='Yes', values=['Yes', 'No'])
+info.param('iop_params.mon.monitor_st', label='Operational State Monitoring Test?', default='Yes', values=['Yes', 'No'])
+info.param('iop_params.mon.monitor_conn', label='Connnection Status Monitoring Test?', default='Yes',
+           values=['Yes', 'No'])
+info.param('iop_params.mon.monitor_alrm', label='Alarm Status Monitoring Test?', default='Yes', values=['Yes', 'No'])
+
+info.param_group('spot_checks', label='Grid-Support Function Spot Checks')
+info.param('spot_checks.cpf', label='Constant Power Factor (CPF)', default='No', values=['Yes', 'No'])
+info.param('spot_checks.vv', label='Active Power-Reactive Power (VV)', default='No', values=['Yes', 'No'])
+info.param('spot_checks.wv', label='Active Power-Reactive Power (WV)', default='No', values=['Yes', 'No'])
+info.param('spot_checks.crp', label='Constant Reactive Power (CRP)', default='No', values=['Yes', 'No'])
+info.param('spot_checks.vw', label='Voltage-Active Power (VW) Mode', default='No', values=['Yes', 'No'])
+info.param('spot_checks.vt', label='Voltage Trip (VT)', default='No', values=['Yes', 'No'])
+info.param('spot_checks.ft', label='Frequency Trip (FT)', default='No', values=['Yes', 'No'])
+info.param('spot_checks.fw', label='Frequency Droop (FW)', default='No', values=['Yes', 'No'])
+info.param('spot_checks.es', label='Enter Service (ES)', default='No', values=['Yes', 'No'])
+info.param('spot_checks.cte', label='Cease to Energize (CTE)', default='No', values=['Yes', 'No'])
+info.param('spot_checks.lap', label='Limit Maximum Active Power (LAP)', default='No', values=['Yes', 'No'])
+info.param('spot_checks.conn', label='Connect/Disconnect', default='No', values=['Yes', 'No'])
+
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)
-info.param('eut.phases', label='Phases', default='Three phase', values=['Single phase', 'Split phase', 'Three phase'])
-info.param('eut.s_rated', label='Apparent power rating (VA)', default=10000.0)
-info.param('eut.p_rated', label='Output power rating (W)', default=8000.0)
-info.param('eut.p_min', label='Minimum Power Rating (W)', default=1000.)
-info.param('eut.var_rated', label='Output var rating (vars)', default=2000.0)
-info.param('eut.v_nom', label='Nominal AC voltage (V)', default=120.0, desc='Nominal voltage for the AC simulator.')
-info.param('eut.v_low', label='Minimum AC voltage (V)', default=116.0)
-info.param('eut.v_high', label='Maximum AC voltage (V)', default=132.0)
-info.param('eut.v_in_nom', label='V_in_nom: Nominal input voltage (Vdc)', default=400)
-info.param('eut.f_nom', label='Nominal AC frequency (Hz)', default=60.0)
-info.param('eut.f_max', label='Maximum frequency in the continuous operating region (Hz)', default=66.)
-info.param('eut.f_min', label='Minimum frequency in the continuous operating region (Hz)', default=56.)
-info.param('eut.imbalance_resp', label='EUT response to phase imbalance is calculated by:',
-           default='EUT response to the average of the three-phase effective (RMS)',
-           values=['EUT response to the individual phase voltages',
-                   'EUT response to the average of the three-phase effective (RMS)',
-                   'EUT response to the positive sequence of voltages'])
+info.param('eut.wait_time', label='Wait time required for DER writes to go into effect.', default=5.0)
+info.param('eut.p_rated', label='Output power rating (W)', default=10000.0)
+info.param('eut.p_min', label='Output power rating (W)', default=100.0)
+info.param('eut.s_rated', label='Output apparent power rating (VA)', default=10000.0)
+info.param('eut.var_rated', label='Output var rating (vars)', default=4400.0)
+info.param('eut.v_nom', label='Nominal AC voltage (V)', default=120.0)
+
 
 der1547.params(info)
 hil.params(info)
