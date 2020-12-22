@@ -300,7 +300,7 @@ class DataLogging:
                 row_data.append('%s_TARGET_MAX' % meas_value)
 
         row_data.append('EVENT')
-        self.ts.log_debug('Sc points: %s' % row_data)
+        # self.ts.log_debug('Sc points: %s' % row_data)
         self.sc_points['sc'] = row_data
 
     def set_result_summary_name(self):
@@ -336,7 +336,7 @@ class DataLogging:
         row_data.append('FILENAME')
 
         self.rslt_sum_col_name = ','.join(row_data) + '\n'
-        self.ts.log_debug(f'summary column={self.rslt_sum_col_name}'.rstrip())
+        # self.ts.log_debug(f'summary column={self.rslt_sum_col_name}'.rstrip())
 
     def get_rslt_param_plot(self):
         """
