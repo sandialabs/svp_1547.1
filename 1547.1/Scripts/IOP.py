@@ -449,6 +449,8 @@ def test_run():
                     ts.log('Starting Monitoring Assessment. Active Power reported from the EUT is: %s W' %
                            (m.get('mn_w') * 1.e3))
                     accuracy = 5.  # percent
+                    ts.log('')
+                    ts.log('**** Active Power Monitoring Test ****')
                     for setpoint in [0.25, 0.95]:  # test_pts (pu)
                         setpoint_pct = setpoint * 100.
                         ts.log_debug('    ****Configuring Experiment. Executing: p_lim = %s' % setpoint)
@@ -499,9 +501,14 @@ def test_run():
                     accuracy = 5.
                     ts.log('Starting Monitoring Assessment. Reactive Power reported from the EUT is: %s' %
                            eut.get_monitoring().get('mn_var'))
-                    for excitation in ['inj','abs']:
+                    ts.log('')
+                    ts.log('**** Reactive Power Monitoring Test ****')
+                    for excitation in ['inj', 'abs']:
                         for setpoint in [0.25, 0.95]:
+                            crp = False
                             try:
+                                if not eut.get_nameplate().get('np_supported_modes').get('fixed_var'):
+                                    raise Exception  # jump down to except to set vars with PF
                                 ts.log_debug('     ****Configuring Experiment. Executing: CRP = %s' % setpoint)
                                 eut.set_const_q(params={"const_q_mode_enable": True,
                                                         "const_q_mode_excitation": excitation,
@@ -511,6 +518,8 @@ def test_run():
                             except Exception as e:  # fallback plan if CRP doesn't work
                                 ts.log_warning('Unable to use CRP: %s' % e)
                                 pf = math.sqrt(1. - (setpoint ** 2))
+                                if excitation == 'abs':
+                                    setpoint *= -1  # invert sign for abs for the DNP3 devices
                                 ts.log_debug('     ****Configuring Experiment. Executing: Const PF = %s' % setpoint)
                                 eut.set_const_pf(params={"const_pf_mode_enable": True, "const_pf_abs": pf,
                                                          "const_pf_excitation": excitation})
@@ -546,7 +555,6 @@ def test_run():
                     else:
                         eut.set_const_pf(params={"const_pf_mode_enable": False})
 
-
                 '''
                 ________________________________________________________________________________________________________
                 Monitoring          Operating               Operating               Criteria
@@ -562,11 +570,13 @@ def test_run():
                     accuracy = 1.
                     ts.log('Starting Monitoring Assessment. Voltage reported from the EUT is: %s' %
                            eut.get_monitoring().get('mn_v'))
+                    ts.log('')
+                    ts.log('**** Voltage Monitoring Test ****')
                     for setpoint in [89., 109.]:  # pu
                         v_grid = setpoint * 0.01 * v_nom  # V
                         if grid is not None:
                             grid.voltage(v_grid)
-                        ts.log_debug('****Configuring Experiment. Setting grid voltage to %s V' % v_grid)
+                        ts.log_debug('****Configuring Experiment. Setting grid voltage to %0.2f V' % v_grid)
                         ts.sleep(2)
                         inaccurate_measurement = True
                         timeout = 5
@@ -614,6 +624,8 @@ def test_run():
                     accuracy = 0.01  # 10 mHz
                     ts.log('Starting Monitoring Assessment. Frequency reported from the EUT is: %s' %
                            eut.get_monitoring().get('mn_hz'))
+                    ts.log('')
+                    ts.log('**** Frequency Monitoring Test ****')
                     for setpoint in [57., 61.8]:
                         if grid is not None:
                             grid.freq(setpoint)
@@ -656,8 +668,16 @@ def test_run():
                 if ts.param_value('iop_params.mon.monitor_st') == 'Yes':
                     ts.log('Starting Monitoring Assessment. State reported from the EUT is: %s' %
                            eut.get_monitoring().get('mn_st'))
+                    ts.log('')
+                    ts.log('**** Operational State Monitoring Test ****')
                     for state in [True, False]:
-                        eut.set_conn(params={'conn': state})
+                        conn_mode = False
+                        try:
+                            eut.set_conn(params={'conn': state})
+                            conn_mode = True
+                        except Exception as e:
+                            ts.log_warning('Could not test operation state using connect/disconnect. %s' % e)
+                            eut.set_es_permit_service(params={'es_permit_service': state})
                         ts.log_debug('****Configuring Experiment. Setting EUT Operational State to %s' % state)
                         ts.sleep(2)
                         inaccurate_measurement = True
@@ -675,7 +695,10 @@ def test_run():
                                 ts.log('    EUT Operational State did not match per IEEE 1547-2018 requirements.')
                                 ts.sleep(1)
                         ts.log('RESULT = %s' % test_pass_fail)
-                    eut.set_conn(params={'conn': True})
+                    if conn_mode:
+                        eut.set_conn(params={'conn': True})
+                    else:
+                        eut.set_es_permit_service(params={'es_permit_service': True})
 
                 '''
                 ________________________________________________________________________________________________________
@@ -691,8 +714,16 @@ def test_run():
                 if ts.param_value('iop_params.mon.monitor_conn') == 'Yes':
                     ts.log('Starting Monitoring Assessment. Connection Status reported from the EUT is: %s' %
                            eut.get_monitoring().get('mn_conn'))
+                    ts.log('')
+                    ts.log('**** Connection Status Monitoring Test ****')
                     for conn in [True, False]:
-                        eut.set_es_permit_service(params={'es_permit_service': conn})
+                        conn_mode = False
+                        try:
+                            eut.set_conn(params={'conn': conn})
+                            conn_mode = True
+                        except Exception as e:
+                            ts.log_warning('Could not test operation state using connect/disconnect. %s' % e)
+                            eut.set_es_permit_service(params={'es_permit_service': conn})
                         ts.log_debug('****Configuring Experiment. Setting EUT connection status to %s' % conn)
                         ts.sleep(2)
                         inaccurate_measurement = True
@@ -710,7 +741,10 @@ def test_run():
                                 ts.log('    EUT Connection State did not match per IEEE 1547-2018 requirements.')
                                 ts.sleep(1)
                         ts.log('RESULT = %s' % test_pass_fail)
-                    eut.set_conn(params={'conn': True})
+                    if conn_mode:
+                        eut.set_conn(params={'conn': True})
+                    else:
+                        eut.set_es_permit_service(params={'es_permit_service': True})
 
                 '''
                 ________________________________________________________________________________________________________
@@ -728,6 +762,8 @@ def test_run():
                                                                                     tested can be set and cleared.
                 '''
                 if ts.param_value('iop_params.mon.monitor_alrm') == 'Yes':
+                    ts.log('')
+                    ts.log('**** Alarm Status Monitoring Test ****')
                     for error in [True, False]:
                         if error:
                             if grid is not None:
@@ -780,8 +816,7 @@ def test_run():
                 ts.log('Test PF Read: %s' % eut.get_const_pf())
                 mn_var = eut.get_monitoring().get("mn_var")
                 ts.log('Measured reactive power: %s kVar' % mn_var)
-                # ts.log_debug('var_max: %s' % var_max)
-                ts.log('Test evaluation. DER reactive power is %0.2f%% of var max' % (1.e5 * (mn_var / var_max)))
+                ts.log('DER reactive power is %0.2f%% of var max' % (1.e5 * (mn_var / var_max)))
                 ts.log('----')
             ts.log('Disabling PF')
             eut.set_const_pf(params={"const_pf_mode_enable": False})
