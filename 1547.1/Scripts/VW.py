@@ -120,8 +120,10 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
 
         # pv simulator is initialized with test parameters and enabled
         pv = pvsim.pvsim_init(ts)
-        pv.power_set(p_rated)
-        pv.power_on()  # Turn on DC so the EUT can be initialized
+        if pv is not None:
+            pv.power_set(p_rated)
+            pv.power_on()  # Turn on DC so the EUT can be initialized
+
         ts.log_debug(15*"*"+"DAS initialization"+15*"*")
 
         # DAS soft channels
@@ -215,24 +217,25 @@ def volt_watt_mode(vw_curves, vw_response_time, pwr_lvls):
 
                 # Special considerations for CHIL ASGC/Typhoon startup #
                 if chil is not None:
-                    if  eut.measurements() is not None:
-                        inv_power = eut.measurements().get('W')
-                        timeout = 120.
-                        if inv_power <= pv_power_setting * 0.85:
-                            pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
-                            ts.sleep(3)
-                            eut.connect(params={'Conn': True})
-                        while inv_power <= pv_power_setting * 0.85 and timeout >= 0:
-                            ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
-                                (inv_power, timeout))
-                            ts.sleep(1)
-                            timeout -= 1
+                    if eut is not None:
+                        if  eut.measurements() is not None:
                             inv_power = eut.measurements().get('W')
-                            if timeout == 0:
-                                result = script.RESULT_FAIL
-                                raise der.DERError('Inverter did not start.')
-                        ts.log('Waiting for EUT to ramp up')
-                        ts.sleep(8)
+                            timeout = 120.
+                            if inv_power <= pv_power_setting * 0.85:
+                                pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                                ts.sleep(3)
+                                eut.connect(params={'Conn': True})
+                            while inv_power <= pv_power_setting * 0.85 and timeout >= 0:
+                                ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                                    (inv_power, timeout))
+                                ts.sleep(1)
+                                timeout -= 1
+                                inv_power = eut.measurements().get('W')
+                                if timeout == 0:
+                                    result = script.RESULT_FAIL
+                                    raise der.DERError('Inverter did not start.')
+                            ts.log('Waiting for EUT to ramp up')
+                            ts.sleep(8)
 
                 '''
                 e) Set EUT volt-watt parameters to the values specified by Characteristic 1. All other functions should
@@ -444,23 +447,24 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
 
         # Special considerations for CHIL ASGC/Typhoon startup
         if chil is not None:
-            inv_power = eut.measurements().get('W')
-            timeout = 120.
-            if inv_power <= p_rated * 0.85:
-                pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
-                ts.sleep(3)
-                eut.connect(params={'Conn': True})
-            while inv_power <= p_rated * 0.85 and timeout >= 0:
-                ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
-                       (inv_power, timeout))
-                ts.sleep(1)
-                timeout -= 1
+            if eut is not None:
                 inv_power = eut.measurements().get('W')
-                if timeout == 0:
-                    result = script.RESULT_FAIL
-                    raise der.DERError('Inverter did not start.')
-            ts.log('Waiting for EUT to ramp up')
-            ts.sleep(8)
+                timeout = 120.
+                if inv_power <= p_rated * 0.85:
+                    pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                    ts.sleep(3)
+                    eut.connect(params={'Conn': True})
+                while inv_power <= p_rated * 0.85 and timeout >= 0:
+                    ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                        (inv_power, timeout))
+                    ts.sleep(1)
+                    timeout -= 1
+                    inv_power = eut.measurements().get('W')
+                    if timeout == 0:
+                        result = script.RESULT_FAIL
+                        raise der.DERError('Inverter did not start.')
+                ts.log('Waiting for EUT to ramp up')
+                ts.sleep(8)
 
         '''
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
@@ -500,10 +504,10 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                 # it is assumed the EUT is on
                 eut = der.der_init(ts)
                 if eut is not None:
-                    vw_curve_params = {'v': [int(v_pairs['V1'] * (100. / v_nom)),
-                                             int(v_pairs['V2'] * (100. / v_nom))],
-                                       'w': [int(v_pairs['P1'] * (100. / p_rated)),
-                                             int(v_pairs['P2'] * (100. / p_rated))],
+                    vw_curve_params = {'v': [round(v_pairs['V1'] * (v_nom),2),
+                                    round(v_pairs['V2'] * (v_nom),2)],
+                                'w': [round(v_pairs['P1'] * (p_rated),2),
+                                        round(v_pairs['P2'] * (p_rated),2)],
                                        'DeptRef': 'W_MAX_PCT'}
                     vw_params = {'Ena': True, 'ActCrv': 1, 'curve': vw_curve_params}
                     '''
@@ -541,8 +545,9 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                     ts.log('Voltage step: setting Grid simulator to case A (IEEE 1547.1-Table 24)(%s)' % step_label)
                     ActiveFunction.start(daq=daq, step_label=step_label)
                     v_target=ActiveFunction.set_grid_asymmetric(grid=grid, case='case_a')
-                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
-                    ActiveFunction.evaluate_criterias()
+                    step_dict = {'V': v_target}
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
                 '''
                 Step i) For multiphase units, step the AC test source voltage to VN.
@@ -553,8 +558,9 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                     ActiveFunction.start(daq=daq, step_label=step_label)
                     v_target = v_nom
                     grid.voltage(v_target)
-                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
-                    ActiveFunction.evaluate_criterias()
+                    step_dict = {'V': v_target}
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
                 '''
@@ -565,8 +571,9 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                     ts.log('Voltage step: setting Grid simulator to case B (IEEE 1547.1-Table 24)(%s)' % step_label)
                     ActiveFunction.start(daq=daq, step_label=step_label)
                     v_target=ActiveFunction.set_grid_asymmetric(grid=grid, case='case_b')
-                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
-                    ActiveFunction.evaluate_criterias()
+                    step_dict = {'V': v_target}
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
                 '''
                 Step k) For multiphase units, step the AC test source voltage to VN.
@@ -577,8 +584,9 @@ def volt_watt_mode_imbalanced_grid(imbalance_resp, vw_curves, vw_response_time):
                     ActiveFunction.start(daq=daq, step_label=step_label)
                     v_target = v_nom
                     grid.voltage(v_target)
-                    ActiveFunction.record_timeresponse(daq=daq, step_value=v_target)
-                    ActiveFunction.evaluate_criterias()
+                    step_dict = {'V': v_target}
+                    ActiveFunction.record_timeresponse(daq=daq)
+                    ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict)
                     result_summary.write(ActiveFunction.write_rslt_sum())
 
                 # Get the rslt parameters for plot

@@ -112,7 +112,7 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
             chil.config()
 
         # pv simulator is initialized with test parameters and enabled
-        pv = pvsim.pvsim_init(ts)
+        pv = pvsim.pvsim_init(ts, support_interfaces={'hil': chil}) 
         if pv is not None:
             pv.power_set(p_rated)
             pv.power_on()  # Turn on DC so the EUT can be initialized
@@ -121,7 +121,7 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
         das_points = ActiveFunction.get_sc_points()
 
         # initialize data acquisition system
-        daq = das.das_init(ts, sc_points=das_points['sc'])
+        daq = das.das_init(ts, sc_points=das_points['sc'], support_interfaces={'hil': chil}) 
 
         ts.log_debug(0.05 * ts.param_value('eut.s_rated'))
         daq.sc['P_TARGET'] = v_nom
@@ -137,7 +137,7 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
         control functions.
         '''
 
-        eut = der.der_init(ts)
+        eut = der.der_init(ts, support_interfaces={'hil': chil}) 
         if eut is not None:
             eut.config()
             ts.log_debug(eut.measurements())
@@ -161,26 +161,29 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
             ts.log_debug('Set L/HVRT and trip parameters set to the widest range of adjustability possible.')
 
         # Special considerations for CHIL ASGC/Typhoon startup
+        '''
         if chil is not None:
-            inv_power = eut.measurements().get('W')
-            timeout = 120.
-            if inv_power <= p_rated * 0.85:
-                pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
-                ts.sleep(3)
-                eut.connect(params={'Conn': True})
-            while inv_power <= p_rated * 0.85 and timeout >= 0:
-                ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
-                       (inv_power, timeout))
-                ts.sleep(1)
-                timeout -= 1
-                inv_power = eut.measurements().get('W')
-                if timeout == 0:
-                    result = script.RESULT_FAIL
-                    raise der.DERError('Inverter did not start.')
-            ts.log('Waiting for EUT to ramp up')
-            ts.sleep(8)
-            ts.log_debug('DAS data_read(): %s' % daq.data_read())
-
+            if eut is not None:
+                if eut.measurements() is not None:
+                    inv_power = eut.measurements().get('W')
+                    timeout = 120.
+                    if inv_power <= p_rated * 0.85:
+                        pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                        ts.sleep(3)
+                        eut.connect(params={'Conn': True})
+                    while inv_power <= p_rated * 0.85 and timeout >= 0:
+                        ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                            (inv_power, timeout))
+                        ts.sleep(1)
+                        timeout -= 1
+                        inv_power = eut.measurements().get('W')
+                        if timeout == 0:
+                            result = script.RESULT_FAIL
+                            raise der.DERError('Inverter did not start.')
+                    ts.log('Waiting for EUT to ramp up')
+                    ts.sleep(8)
+                    ts.log_debug('DAS data_read(): %s' % daq.data_read())
+        '''
         '''
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
         '''
@@ -210,7 +213,9 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
 
         #TODO 1.Add absorb option possibility for EUT
         #TODO 2.Add communication with EUT
-
+        if chil is not None:
+            ts.log('Start simulation of CHIL')
+            chil.start_simulation()
         for wv_curve in wv_curves:
             ts.log('Starting test with characteristic curve %s' % (wv_curve))
             ActiveFunction.reset_curve(wv_curve)
@@ -223,12 +228,10 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
             if eut is not None:
                 # Activate watt-var function with following parameters
                 # SunSpec convention is to use percentages for P and Q points.
-                wv_curve_params = {'w': [p_pairs['P0']*(100/p_rated),
-                                         p_pairs['P1']*(100/p_rated),
+                wv_curve_params = {'w': [p_pairs['P1']*(100/p_rated),
                                          p_pairs['P2']*(100/p_rated),
                                          p_pairs['P3']*(100/p_rated)],
-                                   'var': [p_pairs['Q0']*(100/var_rated),
-                                           p_pairs['Q1']*(100/var_rated),
+                                   'var': [p_pairs['Q1']*(100/var_rated),
                                            p_pairs['Q2']*(100/var_rated),
                                            p_pairs['Q3']*(100/var_rated)]}
                 ts.log_debug('Sending WV points: %s' % wv_curve_params)
@@ -250,32 +253,35 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
                     pv.iv_curve_config(pmp=pv_power_setting, vmp=v_in_nom)
                     pv.irradiance_set(1000.)
 
-                # Special considerations for CHIL ASGC/Typhoon startup #
+                # Special considerations for CHIL ASGC/Typhoon startup 
+                '''
                 if chil is not None:
-                    inv_power = eut.measurements().get('W')
-                    timeout = 120.
-                    if inv_power <= pv_power_setting * 0.85:
-                        pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
-                        ts.sleep(3)
-                        eut.connect(params={'Conn': True})
-                    while inv_power <= pv_power_setting * 0.85 and timeout >= 0:
-                        ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
-                               (inv_power, timeout))
-                        ts.sleep(1)
-                        timeout -= 1
-                        inv_power = eut.measurements().get('W')
-                        if timeout == 0:
-                            result = script.RESULT_FAIL
-                            raise der.DERError('Inverter did not start.')
-                    ts.log('Waiting for EUT to ramp up')
-                    ts.sleep(8)
-
+                    if eut is not None:
+                        if eut.measurements() is not None:
+                            inv_power = eut.measurements().get('W')
+                            timeout = 120.
+                            if inv_power <= pv_power_setting * 0.85:
+                                pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                                ts.sleep(3)
+                                eut.connect(params={'Conn': True})
+                            while inv_power <= pv_power_setting * 0.85 and timeout >= 0:
+                                ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                                    (inv_power, timeout))
+                                ts.sleep(1)
+                                timeout -= 1
+                                inv_power = eut.measurements().get('W')
+                                if timeout == 0:
+                                    result = script.RESULT_FAIL
+                                    raise der.DERError('Inverter did not start.')
+                            ts.log('Waiting for EUT to ramp up')
+                            ts.sleep(8)
+                '''
                 #Create Watt-Var Dictionary
                 p_steps_dict = ActiveFunction.create_wv_dict_steps()
 
                 filename = 'WV_%s_PWR_%d' % (wv_curve, power * 100)
                 ActiveFunction.reset_filename(filename=filename)
-                ts.log('------------{}------------'.format(dataset_filename))
+                ts.log('------------{}------------'.format(filename))
 
                 # Start the data acquisition systems
                 daq.data_capture(True)
@@ -334,6 +340,15 @@ def watt_var_mode(wv_curves, wv_response_time, pwr_lvls):
             eut.close()
         if result_summary is not None:
             result_summary.close()
+        
+        # create result workbook
+        excelfile = ts.config_name() + '.xlsx'
+        ts.log_debug(f'{excelfile}')
+        ts.log_debug(f'{ts.results_dir()}')
+        ts.log_debug(f'{ts.result_dir()}')
+        rslt.result_workbook(file=excelfile, results_dir=ts.results_dir(), result_dir=ts.result_dir(), ts=ts)
+        #rslt.result_workbook(excelfile, ts.results_dir(), ts.result_dir())
+        ts.result_file(excelfile)
 
     return result
 
@@ -383,7 +398,8 @@ def test_run():
     finally:
         # create result workbook
         excelfile = ts.config_name() + '.xlsx'
-        rslt.result_workbook(excelfile, ts.results_dir(), ts.result_dir())
+        #rslt.result_workbook(excelfile, ts.results_dir(), ts.result_dir())
+        rslt.result_workbook(file=excelfile, results_dir=ts.results_dir(), result_dir=ts.result_dir(), ts=ts)
         ts.result_file(excelfile)
 
     return result

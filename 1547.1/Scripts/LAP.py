@@ -187,14 +187,29 @@ def test_run():
         if daq is not None:
             ts.log('DAS device: %s' % daq.info())
 
-        eut = der.der_init(ts)
+        eut = der.der_init(ts, support_interfaces={'hil': chil}) 
         if eut is not None:
             eut.config()
             # Enable volt/watt curve and configure default settings
-            eut.volt_watt(params={'Ena': True, 'curve': {'ActPt': 2,
-                                      'v': [106, 110], 'w': [100, 0], 'DeptRef': 'W_MAX_PCT',
-                                      'RmpPtTms': 10, 'RmpDecTmm': 0, 'RmpIncTmm': 0}})
-            eut.freq_watt(params={'Ena': True, 'curve': 1, 'dbf': 0.036, 'kof': 0.05, 'RspTms': 5})
+            v_pairs = ActiveFunction.get_params(curve=1, function=VW)
+            vw_curve_params = {'v': (round(v_pairs['V1']/v_nom,2),
+                                    round(v_pairs['V2']/v_nom,2)),
+                                'w': (round(v_pairs['P1']/p_rated,2),
+                                        round(v_pairs['P2']/p_rated,2)),
+                                       'DeptRef': 'W_MAX_PCT',
+                                       'RmpTms':tr_vw}
+            vw_params = {'Ena': True, 'ActCrv': 1, 'curve': vw_curve_params}
+            eut.volt_watt(params=vw_params)
+            # Enable freq/watt curve and configure default settings
+            fw_curve_params = ActiveFunction.get_params(function=FW, curve=1)
+            fw_params = {
+                                'Ena': True,
+                                'curve': 1,
+                                'dbf': fw_curve_params['dbf'],
+                                'kof': fw_curve_params['kof'],
+                                'RspTms': fw_curve_params['TR']
+                            }
+            eut.freq_watt(fw_params)    
             try:
                 eut.vrt_stay_connected_high(params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000,
                                                     'V1': v_max, 'Tms2': 0.16, 'V2': v_max})
@@ -254,6 +269,9 @@ def test_run():
 
         h) Repeat steps b) through g) twice for a total of three repetitions
         """
+        if chil is not None:
+            ts.log('Start simulation of CHIL')
+            chil.start_simulation()
 
         for n_iter in n_iters:
             for act_pwrs_limit in act_pwrs_limits:
@@ -276,8 +294,8 @@ def test_run():
                 ts.log('EUT Config: setting Active Power Limit to 100%')
                 if eut is not None:
                     # limit maximum power
-                    eut.limit_max_power(params={'MaxLimWEna': True,
-                                                'MaxLimW_PCT': 100,
+                    eut.limit_max_power(params={'Ena': True,
+                                                'WMaxPct': 100,
                                                 'WinTms': 0,
                                                 'RmpTms': 0,
                                                 'RvrtTms': 0.0})
@@ -311,7 +329,7 @@ def test_run():
                     )
                 step_dict = {'V': v_nom, 'F': f_nom, 'P': act_pwrs_limit}
                 #target_dict = {'P': act_pwrs_limit}
-                ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
+                ActiveFunction.record_timeresponse(daq=daq)
                 ts.log_debug(f'daq={daq}')
                 ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict, y_criterias_mod={'P': LAP})
                 result_summary.write(ActiveFunction.write_rslt_sum())
@@ -321,7 +339,7 @@ def test_run():
                       state
                     - Return AC test frequency to nominal and Hold until new states reached
                 """
-                f_steps = [59, f_nom]
+                f_steps = [59.0, f_nom]
                 step_label = ActiveFunction.get_step_label()
                 if grid is not None:
                     for f_step in f_steps:
@@ -331,7 +349,7 @@ def test_run():
                         #initial_values = ActiveFunction.get_initial_value(daq=daq,step=step_)
                         grid.freq(f_step)
                         step_dict = {'V': v_nom, 'F': f_step, 'P': act_pwrs_limit}
-                        ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
+                        ActiveFunction.record_timeresponse(daq=daq)
                         ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict, y_criterias_mod={'P': FW})
                         result_summary.write(ActiveFunction.write_rslt_sum())
 
@@ -341,7 +359,7 @@ def test_run():
                       state
                     - Return AC test frequency to nominal and Hold until new states reached
                 """
-                f_steps = [61, f_nom]
+                f_steps = [61.0, f_nom]
                 step_label = ActiveFunction.get_step_label()
                 if grid is not None:
                     for f_step in f_steps:
@@ -351,7 +369,7 @@ def test_run():
                         #initial_values = ActiveFunction.get_initial_value(daq=daq,step=step_)
                         grid.freq(f_step)
                         step_dict = {'V': v_nom, 'F': f_step, 'P': act_pwrs_limit}
-                        ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
+                        ActiveFunction.record_timeresponse(daq=daq)
                         ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict, y_criterias_mod={'P': FW})
                         result_summary.write(ActiveFunction.write_rslt_sum())
 
@@ -371,7 +389,7 @@ def test_run():
                         ActiveFunction.start(daq=daq, step_label=step_)
                         grid.voltage(v_step)
                         step_dict = {'V': v_step, 'F': f_nom, 'P': act_pwrs_limit}
-                        ActiveFunction.record_timeresponse(daq=daq, step_dict=step_dict)
+                        ActiveFunction.record_timeresponse(daq=daq)
                         ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict, y_criterias_mod={'P': VW})
                         result_summary.write(ActiveFunction.write_rslt_sum())
 
@@ -411,7 +429,7 @@ def test_run():
         if daq is not None:
             daq.close()
         if eut is not None:
-            eut.fixed_pf(params={'Ena': False, 'PF': 1.0})
+            #eut.fixed_pf(params={'Ena': False, 'PF': 1.0})
             eut.close()
         if rs is not None:
             rs.close()

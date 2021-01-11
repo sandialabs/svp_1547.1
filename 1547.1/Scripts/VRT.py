@@ -143,9 +143,28 @@ def test_run():
 
         phil = hil.hil_init(ts)
         if phil is not None:
-            # auto_config should be set to "No"
-            phil.open()
-            phil.load_model_on_hil()
+            # return self.ts.param_value(self.group_name + '.' + GROUP_NAME + '.' + name)
+            open_proj = phil._param_value('hil_config_open')
+            compilation = phil._param_value('hil_config_compile')
+            stop_sim = phil._param_value('hil_config_stop_sim')
+            load = phil._param_value('hil_config_load')
+            execute = phil._param_value('hil_config_execute')
+            model_name = phil._param_value('hil_config_model_name')
+            phil.config()
+
+        ''' RTLab OpWriteFile Math using worst case scenario of 160 seconds, 14 signals and Ts = 40e-6
+        Duration of acquisition in number of points: Npoints = (Tend-Tstart)/(Ts*dec) = (350)/(0.000040*25) = 1350e3
+        
+        Acquisition frame duration: Tframe = Nbss * Ts * dec = 1000*0.000040*250 = 10 sec
+        
+        Number of buffers to be acquired: Nbuffers = Npoints / Nbss = (Tend - Tstart) / Tframe = 16
+        
+        Minimum file size: MinSize= Nbuffers x SizeBuf = [(Tend - Tstart) / Ts ] * (Nsig+1) * 8 * Nbss 
+            = (160/40e-6)*(14+1)*8*1000 = 4.8e11
+        
+        SizeBuf = 1/Nbuffers * {[(Tend - Tstart) / Ts ]*(Nsig+1)*8*Nbss} = [(160/0.000040)*(14+1)*8*1e3]/16 = 30e9
+        Size of one buffer in bytes (SizeBuf) = (Nsig+1) * 8 * Nbss (Minimum) = (14+1)*8*1000 = 120e3
+        '''
 
         if low_pwr_ena == 'Enabled':
             pwr_lvl.append(low_pwr_value)
@@ -158,13 +177,13 @@ def test_run():
         if high_pwr_ena == 'Disabled' and low_pwr_ena == 'Disabled':
             ts.log_error('No power tests included in VRT test!')
 
-        if ts.param_value('vrt.wav_ena') == "Yes":
+        if ts.param_value('vrt.wav_ena') == "Yes" :
             wav_ena = True
-        else:
+        else :
             wav_ena = False
-        if ts.param_value('vrt.data_ena') == "Yes":
+        if ts.param_value('vrt.data_ena') == "Yes" :
             data_ena = True
-        else:
+        else :
             data_ena = False
         """
         Configure settings in 1547.1 Standard module for the Voltage Ride Through Tests
@@ -174,28 +193,23 @@ def test_run():
         # result_params = lib_1547.get_rslt_param_plot()
         # ts.log(result_params
 
-        ts.log_debug(15 * "*" + "Amplifier initialization" + 15 * "*")
-        amp = gridsim.gridsim_init(ts, id=1)  # configure voltage limits, etc.
-        if amp is not None:
-            amp.config()
-
         # grid simulator is initialized with test parameters and enabled
         ts.log_debug(15 * "*" + "Gridsim initialization" + 15 * "*")
-        grid = gridsim.gridsim_init(ts, id=2, support_interfaces={"hil": phil})
+        grid = gridsim.gridsim_init(ts, support_interfaces={"hil": phil})  # Turn on AC so the EUT can be initialized
         if grid is not None:
             grid.voltage(v_nom)  
 
         # pv simulator is initialized with test parameters and enabled
         ts.log_debug(15 * "*" + "PVsim initialization" + 15 * "*")
         pv = pvsim.pvsim_init(ts)
-        # if pv is not None:
-        #     pv.iv_curve_config(pmp=p_rated, vmp=v_nom_in)
-        #     pv.irradiance_set(1000.)
+        if pv is not None:
+            pv.power_set(p_rated)
+            pv.power_on()  # Turn on DC so the EUT can be initialized
 
         # initialize data acquisition
         ts.log_debug(15 * "*" + "DAS initialization" + 15 * "*")
         daq = das.das_init(ts, support_interfaces={"hil": phil, "pvsim": pv})
-        daq.waveform_config({"mat_file_name": "Data.mat",
+        daq.waveform_config({"mat_file_name":"Data.mat",
                             "wfm_channels": VoltRideThrough.get_wfm_file_header()})
 
         if daq is not None:
@@ -229,7 +243,7 @@ def test_run():
         Connect the EUT according to the instructions and specifications provided by the manufacturer.
         """
         # Wait to establish communications with the EUT after AC and DC power are provided
-        eut = der.der_init(ts)
+        eut = der.der_init(ts, support_interfaces={'hil': phil}) 
 
         # start = time.time()
         # comm_wait_time = max(0.0, startup_time - 60.)
@@ -240,40 +254,11 @@ def test_run():
 
         if eut is not None:
             eut.config()
+            
         # if eut is not None:
         #     eut.deactivate_all_fct()
 
-        """
-        The voltage-reactive power control mode of the EUT shall be set to the default settings specified in Table 8
-        of IEEE Std 1547-2018 for the applicable performance category, and enabled.
-        """
-        # Default curve is characteristic curve 1
-        vv_curve = 1
-        ActiveFunction = p1547.ActiveFunction(ts=ts,
-                                              script_name='Volt-Var',
-                                              functions=[VV],
-                                              criteria_mode=[True, True, True])
-
-        # Don't need to be set to imbalance mode
-        # ActiveFunction.set_imbalance_config(imbalance_angle_fix="std")
-        # ActiveFunction.reset_curve(vv_curve)
-        # ActiveFunction.reset_time_settings(tr=10, number_tr=2)
-        v_pairs = ActiveFunction.get_params(function=VV, curve=vv_curve)
-        ts.log_debug('v_pairs:%s' % v_pairs)
-
-        if eut is not None:
-            # Set to: V = {92, 98, 102, 108}, Var = {44, 0 , 0 , -44}
-            vv_curve_params = {'v': [round(v_pairs['V1'] * (100 / v_nom)),
-                                     round(v_pairs['V2'] * (100 / v_nom)),
-                                     round(v_pairs['V3'] * (100 / v_nom)),
-                                     round(v_pairs['V4'] * (100 / v_nom))],
-                               'q': [round(v_pairs['Q1'] * (100 / var_rated)),
-                                     round(v_pairs['Q2'] * (100 / var_rated)),
-                                     round(v_pairs['Q3'] * (100 / var_rated)),
-                                     round(v_pairs['Q4'] * (100 / var_rated))],
-                               'DeptRef': 'Q_MAX_PCT'}
-            ts.log_debug('Setting VV points: %s' % vv_curve_params)
-            eut.volt_var(params={'Ena': False, 'curve': vv_curve_params})
+    
 
         # Initial loop for all mode that will be executed
         modes = VoltRideThrough.get_modes()  # Options: LV_CAT_2, HV_CAT_2, LV_CAT_3, HV_CAT_3
@@ -291,7 +276,7 @@ def test_run():
             convenient power level between 25% to 50% of EUT nameplate  apparent power rating at nominal voltage.
             """
             for pwr in pwr_lvl:  
-                for phase in phase_comb_list:
+                for phase in phase_comb_list :  
              
                     phase_combination_label = "PH" + ''.join(phase)
 
@@ -305,32 +290,62 @@ def test_run():
                     """
                     if pv is not None:
                         ts.log_debug(f'Setting power level to {pwr}')
+                        pv.iv_curve_config(pmp=p_rated, vmp=v_nom_in)
+                        pv.irradiance_set(1000.)
                         pv.power_set(p_rated * pwr)
-
-                    ts.sleep(1)
                         
                     """
                     Initiating voltage sequence for VRT
                     """
-                    # You need to first load the model, then configure the parameters
-                    if phil is not None:
-                        phil.load_model_on_hil()
-
-                    ts.sleep(1)
-
                     vrt_test_sequences = VoltRideThrough.set_test_conditions(current_mode)
                     VoltRideThrough.set_phase_combination(phase)
                     vrt_stop_time = VoltRideThrough.get_vrt_stop_time(vrt_test_sequences)
                     if phil is not None:
+                        # Set model parameters
+                        #phil.set_parameters(vrt_parameters)
                         # This adds 5 seconds of nominal behavior for EUT normal shutdown. This 5 sec is not recorded.
                         vrt_stop_time = vrt_stop_time + 5
                         ts.log('Stop time set to %s' % phil.set_stop_time(vrt_stop_time))
-
+                        # The driver should take care of this by selecting "Yes" to "Load the model to target?"
                         ts.sleep(2.0)
-
-                        # Now that we have all the test_sequences its time to send them to the model.
+                        phil.load_model_on_hil()
+                        # You need to first load the model, then configure the parameters
+                        # Now that we have all the test_sequences its time to sent them to the model.
                         VoltRideThrough.set_vrt_model_parameters(vrt_test_sequences)
+                                        
+                        """
+                        The voltage-reactive power control mode of the EUT shall be set to the default settings specified in Table 8
+                        of IEEE Std 1547-2018 for the applicable performance category, and enabled.
+                        """
+                        # Default curve is characteristic curve 1
+                        vv_curve = 1
+                        ActiveFunction = p1547.ActiveFunction(ts=ts,
+                                                            script_name='Volt-Var',
+                                                            functions=[VV],
+                                                            criteria_mode=[True, True, True])
+                        # Don't need to be set to imbalance mode
+                        #ActiveFunction.set_imbalance_config(imbalance_angle_fix="std")
+                        #ActiveFunction.reset_curve(vv_curve)
+                        #ActiveFunction.reset_time_settings(tr=10, number_tr=2)
+                        v_pairs = ActiveFunction.get_params(function=VV, curve=vv_curve)
+                        ts.log_debug('v_pairs:%s' % v_pairs)
+                        if eut is not None:
+                            # Set to: V = {92, 98, 102, 108}, Var = {44, 0 , 0 , -44}
+                            vv_curve_params = {'v': [round(v_pairs['V1']/v_nom,2),
+                                                    round(v_pairs['V2']/v_nom,2),
+                                                    round(v_pairs['V3']/v_nom,2),
+                                                    round(v_pairs['V4']/v_nom,2)],
+                                            'var': [round(v_pairs['Q1']/p_rated,2),
+                                                    round(v_pairs['Q2']/p_rated,2),
+                                                    round(v_pairs['Q3']/p_rated,2),
+                                                    round(v_pairs['Q4']/p_rated,2)],
+                                            'vref': 1.0,
+                                            'RmpPtTms': 1.0}
+                            ts.log_debug('Setting VV points: %s' % vv_curve_params)
+                            eut.volt_var(params={'Ena': True, 'ACTCRV': vv_curve, 'curve': vv_curve_params})
+                            ts.log_debug('Initial EUT VV settings are %s' % eut.volt_var())
 
+                        # The driver parameter "Execute the model on target?" should be set to "No"
                         phil.start_simulation() 
                         ts.sleep(0.5)
                         sim_time = phil.get_time()
@@ -340,6 +355,7 @@ def test_run():
                                 sim_time, vrt_stop_time - sim_time))
                             ts.sleep(5)
 
+                    
                         rms_dataset_filename = "No File"   
                         wave_start_filename = "No File"        
                         if data_ena:
@@ -380,13 +396,17 @@ def test_run():
 
                         phil.stop_simulation()
 
+                  
+
         result = script.RESULT_COMPLETE
 
     except script.ScriptFail as e:
-        ts.log_error(e)
+        reason = str(e)
+        if reason:
+            ts.log_error(reason)
 
     except Exception as e:
-        # ts.log_error((e, traceback.format_exc()))
+        ts.log_error((e, traceback.format_exc()))
 
         ts.log_error('Test script exception: %s' % traceback.format_exc())
 
@@ -394,8 +414,8 @@ def test_run():
         if grid is not None:
             grid.close()
         if pv is not None:
-            # if p_rated is not None:
-            #     pv.power_set(p_rated)
+            if p_rated is not None:
+                pv.power_set(p_rated)
             pv.close()
         if daq is not None:
             daq.close()
@@ -498,8 +518,7 @@ info.logo('sirfn.png')
 
 # Other equipment parameters
 der.params(info)
-gridsim.params(info, id=1, label='Amplifier')
-gridsim.params(info, id=2, label='HIL Gridsim')
+gridsim.params(info)
 pvsim.params(info)
 das.params(info)
 hil.params(info)

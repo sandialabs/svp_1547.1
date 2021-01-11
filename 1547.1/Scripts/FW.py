@@ -137,7 +137,7 @@ def test_run():
         #das_points = {'sc': ('P_TARGET', 'P_TARGET_MIN', 'P_TARGET_MAX', 'P_MEAS', 'F_TARGET', 'F_MEAS', 'event')}
         das_points = ActiveFunction.get_sc_points()
         # initialize data acquisition system
-        daq = das.das_init(ts, sc_points=das_points['sc'])
+        daq = das.das_init(ts, sc_points=das_points['sc'], support_interfaces={'hil': chil}) 
         if daq is not None:
             daq.sc['P_TARGET'] = 100
             daq.sc['P_TARGET_MIN'] = 100
@@ -149,7 +149,7 @@ def test_run():
             ts.log('DAS device: %s' % daq.info())
 
         # Configure the EUT communications
-        eut = der.der_init(ts)
+        eut = der.der_init(ts, support_interfaces={'hil': chil}) 
         '''
         b) Set all frequency trip parameters to the widest range of adjustability. 
             Disable all reactive/active power control functions.
@@ -228,7 +228,6 @@ def test_run():
                             params={
                             'MaxLimWEna': True,
                             'MaxLimW_PCT': 50
-                            #'MaxLimW': round(p_rated / 2.0, 2) * -1
                             }
                         )
                     else:
@@ -243,6 +242,9 @@ def test_run():
 
               below_o) ""           ""              ""
             '''
+            if chil is not None:
+                    ts.log('Start simulation of CHIL')
+                    chil.start_simulation()
             for fw_curve in fw_curves:
                 ts.log('Starting test with characteristic curve %s' % (fw_curve))
                 ActiveFunction.reset_curve(curve=fw_curve)

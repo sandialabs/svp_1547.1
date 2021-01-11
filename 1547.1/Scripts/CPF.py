@@ -156,7 +156,7 @@ def test_run():
             grid.voltage(v_nom)
 
         # pv simulator is initialized with test parameters and enabled
-        pv = pvsim.pvsim_init(ts)
+        pv = pvsim.pvsim_init(ts, support_interfaces={'hil': chil}) 
         if pv is not None:
             pv.power_set(p_rated)
             pv.power_on()  # Turn on DC so the EUT can be initialized
@@ -318,7 +318,7 @@ def test_run():
                     # i) Step the AC test source voltage to (VL + av)
                     step = ActiveFunction.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % ((v_min + a_v), step))
-                    ActiveFunction.start(daq=daq, step_label=step_label)
+                    ActiveFunction.start(daq=daq, step_label=step)
                     step_dict = {'V': v_min + a_v, 'P': p_rated, 'PF': pf_target}
                     grid.voltage(step_dict['V'])
                     ActiveFunction.record_timeresponse(daq=daq)
@@ -328,7 +328,7 @@ def test_run():
                     #   j) Step the AC test source voltage to (VH - av)
                     step = ActiveFunction.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % ((v_max - a_v),step))
-                    ActiveFunction.start(daq=daq, step_label=step_label)
+                    ActiveFunction.start(daq=daq, step_label=step)
                     step_dict = {'V': v_min - a_v, 'P': p_rated, 'PF': pf_target}
                     grid.voltage(step_dict['V'])
                     ActiveFunction.record_timeresponse(daq=daq)
@@ -338,7 +338,7 @@ def test_run():
                     #   k) Step the AC test source voltage to (VL + av)
                     step = ActiveFunction.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
-                    ActiveFunction.start(daq=daq, step_label=step_label)
+                    ActiveFunction.start(daq=daq, step_label=step)
                     step_dict = {'V': v_min + a_v, 'P': p_rated, 'PF': pf_target}
                     grid.voltage(step_dict['V'])
                     ActiveFunction.record_timeresponse(daq=daq)
@@ -353,7 +353,7 @@ def test_run():
                     """
                     step = ActiveFunction.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
-                    ActiveFunction.start(daq=daq, step_label=step_label)
+                    ActiveFunction.start(daq=daq, step_label=step)
                     step_dict = {'V': v_nom, 'P': p_rated, 'PF': pf_target}
                     grid.voltage(step_dict['V'])
                     ActiveFunction.record_timeresponse(daq=daq)
@@ -366,7 +366,7 @@ def test_run():
                     """
                     step = ActiveFunction.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
-                    ActiveFunction.start(daq=daq, step_label=step_label)
+                    ActiveFunction.start(daq=daq, step_label=step)
                     v_target = ActiveFunction.set_grid_asymmetric(grid=grid, case='case_a')
                     step_dict = {'V': v_target , 'P': p_rated, 'PF': pf_target}
                     ActiveFunction.record_timeresponse(daq=daq)
@@ -379,7 +379,7 @@ def test_run():
                 if grid is not None and phases == 'Three phase':
                     step = ActiveFunction.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
-                    ActiveFunction.start(daq=daq, step_label=step_label)
+                    ActiveFunction.start(daq=daq, step_label=step)
                     step_dict = {'V': v_nom, 'P': p_rated, 'PF': pf_target}
                     grid.voltage(step_dict['V'])
                     ActiveFunction.record_timeresponse(daq=daq)
@@ -392,7 +392,7 @@ def test_run():
                 if grid is not None and phases == 'Three phase':
                     step = ActiveFunction.get_step_label()
                     ts.log('Voltage step: setting Grid simulator to case B (IEEE 1547.1-Table 24)(%s)' % step)
-                    ActiveFunction.start(daq=daq, step_label=step_label)
+                    ActiveFunction.start(daq=daq, step_label=step)
                     v_target = ActiveFunction.set_grid_asymmetric(grid=grid, case='case_b')
                     step_dict = {'V': v_target, 'P': p_rated, 'PF': pf_target}
                     ActiveFunction.record_timeresponse(daq=daq)
@@ -408,7 +408,7 @@ def test_run():
                 if grid is not None and phases == 'Three phase':
                     step = ActiveFunction.get_step_label()
                     ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_nom, step))
-                    ActiveFunction.start(daq=daq, step_label=step_label)
+                    ActiveFunction.start(daq=daq, step_label=step)
                     step_dict = {'V': v_nom, 'P': p_rated, 'PF': pf_target}
                     grid.voltage(step_dict['V'])
                     ActiveFunction.record_timeresponse(daq=daq)

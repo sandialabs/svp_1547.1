@@ -89,7 +89,7 @@ def test_run():
         p_min = ts.param_value('eut.p_min')
         p_min_prime = ts.param_value('eut.p_min_prime')
         phases = ts.param_value('eut.phases')
-        pf_response_time = ts.param_value('crp.pf_response_time')
+        crp_response_time = ts.param_value('crp.crp_response_time')
 
         # Pass/fail accuracies
         pf_msa = ts.param_value('eut.pf_msa')
@@ -161,7 +161,7 @@ def test_run():
             grid.voltage(v_nom)
 
         # pv simulator is initialized with test parameters and enabled
-        pv = pvsim.pvsim_init(ts)
+        pv = pvsim.pvsim_init(ts, support_interfaces={'hil': chil})
         if pv is not None:
             pv.power_set(p_rated)
             pv.power_on()  # Turn on DC so the EUT can be initialized
@@ -171,7 +171,7 @@ def test_run():
         das_points = ActiveFunction.get_sc_points()
 
         # initialize data acquisition
-        daq = das.das_init(ts, sc_points=das_points['sc'])
+        daq = das.das_init(ts, sc_points=das_points['sc'], support_interfaces={'hil': chil}) 
 
         if daq is not None:
             daq.sc['V_MEAS'] = 100
@@ -188,7 +188,7 @@ def test_run():
         control functions.
         """
         # it is assumed the EUT is on
-        eut = der.der_init(ts)
+        eut = der.der_init(ts, support_interfaces={'hil': chil}) 
         if eut is not None:
             eut.config()
             # disable volt/var curve
@@ -197,23 +197,25 @@ def test_run():
 
         # Special considerations for CHIL ASGC/Typhoon startup #
         if chil is not None:
-            inv_power = eut.measurements().get('W')
-            timeout = 120.
-            if inv_power <= p_rated * 0.85:
-                pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
-                ts.sleep(3)
-                eut.connect(params={'Conn': True})
-            while inv_power <= p_rated * 0.85 and timeout >= 0:
-                ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
-                       (inv_power, timeout))
-                ts.sleep(1)
-                timeout -= 1
-                inv_power = eut.measurements().get('W')
-                if timeout == 0:
-                    result = script.RESULT_FAIL
-                    raise der.DERError('Inverter did not start.')
-            ts.log('Waiting for EUT to ramp up')
-            ts.sleep(8)
+            if eut is not None:
+                if eut.measurements() is not None:
+                    inv_power = eut.measurements().get('W')
+                    timeout = 120.
+                    if inv_power <= p_rated * 0.85:
+                        pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                        ts.sleep(3)
+                        eut.connect(params={'Conn': True})
+                    while inv_power <= p_rated * 0.85 and timeout >= 0:
+                        ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                            (inv_power, timeout))
+                        ts.sleep(1)
+                        timeout -= 1
+                        inv_power = eut.measurements().get('W')
+                        if timeout == 0:
+                            result = script.RESULT_FAIL
+                            raise der.DERError('Inverter did not start.')
+                    ts.log('Waiting for EUT to ramp up')
+                    ts.sleep(8)
 
         """
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
@@ -237,13 +239,15 @@ def test_run():
         """
         t) Steps d) through q) may be repeated to test additional communication protocols - Run with another test.
         """
-
+        if chil is not None:
+            ts.log('Start simulation of CHIL')
+            chil.start_simulation()
         # For PV systems, this requires that Vmpp = Vin_nom and Pmpp = Prated.
         for v_in_label, v_in in v_in_targets.items():
             ts.log('Starting test %s at v_in = %s' % (v_in_label, v_in))
             a_v = ActiveFunction.MRA['V'] * 1.5
             #Set response time recording
-            ActiveFunction.reset_time_settings(tr=pf_response_time)
+            ActiveFunction.reset_time_settings(tr=crp_response_time)
 
             if pv is not None:
                 pv.iv_curve_config(pmp=p_rated, vmp=v_in)
@@ -276,7 +280,7 @@ def test_run():
                 daq.sc['Q_TARGET'] = q_target
 
                 if eut is not None:
-                    parameters = {'Ena': True, 'Q': q_target, 'Wmax': p_rated}
+                    parameters = {'Ena': True, 'Q': q_target, 'Wmax': p_rated, 'RvrtTms': crp_response_time}
                     ts.log('Parameters set: %s' % parameters)
                     eut.reactive_power(params=parameters)
                     vars_setting = eut.reactive_power(params=parameters)
@@ -291,7 +295,7 @@ def test_run():
                 daq.sc['event'] = step_label
                 daq.data_sample()
                 ts.log('Wait for steady state to be reached')
-                ts.sleep(2 * pf_response_time)
+                ts.sleep(2 * crp_response_time)
 
                 """
                 g) Step the EUT's active power to 20% of Prated or Pmin, whichever is less.
@@ -440,28 +444,21 @@ def test_run():
                 """
                 r) Disable constant power factor mode. Power factor should return to unity.
                 """
-                if eut is not None:
-                    parameters = {'Ena': False}
-                    #ts.log('PF set: %s' % parameters)
-                    eut.fixed_var(params=parameters)
-                    var_setting = eut.fixed_var()
-                    ts.log('Reactive Power setting read: %s' % vars_setting)
-                    daq.sc['event'] = ActiveFunction.get_step_label()
-                    daq.data_sample()
-                    ts.sleep(4 * pf_response_time)
-                    daq.sc['event'] = 'T_settling_done'
-                    daq.data_sample()
-
                 """
                 q) Verify all reactive/active power control functions are disabled.
                 """
                 if eut is not None:
-                    ts.log('Reactive/active power control functions are disabled.')
-                    # TODO Implement ts.prompt functionality?
-                    # meas = eut.measurements()
-                    # ts.log('EUT PF is now: %s' % (data.get('AC_PF_1')))
-                    # ts.log('EUT Power: %s, EUT Reactive Power: %s' % (meas['W'], meas['VAr']))
-
+                    parameters = {'Ena': False}
+                    ts.log('Parameters set: %s' % parameters)
+                    vars_setting = eut.reactive_power(params=parameters)
+                    if not vars_setting["Ena"]:
+                        ts.log('Reactive/active power control functions are disabled.')
+                    daq.sc['event'] = ActiveFunction.get_step_label()
+                    daq.data_sample()
+                    ts.sleep(4 * crp_response_time)
+                    daq.sc['event'] = 'T_settling_done'
+                    daq.data_sample()
+                
                 ts.log('Sampling complete')
                 dataset_filename = dataset_filename + ".csv"
                 daq.data_capture(False)
@@ -555,7 +552,7 @@ info.param('crp.q_max_inj_enable', label='Qmax,inj activation', default='Enabled
 info.param('crp.half_q_max_abs_enable', label='0.5*Qmax,abs activation', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('crp.half_q_max_inj_enable', label='0.5*Qmax,inj activation', default='Enabled', values=['Disabled', 'Enabled'])
 
-info.param('crp.pf_response_time', label='PF Response Time (secs)', default=10.0)
+info.param('crp.crp_response_time', label='CRP Response Time (secs)', default=10.0)
 info.param('crp.v_in_nom', label='Test V_in_nom', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('crp.v_in_min', label='Test V_in_min', default='Enabled', values=['Disabled', 'Enabled'])
 info.param('crp.v_in_max', label='Test V_in_max', default='Enabled', values=['Disabled', 'Enabled'])

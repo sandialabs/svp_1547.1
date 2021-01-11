@@ -119,7 +119,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
             chil.config()
         ts.log_debug(15*"*"+"PVSIM initialization"+15*"*")
         # pv simulator is initialized with test parameters and enabled
-        pv = pvsim.pvsim_init(ts)
+        pv = pvsim.pvsim_init(ts, support_interfaces={'hil': chil}) 
         if pv is not None:
             pv.power_set(p_rated)
             pv.power_on()  # Turn on DC so the EUT can be initialized
@@ -171,27 +171,28 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
         else:
             ts.log_debug('Set L/HVRT and trip parameters set to the widest range of adjustability possible.')
 
-        # Special considerations for CHIL ASGC/Typhoon startup
+        # # Special considerations for CHIL ASGC/Typhoon startup
         if chil is not None:
-            if eut.measurements() is not None:
-                inv_power = eut.measurements().get('W')
-                timeout = 120.
-                if inv_power <= p_rated * 0.85:
-                    pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
-                    ts.sleep(3)
-                    eut.connect(params={'Conn': True})
-                while inv_power <= p_rated * 0.85 and timeout >= 0:
-                    ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
-                        (inv_power, timeout))
-                    ts.sleep(1)
-                    timeout -= 1
+            if eut is not None:
+                if eut.measurements() is not None:
                     inv_power = eut.measurements().get('W')
-                    if timeout == 0:
-                        result = script.RESULT_FAIL
-                        raise der.DERError('Inverter did not start.')
-                ts.log('Waiting for EUT to ramp up')
-                ts.sleep(8)
-                ts.log_debug('DAS data_read(): %s' % daq.data_read())
+                    timeout = 120.
+                    if inv_power <= p_rated * 0.85:
+                        pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                        ts.sleep(3)
+                        eut.connect(params={'Conn': True})
+                    while inv_power <= p_rated * 0.85 and timeout >= 0:
+                        ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                            (inv_power, timeout))
+                        ts.sleep(1)
+                        timeout -= 1
+                        inv_power = eut.measurements().get('W')
+                        if timeout == 0:
+                            result = script.RESULT_FAIL
+                            raise der.DERError('Inverter did not start.')
+                    ts.log('Waiting for EUT to ramp up')
+                    ts.sleep(8)
+                    ts.log_debug('DAS data_read(): %s' % daq.data_read())
 
         '''
         c) Set all AC test source parameters to the nominal operating voltage and frequency.
@@ -202,7 +203,7 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
         if grid is not None:
             grid.voltage(v_nom)
             if chil is not None:  # If using HIL, give the grid simulator the hil object
-                grid.config(chil)
+                grid.config()
 
         # open result summary file
         result_summary_filename = 'result_summary.csv'
@@ -242,25 +243,27 @@ def volt_vars_mode(vv_curves, vv_response_time, pwr_lvls, v_ref_value):
                     pv.irradiance_set(1000.)
 
                 # Special considerations for CHIL ASGC/Typhoon startup #
+                # Why does it need to appear twice, shouldn't this be at the driver level
                 if chil is not None:
-                    if  eut.measurements() is not None:
-                        inv_power = eut.measurements().get('W')
-                        timeout = 120.
-                        if inv_power <= pv_power_setting * 0.85:
-                            pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
-                            ts.sleep(3)
-                            eut.connect(params={'Conn': True})
-                        while inv_power <= pv_power_setting * 0.85 and timeout >= 0:
-                            ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
-                                (inv_power, timeout))
-                            ts.sleep(1)
-                            timeout -= 1
+                    if eut is not None:
+                        if  eut.measurements() is not None:
                             inv_power = eut.measurements().get('W')
-                            if timeout == 0:
-                                result = script.RESULT_FAIL
-                                raise der.DERError('Inverter did not start.')
-                        ts.log('Waiting for EUT to ramp up')
-                        ts.sleep(8)
+                            timeout = 120.
+                            if inv_power <= pv_power_setting * 0.85:
+                                pv.irradiance_set(995)  # Perturb the pv slightly to start the inverter
+                                ts.sleep(3)
+                                eut.connect(params={'Conn': True})
+                            while inv_power <= pv_power_setting * 0.85 and timeout >= 0:
+                                ts.log('Inverter power is at %0.1f. Waiting up to %s more seconds or until EUT starts...' %
+                                    (inv_power, timeout))
+                                ts.sleep(1)
+                                timeout -= 1
+                                inv_power = eut.measurements().get('W')
+                                if timeout == 0:
+                                    result = script.RESULT_FAIL
+                                    raise der.DERError('Inverter did not start.')
+                            ts.log('Waiting for EUT to ramp up')
+                            ts.sleep(8)
                     
 
 
@@ -442,7 +445,7 @@ def volt_var_mode_imbalanced_grid(imbalance_resp, vv_curves, vv_response_time):
             grid.voltage(v_nom)
 
         # pv simulator is initialized with test parameters and enabled
-        pv = pvsim.pvsim_init(ts)
+        pv = pvsim.pvsim_init(ts, support_interfaces={'hil': chil}) 
         if pv is not None:
             pv.power_set(p_rated)
             pv.power_on()  # Turn on DC so the EUT can be initialized
