@@ -300,7 +300,7 @@ class DataLogging:
                 row_data.append('%s_TARGET_MAX' % meas_value)
 
         row_data.append('EVENT')
-        # self.ts.log_debug('Sc points: %s' % row_data)
+        self.ts.log_debug('Sc points: %s' % row_data)
         self.sc_points['sc'] = row_data
 
     def set_result_summary_name(self):
@@ -336,7 +336,7 @@ class DataLogging:
         row_data.append('FILENAME')
 
         self.rslt_sum_col_name = ','.join(row_data) + '\n'
-        # self.ts.log_debug(f'summary column={self.rslt_sum_col_name}'.rstrip())
+        self.ts.log_debug(f'summary column={self.rslt_sum_col_name}'.rstrip())
 
     def get_rslt_param_plot(self):
         """
@@ -423,7 +423,7 @@ class DataLogging:
         """
         value = None
         nb_phases = None
-
+        self.ts.log_debug(self.data.get(self.get_measurement_label(type_meas)[0]))
         try:
             if self.phases == 'Single phase':
                 value = self.data.get(self.get_measurement_label(type_meas)[0])
@@ -451,21 +451,21 @@ class DataLogging:
                                       % (self.get_measurement_label(type_meas), value1, value2, value3))
                 value = value1 + value2 + value3
                 nb_phases = 3
+            # TODO : imbalance_resp should change the way you acquire the data
+            if type_meas == 'V':
+                # average value of V
+                value = value / nb_phases
+            elif type_meas == 'F':
+                # No need to do data average for frequency
+                value = self.data.get(self.get_measurement_label(type_meas)[0])
+            return round(value, 3)
 
         except Exception as e:
             self.ts.log_error('Inverter phase parameter not set correctly.')
             self.ts.log_error('phases=%s' % self.phases)
-            raise p1547Error('Error in get_measurement_total() : %s' % (str(e)))
+            #raise p1547Error('Error in get_measurement_total() : %s' % (str(e)))
 
-        # TODO : imbalance_resp should change the way you acquire the data
-        if type_meas == 'V':
-            # average value of V
-            value = value / nb_phases
-        elif type_meas == 'F':
-            # No need to do data average for frequency
-            value = self.data.get(self.get_measurement_label(type_meas)[0])
-
-        return round(value, 3)
+       
 
     def get_rslt_sum_col_name(self):
         """
@@ -1038,34 +1038,34 @@ class ImbalanceComponent:
             if imbalance_angle_fix == 'std':
                 # Case A
                 self.mag['case_a'] = [1.07 * self.v_nom, 0.91 * self.v_nom, 0.91 * self.v_nom]
-                self.ang['case_a'] = [0., 120, -120]
+                self.ang['case_a'] = [0.0, -120.0, 120.0]
                 # Case B
                 self.mag['case_b'] = [0.91 * self.v_nom, 1.07 * self.v_nom, 1.07 * self.v_nom]
-                self.ang['case_b'] = [0., 120.0, -120.0]
+                self.ang['case_b'] = [0.0, -120.0, 120.0]
                 self.ts.log("Setting test with imbalanced test with FIXED angles/values")
             elif imbalance_angle_fix == 'fix_mag':
                 # Case A
                 self.mag['case_a'] = [1.07 * self.v_nom, 0.91 * self.v_nom, 0.91 * self.v_nom]
-                self.ang['case_a'] = [0., 126.59, -126.59]
+                self.ang['case_a'] = [0.0, -126.59, 126.59]
                 # Case B
                 self.mag['case_b'] = [0.91 * self.v_nom, 1.07 * self.v_nom, 1.07 * self.v_nom]
-                self.ang['case_b'] = [0., 114.5, -114.5]
+                self.ang['case_b'] = [0.0, -114.5, 114.5]
                 self.ts.log("Setting test with imbalanced test with NOT FIXED angles/values")
             elif imbalance_angle_fix == 'fix_ang':
                 # Case A
                 self.mag['case_a'] = [1.08 * self.v_nom, 0.91 * self.v_nom, 0.91 * self.v_nom]
-                self.ang['case_a'] = [0., 120, -120]
+                self.ang['case_a'] = [0.0, -120.0, 120.0]
                 # Case B
                 self.mag['case_b'] = [0.9 * self.v_nom, 1.08 * self.v_nom, 1.08 * self.v_nom]
-                self.ang['case_b'] = [0., 120, -120]
+                self.ang['case_b'] = [0.0, -120.0, 120.0]
                 self.ts.log("Setting test with imbalanced test with NOT FIXED angles/values")
             elif imbalance_angle_fix == 'not_fix':
                 # Case A
                 self.mag['case_a'] = [1.08 * self.v_nom, 0.91 * self.v_nom, 0.91 * self.v_nom]
-                self.ang['case_a'] = [0., 126.59, -126.59]
+                self.ang['case_a'] = [0.0, -126.59, 126.59]
                 # Case B
                 self.mag['case_b'] = [0.9 * self.v_nom, 1.08 * self.v_nom, 1.08 * self.v_nom]
-                self.ang['case_b'] = [0., 114.5, -114.5]
+                self.ang['case_b'] = [0.0, -114.5, 114.5]
                 self.ts.log("Setting test with imbalanced test with NOT FIXED angles/values")
 
             # return (self.mag, self.ang)
@@ -1123,11 +1123,12 @@ class HilModel(object):
         else:
             self.hil = None
         self.set_time_path()
+        self.set_nominal_values()
+        #self.set_input_scale_offset()
 
         # recommend changing these in simulink for each lab to verify the HIL simulation is safe and
         # operational before executing in the SVP - Jay
         # self.set_nominal_values()
-        # self.set_input_scale_offset
 
     def set_nominal_values(self):
         parameters = []
@@ -1210,7 +1211,8 @@ class VoltVar(EutParameters, UtilParameters):
             'Q1': round(self.s_rated * 0.44, 2),
             'Q2': round(self.s_rated * 0.0, 2),
             'Q3': round(self.s_rated * 0.0, 2),
-            'Q4': round(self.s_rated * -0.44, 2)
+            'Q4': round(self.s_rated * -0.44, 2),
+            'TR': 5.0
         }
 
         self.param[VV][2] = {
@@ -1221,7 +1223,8 @@ class VoltVar(EutParameters, UtilParameters):
             'Q1': round(self.var_rated * 1.0, 2),
             'Q2': round(self.var_rated * 0.5, 2),
             'Q3': round(self.var_rated * 0.5, 2),
-            'Q4': round(self.var_rated * -1.0, 2)
+            'Q4': round(self.var_rated * -1.0, 2),
+            'TR': 1.0
         }
         self.param[VV][3] = {
             'V1': round(0.90 * self.v_nom, 2),
@@ -1231,7 +1234,8 @@ class VoltVar(EutParameters, UtilParameters):
             'Q1': round(self.var_rated * 1.0, 2),
             'Q2': round(self.var_rated * -0.5, 2),
             'Q3': round(self.var_rated * -0.5, 2),
-            'Q4': round(self.var_rated * -1.0, 2)
+            'Q4': round(self.var_rated * -1.0, 2),
+            'TR': 90.0
         }
 
     def create_vv_dict_steps(self, v_ref, mode='Normal'):
@@ -1334,17 +1338,20 @@ class VoltWatt(EutParameters, UtilParameters):
         self.param[VW][1] = {
             'V1': round(1.06 * self.v_nom, 2),
             'V2': round(1.10 * self.v_nom, 2),
-            'P1': round(self.p_rated, 2)
+            'P1': round(self.p_rated, 2),
+            'TR': 10.0
         }
         self.param[VW][2] = {
             'V1': round(1.05 * self.v_nom, 2),
             'V2': round(1.10 * self.v_nom, 2),
-            'P1': round(self.p_rated, 2)
+            'P1': round(self.p_rated, 2),
+            'TR': 90.0
         }
         self.param[VW][3] = {
             'V1': round(1.09 * self.v_nom, 2),
             'V2': round(1.10 * self.v_nom, 2),
-            'P1': round(self.p_rated, 2)
+            'P1': round(self.p_rated, 2),
+            'TR': 0.5
         }
 
         if self.p_min > (0.2 * self.p_rated):
@@ -1458,17 +1465,26 @@ class FrequencyWatt(EutParameters, UtilParameters):
             p_small = 0.05
 
         self.param[FW] = {}
-
+        if self.ts.param_value('fw.test_1_tr') is None:
+            # Based on table 34 and category III
+            tr_1 = 5.0
+        else:
+            tr_1 = self.ts.param_value('fw.test_1_tr')
         self.param[FW][1] = {
             'dbf': 0.036,
             'kof': 0.05,
-            'tr': self.ts.param_value('fw.test_1_tr'),
+            'TR': tr_1,
             'f_small': p_small * self.f_nom * 0.05
         }
+        if self.ts.param_value('fw.test_2_tr') is None:
+            # Based on table 35 and category III
+            tr_2 = 0.2
+        else:
+            tr_2 = self.ts.param_value('fw.test_2_tr')
         self.param[FW][2] = {
             'dbf': 0.017,
             'kof': 0.03,
-            'tr': self.ts.param_value('fw.test_2_tr'),
+            'TR': tr_2,
             'f_small': p_small * self.f_nom * 0.02
         }
 
@@ -1577,7 +1593,8 @@ class WattVar(EutParameters, UtilParameters):
                 'P3': round(1.0 * self.p_rated_prime, 2),
                 'Q1': 0,
                 'Q2': 0,
-                'Q3': round(self.s_rated * 0.44, 2)
+                'Q3': round(self.s_rated * 0.44, 2),
+                'TR': 10.0
             }
             self.param[WV][2] = {
                 'P1': round(-p, 2),
@@ -1585,7 +1602,8 @@ class WattVar(EutParameters, UtilParameters):
                 'P3': round(1.0 * self.p_rated_prime, 2),
                 'Q1': round(self.s_rated * 0.22, 2),
                 'Q2': round(self.s_rated * 0.22, 2),
-                'Q3': round(self.s_rated * 0.44, 2)
+                'Q3': round(self.s_rated * 0.44, 2),
+                'TR': 10.0
             }
             self.param[WV][3] = {
                 'P1': round(-p, 2),
@@ -1593,7 +1611,8 @@ class WattVar(EutParameters, UtilParameters):
                 'P3': round(1.0 * self.p_rated_prime, 2),
                 'Q1': round(0, 2),
                 'Q2': round(self.s_rated * 0.44, 2),
-                'Q3': round(self.s_rated * 0.44, 2)
+                'Q3': round(self.s_rated * 0.44, 2),
+                'TR': 10.0
             }
         else:
             self.param[WV][1] = {
