@@ -1,24 +1,23 @@
 <suite globals="True" name="VW">
   <members>
-    <member name="VW\VW_1.tst" />
-    <member name="VW\VW_2.tst" />
-    <member name="VW\VW_3.tst" />
-    <member name="VW\VW_IMBALANCE.tst" />
-    <member name="VW\VW_IMBALANCE_FIX.tst" />
-    <member name="VW\VW_MANUAL.tst" />
+    <member name="VW/VW_1.tst" />
+    <member name="VW/VW_2.tst" />
+    <member name="VW/VW_3.tst" />
+    <member name="VW/VW_IMBALANCE.tst" />
+    <member name="VW/VW_IMBALANCE_FIX.tst" />
   </members>
   <params>
     <param name="eut.f_min" type="float">56.0</param>
     <param name="eut.f_nom" type="float">60.0</param>
     <param name="eut.f_max" type="float">66.0</param>
-    <param name="eut.v_low" type="float">108.0</param>
+    <param name="eut.v_low" type="float">116.0</param>
     <param name="eut.v_nom" type="float">120.0</param>
     <param name="eut.v_high" type="float">132.0</param>
     <param name="eut.v_in_nom" type="int">400</param>
     <param name="eut.p_min" type="float">1000.0</param>
     <param name="eut.var_rated" type="float">2000.0</param>
+    <param name="eut.p_rated" type="float">8000.0</param>
     <param name="eut.s_rated" type="float">10000.0</param>
-    <param name="eut.p_rated" type="float">10000.0</param>
     <param name="der.mode" type="string">Disabled</param>
     <param name="gridsim.mode" type="string">Disabled</param>
     <param name="gridsim.auto_config" type="string">Disabled</param>

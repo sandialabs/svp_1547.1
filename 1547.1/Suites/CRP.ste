@@ -1,7 +1,9 @@
 <suite globals="True" name="CRP">
   <members>
-    <member name="CRP\CRP_FIX.tst" />
-    <member name="CRP\CRP_MANUAL.tst" />
+    <member name="CRP/CRP_HALF_ABS.tst" />
+    <member name="CRP/CRP_HALF_INJ.tst" />
+    <member name="CRP/CRP_MAX_ABS.tst" />
+    <member name="CRP/CRP_MAX_INJ.tst" />
   </members>
   <params>
     <param name="eut.f_min" type="float">56.0</param>

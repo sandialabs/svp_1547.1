@@ -1,9 +1,8 @@
 <suite globals="True" name="WV">
   <members>
-    <member name="WV\WV_1.tst" />
-    <member name="WV\WV_2.tst" />
-    <member name="WV\WV_3.tst" />
-    <member name="WV\WV_MANUAL.tst" />
+    <member name="WV/WV_1.tst" />
+    <member name="WV/WV_2.tst" />
+    <member name="WV/WV_3.tst" />
   </members>
   <params>
     <param name="eut.v_low" type="float">116.0</param>

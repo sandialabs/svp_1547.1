@@ -1,0 +1,60 @@
+<suite globals="True" name="IEEE1547-OPAL">
+  <members>
+    <member name="WV.ste" />
+    <member name="PRI.ste" />
+    <member name="LAP.ste" />
+    <member name="CPF.ste" />
+    <member name="CRP.ste" />
+    <member name="VW.ste" />
+    <member name="VV.ste" />
+    <member name="FW.ste" />
+  </members>
+  <params>
+    <param name="eut_fw.p_small" type="float">0.05</param>
+    <param name="gridsim.opal.phases" type="int">3</param>
+    <param name="gridsim.opal.f_min" type="float">45.0</param>
+    <param name="gridsim.opal.freq" type="float">60.0</param>
+    <param name="gridsim.opal.f_max" type="float">70.0</param>
+    <param name="eut.v_low" type="float">116.0</param>
+    <param name="eut.v_nom" type="float">120.0</param>
+    <param name="gridsim.opal.v_nom" type="float">120.0</param>
+    <param name="eut.v_high" type="float">132.0</param>
+    <param name="gridsim.opal.v_max" type="float">300.0</param>
+    <param name="eut_cpf.v_in_min" type="int">300</param>
+    <param name="eut_crp.v_in_min" type="int">300</param>
+    <param name="eut.v_in_nom" type="int">400</param>
+    <param name="eut_cpf.v_in_max" type="int">500</param>
+    <param name="eut_crp.v_in_max" type="int">500</param>
+    <param name="eut.p_min" type="float">1000.0</param>
+    <param name="das.opal.sample_interval" type="int">1000</param>
+    <param name="eut.var_rated" type="float">2000.0</param>
+    <param name="eut.p_rated" type="float">8000.0</param>
+    <param name="eut.s_rated" type="float">10000.0</param>
+    <param name="hil.opal.project_dir_path" type="string">C:\OPAL-RT\CANMETENERGY_WORKSPACE\Github_1547</param>
+    <param name="das.opal.wfm_dir" type="string">C:\Users\DETLDAQ\OPAL-RT\RT-LABv2019.1_Workspace\IEEE_1547.1_Phase_Jump\models\Phase_Jump_A_B_A\phase_jump_a_b_a_sm_source\OpREDHAWKtarget\</param>
+    <param name="das.opal.data_name" type="string">Data.mat</param>
+    <param name="der.mode" type="string">Disabled</param>
+    <param name="gridsim.auto_config" type="string">Disabled</param>
+    <param name="pvsim.mode" type="string">Disabled</param>
+    <param name="hil.opal.hil_config" type="string">False</param>
+    <param name="hil.opal.rt_lab_model" type="string">IEEE_1547_Testing</param>
+    <param name="eut.abs_enable" type="string">No</param>
+    <param name="hil.opal.hil_config_compile" type="string">No</param>
+    <param name="eut_cpf.sink_power" type="string">No</param>
+    <param name="eut_crp.sink_power" type="string">No</param>
+    <param name="eut_vw.sink_power" type="string">No</param>
+    <param name="eut_fw.absorb" type="string">No</param>
+    <param name="gridsim.mode" type="string">Opal</param>
+    <param name="das.mode" type="string">Opal</param>
+    <param name="hil.mode" type="string">Opal-RT</param>
+    <param name="das.opal.map" type="string">Opal_Fast_1547</param>
+    <param name="das.opal.wfm_chan_list" type="string">PhaseJump</param>
+    <param name="hil.opal.target_name" type="string">RTServer</param>
+    <param name="hil.opal.rt_mode" type="string">Software</param>
+    <param name="eut.phases" type="string">Three phase</param>
+    <param name="hil.opal.hil_config_open" type="string">Yes</param>
+    <param name="hil.opal.hil_config_stop_sim" type="string">Yes</param>
+    <param name="hil.opal.hil_config_load" type="string">Yes</param>
+    <param name="hil.opal.hil_config_execute" type="string">Yes</param>
+  </params>
+</suite>
