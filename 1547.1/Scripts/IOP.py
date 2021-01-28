@@ -508,7 +508,8 @@ def test_run():
                             crp = False
                             try:
                                 if not eut.get_nameplate().get('np_supported_modes').get('fixed_var'):
-                                    raise Exception  # jump down to except to set vars with PF
+                                    # jump down to except to set vars with PF
+                                    raise Exception('This DER does not include the fixed var function. Using CPF.')
                                 ts.log_debug('     ****Configuring Experiment. Executing: CRP = %s' % setpoint)
                                 eut.set_const_q(params={"const_q_mode_enable": True,
                                                         "const_q_mode_excitation": excitation,
@@ -873,6 +874,7 @@ def test_run():
             wv_data = eut.get_qp()
             # ts.log_debug('WV Read: %s' % wv_data)
             print_params(wv_data)
+            ts.log('----')
 
             params = {'qp_mode_enable': True,
                       'qp_curve_p_gen_pts': [0.2, 0.5, 1.0],
@@ -889,6 +891,7 @@ def test_run():
             ts.log("Readback:")
             wv_data = eut.get_qp()
             print_params(wv_data)
+            ts.log('----')
 
             params = {'qp_mode_enable': True,
                       'qp_curve_p_gen_pts': [0.1, 0.6, 1.0],
@@ -905,6 +908,7 @@ def test_run():
             ts.log("Readback:")
             wv_data = eut.get_qp()
             print_params(wv_data)
+            ts.log('----')
 
             ts.log('Disabling WV...')
             eut.set_qp(params={'qp_mode_enable': False})
