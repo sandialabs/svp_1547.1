@@ -1,0 +1,1012 @@
+2021-01-27 19:35:33.406  D  
+2021-01-27 19:35:33.406  D  **************  Starting IOP_DNP3  **************
+2021-01-27 19:35:33.406  D  Script: IOP.py 1.0.0
+2021-01-27 19:35:33.406  I  Test Parameters:
+2021-01-27 19:35:33.421  I      Print communication map of EUT = Yes
+2021-01-27 19:35:33.421  I      Run Configuration Test? = Yes
+2021-01-27 19:35:33.421  I      Run Monitoring Test? = Yes
+2021-01-27 19:35:33.421  I      Monitoring Tests:
+2021-01-27 19:35:33.421  I          Power Monitoring Test? = Yes
+2021-01-27 19:35:33.421  I          Reactive Power Monitoring Test? = Yes
+2021-01-27 19:35:33.421  I          Voltage Monitoring Test? = Yes
+2021-01-27 19:35:33.421  I          Frequency Monitoring Test? = Yes
+2021-01-27 19:35:33.421  I          Operational State Monitoring Test? = Yes
+2021-01-27 19:35:33.421  I          Connnection Status Monitoring Test? = Yes
+2021-01-27 19:35:33.421  I          Alarm Status Monitoring Test? = Yes
+2021-01-27 19:35:33.421  I  Grid-Support Function Spot Checks:
+2021-01-27 19:35:33.421  I      Constant Power Factor (CPF) = Yes
+2021-01-27 19:35:33.421  I      Active Power-Reactive Power (VV) = Yes
+2021-01-27 19:35:33.421  I      Active Power-Reactive Power (WV) = Yes
+2021-01-27 19:35:33.421  I      Constant Reactive Power (CRP) = Yes
+2021-01-27 19:35:33.421  I      Voltage-Active Power (VW) Mode = Yes
+2021-01-27 19:35:33.421  I      Voltage Trip (VT) = Yes
+2021-01-27 19:35:33.421  I      Frequency Trip (FT) = Yes
+2021-01-27 19:35:33.437  I      Frequency Droop (FW) = Yes
+2021-01-27 19:35:33.437  I      Enter Service (ES) = Yes
+2021-01-27 19:35:33.437  I      Cease to Energize (CTE) = Yes
+2021-01-27 19:35:33.437  I      Limit Maximum Active Power (LAP) = Yes
+2021-01-27 19:35:33.437  I      Connect/Disconnect = Yes
+2021-01-27 19:35:33.437  I  EUT Parameters:
+2021-01-27 19:35:33.437  I      Wait time required for DER writes to go into effect. = 5.0
+2021-01-27 19:35:33.437  I      Output power rating (W) = 250000.0
+2021-01-27 19:35:33.437  I      Output power rating (W) = 2500.0
+2021-01-27 19:35:33.437  I      Output apparent power rating (VA) = 250000.0
+2021-01-27 19:35:33.437  I      Output var rating (vars) = 250000.0
+2021-01-27 19:35:33.437  I      Nominal AC voltage (V) = 7200.0
+2021-01-27 19:35:33.437  I  DER1547 Parameters:
+2021-01-27 19:35:33.437  I      DER1547 Mode = DNP3
+2021-01-27 19:35:33.437  I      DNP3 Parameters:
+2021-01-27 19:35:33.437  I          Simulated Outstation? = Yes
+2021-01-27 19:35:33.437  I          Type of DER Simulation? = EPRI DER Simulator
+2021-01-27 19:35:33.437  I          Automate Configuration? = No
+2021-01-27 19:35:33.437  I          Enable DBus? = No
+2021-01-27 19:35:33.437  I          Path to SimController.py = C:\Users\jjohns2\Documents\Projects2020\InteroperabilityTesting\EPRI DER Setup\SimController.py
+2021-01-27 19:35:33.437  I          Path to DERSimulator.exe = C:\Users\jjohns2\Documents\Projects2020\InteroperabilityTesting\EPRI DER Setup\epri-der-sim-0.1.0.6\epri-der-sim-0.1.0.6\DERSimulator.exe
+2021-01-27 19:35:33.437  I          Irradiance csv filename. (Use "None" for no load.) = None
+2021-01-27 19:35:33.437  I          Agent IP Address = 127.0.0.1
+2021-01-27 19:35:33.437  I          Agent IP Port = 10000
+2021-01-27 19:35:33.453  I          Outstation IP Address = 127.0.0.1
+2021-01-27 19:35:33.453  I          Outstation IP Port = 20000
+2021-01-27 19:35:33.453  I          Outstation Local Address = 100
+2021-01-27 19:35:33.453  I          Master Local Address = 101
+2021-01-27 19:35:33.453  I          Scan Time = 2
+2021-01-27 19:35:33.453  I          OID = 1
+2021-01-27 19:35:33.453  I          Request ID = 1234
+2021-01-27 19:35:33.453  I  HIL Parameters:
+2021-01-27 19:35:33.453  I      Mode = Disabled
+2021-01-27 19:35:33.453  I  Data Acquisition System Parameters:
+2021-01-27 19:35:33.453  I      Mode = Disabled
+2021-01-27 19:35:33.459  I  PV Simulator Parameters:
+2021-01-27 19:35:33.459  I      Mode = Disabled
+2021-01-27 19:35:33.459  I  Grid Simulator Parameters:
+2021-01-27 19:35:33.459  I      Mode = Disabled
+2021-01-27 19:35:33.459  I      Configure grid simulator at beginning of test = Disabled
+2021-01-27 19:35:35.479  I  dnp3_agent is not running - attempting to start agent in new cmd window
+2021-01-27 19:35:35.479  D  file_path: C:\Users\jjohns2\Documents\Projects2020\InteroperabilityTesting\1547.1-py3\Lib\svpdnp3\dnp3_agent.exe
+2021-01-27 19:35:46.634  I  Adding outstation: b'\x02{"params": {"ipaddr": "127.0.0.1", "ipport": 20000, "outstation_addr": 100, "master_addr": 101, "scan_time": 2, "oid": 1}}\x03'
+2021-01-27 19:35:46.634  I  DNP3 Agent Status: {'params': {'Outstations Connected': 1, 'Outstations': {'1': {'oid': 1, 'IP Address': '127.0.0.1', 'Port': 20000, 'Outstation Address': 100, 'Master Address': 101}}}}
+2021-01-27 19:35:46.634  I  Functions to be activated in this test script = ['IOP']
+2021-01-27 19:35:46.634  D  1547.1 Library configured for Interoperability
+2021-01-27 19:35:46.634  I  ---
+2021-01-27 19:35:46.634  I  DER Nameplate Information:
+2021-01-27 19:35:46.634  I  	Active power rating at unity power factor (nameplate active power rating) (kW) [np_p_max] : 250.0
+2021-01-27 19:35:46.634  I  	Active power rating at specified over-excited power factor (kW) [np_p_max_over_pf] : None
+2021-01-27 19:35:46.634  I  	Specified over-excited power factor [np_over_pf] : None
+2021-01-27 19:35:46.650  I  	np_p_max_under_pf: None
+2021-01-27 19:35:46.650  I  	Specified under-excited power factor [np_under_pf] : None
+2021-01-27 19:35:46.650  I  	Apparent power maximum rating (kVA) [np_va_max] : 250.0
+2021-01-27 19:35:46.650  I  	Normal operating performance category [np_normal_op_cat] : CAT_B
+2021-01-27 19:35:46.650  I  	Abnormal operating performance category [np_abnormal_op_cat] : None
+2021-01-27 19:35:46.650  I  	Reactive power injected maximum rating (kvar) [np_q_max_inj] : 250.0
+2021-01-27 19:35:46.650  I  	Reactive power absorbed maximum rating (kvar) [np_q_max_abs] : 250.0
+2021-01-27 19:35:46.650  I  	np_p_max_charge: None
+2021-01-27 19:35:46.650  I  	Apparent power charge maximum rating (kVA) [np_apparent_power_charge_max] : None
+2021-01-27 19:35:46.650  I  	AC voltage nominal rating [np_ac_v_nom] : 72000.0
+2021-01-27 19:35:46.650  I  	AC voltage minimum rating [np_ac_v_min_er_min] : 61200.0
+2021-01-27 19:35:46.650  I  	AC voltage maximum rating [np_ac_v_max_er_max] : 82800.0
+2021-01-27 19:35:46.650  I  	Reactive susceptance that remains connected to the Area EPS in the cease to energize and trip state [np_reactive_susceptance] : None
+2021-01-27 19:35:46.650  I  	Supported control mode functions [np_supported_modes] : 
+2021-01-27 19:35:46.650  I  		max_w: True
+2021-01-27 19:35:46.650  I  		fixed_w: None
+2021-01-27 19:35:46.650  I  		fixed_var: False
+2021-01-27 19:35:46.650  I  		fixed_pf: True
+2021-01-27 19:35:46.650  I  		volt_var: True
+2021-01-27 19:35:46.650  I  		freq_watt: True
+2021-01-27 19:35:46.650  I  		dyn_react_curr: None
+2021-01-27 19:35:46.650  I  		lv_trip: False
+2021-01-27 19:35:46.650  I  		hv_trip: False
+2021-01-27 19:35:46.650  I  		watt_var: False
+2021-01-27 19:35:46.650  I  		volt_watt: True
+2021-01-27 19:35:46.650  I  		lf_trip: False
+2021-01-27 19:35:46.650  I  		hf_trip: False
+2021-01-27 19:35:46.650  I  ---
+2021-01-27 19:35:46.650  I  ---
+2021-01-27 19:35:46.666  I  DER Settings Information:
+2021-01-27 19:35:46.666  I  	Active power rating at unity power factor (nameplate active power rating) (kW) [np_p_max] : 250.0
+2021-01-27 19:35:46.666  I  	Active power rating at specified over-excited power factor (kW) [np_p_max_over_pf] : None
+2021-01-27 19:35:46.666  I  	Specified over-excited power factor [np_over_pf] : None
+2021-01-27 19:35:46.666  I  	np_p_max_under_pf: None
+2021-01-27 19:35:46.666  I  	Specified under-excited power factor [np_under_pf] : None
+2021-01-27 19:35:46.666  I  	Apparent power maximum rating (kVA) [np_va_max] : 250.0
+2021-01-27 19:35:46.666  I  	Normal operating performance category [np_normal_op_cat] : CAT_B
+2021-01-27 19:35:46.666  I  	Abnormal operating performance category [np_abnormal_op_cat] : None
+2021-01-27 19:35:46.666  I  	Reactive power injected maximum rating (kvar) [np_q_max_inj] : 250.0
+2021-01-27 19:35:46.666  I  	Reactive power absorbed maximum rating (kvar) [np_q_max_abs] : 250.0
+2021-01-27 19:35:46.666  I  	np_p_max_charge: None
+2021-01-27 19:35:46.666  I  	Apparent power charge maximum rating (kVA) [np_apparent_power_charge_max] : None
+2021-01-27 19:35:46.666  I  	AC voltage nominal rating [np_ac_v_nom] : 72000.0
+2021-01-27 19:35:46.666  I  	AC voltage minimum rating [np_ac_v_min_er_min] : 61200.0
+2021-01-27 19:35:46.666  I  	AC voltage maximum rating [np_ac_v_max_er_max] : 82800.0
+2021-01-27 19:35:46.666  I  	Reactive susceptance that remains connected to the Area EPS in the cease to energize and trip state [np_reactive_susceptance] : None
+2021-01-27 19:35:46.666  I  	Supported control mode functions [np_supported_modes] : 
+2021-01-27 19:35:46.681  I  		max_w: True
+2021-01-27 19:35:46.681  I  		fixed_w: None
+2021-01-27 19:35:46.681  I  		fixed_var: False
+2021-01-27 19:35:46.681  I  		fixed_pf: True
+2021-01-27 19:35:46.681  I  		volt_var: True
+2021-01-27 19:35:46.688  I  		freq_watt: True
+2021-01-27 19:35:46.882  I  		dyn_react_curr: None
+2021-01-27 19:35:46.882  I  		lv_trip: False
+2021-01-27 19:35:46.882  I  		hv_trip: False
+2021-01-27 19:35:46.882  I  		watt_var: False
+2021-01-27 19:35:46.888  I  		volt_watt: True
+2021-01-27 19:35:46.888  I  		lf_trip: False
+2021-01-27 19:35:46.888  I  		hf_trip: False
+2021-01-27 19:35:46.888  I  ---
+2021-01-27 19:35:46.888  W  DER Settings does not include np_p_max_charge
+2021-01-27 19:35:46.904  I    Currently np_p_max = 250.000.
+2021-01-27 19:35:46.904  I    Setting np_p_max to 200.000.
+2021-01-27 19:35:46.904  W  NO DNP3 APP NOTE AO/BO CONFIGURATION POINTS EXIST!
+2021-01-27 19:35:51.915  I    --> Readback value is 250.000
+2021-01-27 19:35:51.915  W  NO DNP3 APP NOTE AO/BO CONFIGURATION POINTS EXIST!
+2021-01-27 19:35:56.927  I    Currently np_va_max = 250.000.
+2021-01-27 19:35:56.927  I    Setting np_va_max to 200.000.
+2021-01-27 19:35:56.927  W  NO DNP3 APP NOTE AO/BO CONFIGURATION POINTS EXIST!
+2021-01-27 19:36:01.939  I    --> Readback value is 250.000
+2021-01-27 19:36:01.939  W  NO DNP3 APP NOTE AO/BO CONFIGURATION POINTS EXIST!
+2021-01-27 19:36:06.951  I    Currently np_q_max_inj = 250.000.
+2021-01-27 19:36:06.951  I    Setting np_q_max_inj to 200.000.
+2021-01-27 19:36:06.951  W  NO DNP3 APP NOTE AO/BO CONFIGURATION POINTS EXIST!
+2021-01-27 19:36:11.962  I    --> Readback value is 250.000
+2021-01-27 19:36:11.962  W  NO DNP3 APP NOTE AO/BO CONFIGURATION POINTS EXIST!
+2021-01-27 19:36:16.975  I    Currently np_q_max_abs = 250.000.
+2021-01-27 19:36:16.975  I    Setting np_q_max_abs to 200.000.
+2021-01-27 19:36:16.975  W  NO DNP3 APP NOTE AO/BO CONFIGURATION POINTS EXIST!
+2021-01-27 19:36:21.987  I    --> Readback value is 250.000
+2021-01-27 19:36:21.987  W  NO DNP3 APP NOTE AO/BO CONFIGURATION POINTS EXIST!
+2021-01-27 19:36:26.999  I    Currently np_ac_v_max_er_max = 82800.000.
+2021-01-27 19:36:26.999  I    Setting np_ac_v_max_er_max to 66240.000.
+2021-01-27 19:36:26.999  W  NO DNP3 APP NOTE AO/BO CONFIGURATION POINTS EXIST!
+2021-01-27 19:36:32.010  I    --> Readback value is 82800.000
+2021-01-27 19:36:32.010  W  NO DNP3 APP NOTE AO/BO CONFIGURATION POINTS EXIST!
+2021-01-27 19:36:37.022  W  NO DNP3 APP NOTE AO/BO CONFIGURATION POINTS EXIST!
+2021-01-27 19:36:37.022  I  Set control mode functions:
+2021-01-27 19:36:37.022  I  	max_w: True
+2021-01-27 19:36:37.022  I  	fixed_w: False
+2021-01-27 19:36:37.022  I  	fixed_var: True
+2021-01-27 19:36:37.022  I  	fixed_pf: False
+2021-01-27 19:36:37.022  I  	volt_var: True
+2021-01-27 19:36:37.022  I  	freq_watt: False
+2021-01-27 19:36:37.022  I  	dyn_react_curr: True
+2021-01-27 19:36:37.022  I  	lv_trip: False
+2021-01-27 19:36:37.022  I  	hv_trip: True
+2021-01-27 19:36:37.022  I  	watt_var: False
+2021-01-27 19:36:37.022  I  	volt_watt: True
+2021-01-27 19:36:37.022  I  	scheduled: False
+2021-01-27 19:36:37.022  I  	lf_trip: True
+2021-01-27 19:36:37.022  I  	hf_trip: False
+2021-01-27 19:36:37.022  I  --> Readback of control mode functions:
+2021-01-27 19:36:37.022  I  	max_w: True
+2021-01-27 19:36:37.022  I  	fixed_w: None
+2021-01-27 19:36:37.022  I  	fixed_var: False
+2021-01-27 19:36:37.022  I  	fixed_pf: True
+2021-01-27 19:36:37.022  I  	volt_var: True
+2021-01-27 19:36:37.022  I  	freq_watt: True
+2021-01-27 19:36:37.022  I  	dyn_react_curr: None
+2021-01-27 19:36:37.022  I  	lv_trip: False
+2021-01-27 19:36:37.022  I  	hv_trip: False
+2021-01-27 19:36:37.022  I  	watt_var: False
+2021-01-27 19:36:37.022  I  	volt_watt: True
+2021-01-27 19:36:37.022  I  	lf_trip: False
+2021-01-27 19:36:37.022  I  	hf_trip: False
+2021-01-27 19:36:37.022  I  ----------
+2021-01-27 19:36:37.022  W  NO DNP3 APP NOTE AO/BO CONFIGURATION POINTS EXIST!
+2021-01-27 19:36:37.022  I  Set control mode functions:
+2021-01-27 19:36:37.038  I  	max_w: False
+2021-01-27 19:36:37.038  I  	fixed_w: True
+2021-01-27 19:36:37.038  I  	fixed_var: False
+2021-01-27 19:36:37.038  I  	fixed_pf: True
+2021-01-27 19:36:37.038  I  	volt_var: False
+2021-01-27 19:36:37.038  I  	freq_watt: True
+2021-01-27 19:36:37.038  I  	dyn_react_curr: False
+2021-01-27 19:36:37.038  I  	lv_trip: True
+2021-01-27 19:36:37.038  I  	hv_trip: False
+2021-01-27 19:36:37.038  I  	watt_var: True
+2021-01-27 19:36:37.038  I  	volt_watt: False
+2021-01-27 19:36:37.038  I  	scheduled: True
+2021-01-27 19:36:37.038  I  	lf_trip: False
+2021-01-27 19:36:37.038  I  	hf_trip: True
+2021-01-27 19:36:37.038  I  --> Readback of control mode functions:
+2021-01-27 19:36:37.038  I  	max_w: True
+2021-01-27 19:36:37.038  I  	fixed_w: None
+2021-01-27 19:36:37.038  I  	fixed_var: False
+2021-01-27 19:36:37.038  I  	fixed_pf: True
+2021-01-27 19:36:37.038  I  	volt_var: True
+2021-01-27 19:36:37.038  I  	freq_watt: True
+2021-01-27 19:36:37.038  I  	dyn_react_curr: None
+2021-01-27 19:36:37.038  I  	lv_trip: False
+2021-01-27 19:36:37.038  I  	hv_trip: False
+2021-01-27 19:36:37.038  I  	watt_var: False
+2021-01-27 19:36:37.038  I  	volt_watt: True
+2021-01-27 19:36:37.038  I  	lf_trip: False
+2021-01-27 19:36:37.038  I  	hf_trip: False
+2021-01-27 19:36:37.038  I  ----------
+2021-01-27 19:36:37.038  W  NO DNP3 APP NOTE AO/BO CONFIGURATION POINTS EXIST!
+2021-01-27 19:36:37.169  I  Set control mode functions:
+2021-01-27 19:36:37.169  I  	max_w: True
+2021-01-27 19:36:37.169  I  	fixed_w: True
+2021-01-27 19:36:37.169  I  	fixed_var: True
+2021-01-27 19:36:37.169  I  	fixed_pf: True
+2021-01-27 19:36:37.185  I  	volt_var: True
+2021-01-27 19:36:37.185  I  	freq_watt: True
+2021-01-27 19:36:37.185  I  	dyn_react_curr: True
+2021-01-27 19:36:37.185  I  	lv_trip: True
+2021-01-27 19:36:37.201  I  	hv_trip: True
+2021-01-27 19:36:37.372  I  	watt_var: True
+2021-01-27 19:36:37.372  I  	volt_watt: True
+2021-01-27 19:36:37.372  I  	scheduled: True
+2021-01-27 19:36:37.372  I  	lf_trip: True
+2021-01-27 19:36:37.372  I  	hf_trip: True
+2021-01-27 19:36:37.388  I  --> Readback of control mode functions:
+2021-01-27 19:36:37.388  I  	max_w: True
+2021-01-27 19:36:37.388  I  	fixed_w: None
+2021-01-27 19:36:37.403  I  	fixed_var: False
+2021-01-27 19:36:37.407  I  	fixed_pf: True
+2021-01-27 19:36:37.570  I  	volt_var: True
+2021-01-27 19:36:37.570  I  	freq_watt: True
+2021-01-27 19:36:37.570  I  	dyn_react_curr: None
+2021-01-27 19:36:37.570  I  	lv_trip: False
+2021-01-27 19:36:37.570  I  	hv_trip: False
+2021-01-27 19:36:37.586  I  	watt_var: False
+2021-01-27 19:36:37.586  I  	volt_watt: True
+2021-01-27 19:36:37.586  I  	lf_trip: False
+2021-01-27 19:36:37.586  I  	hf_trip: False
+2021-01-27 19:36:37.601  I  ------------------------------
+2021-01-27 19:36:37.786  I  Monitoring Values:
+2021-01-27 19:36:37.786  I  	Active Power (kW) [mn_w] : 250.0
+2021-01-27 19:36:37.786  I  	Reactive Power (kVAr) [mn_var] : 0.0
+2021-01-27 19:36:37.786  I  	mn_v: <list>
+2021-01-27 19:36:37.786  I  		<list item 0>: 7200.0
+2021-01-27 19:36:37.802  I  	Frequency (Hz) [mn_hz] : 60.0
+2021-01-27 19:36:37.808  I  	Operational State of Charge (%) [mn_soc_pct] : None
+2021-01-27 19:36:37.808  I  	Connection State (bool) [mn_conn] : True
+2021-01-27 19:36:37.808  I  	mn_der_op_details: 
+2021-01-27 19:36:37.987  I  		mn_op_local: None
+2021-01-27 19:36:37.987  I  		mn_op_lockout: None
+2021-01-27 19:36:37.987  I  		mn_op_starting: None
+2021-01-27 19:36:37.987  I  		mn_op_stopping: None
+2021-01-27 19:36:37.987  I  		mn_op_started: False
+2021-01-27 19:36:38.002  I  		mn_op_stopped: None
+2021-01-27 19:36:38.009  I  		mn_op_permission_to_start: None
+2021-01-27 19:36:38.009  I  		mn_op_permission_to_stop: None
+2021-01-27 19:36:38.009  I  	mn_der_conn_details: 
+2021-01-27 19:36:38.009  I  		mn_conn_connected_idle: None
+2021-01-27 19:36:38.187  I  		mn_conn_connected_generating: None
+2021-01-27 19:36:38.187  I  		mn_conn_connected_charging: None
+2021-01-27 19:36:38.187  I  		mn_conn_off_available: None
+2021-01-27 19:36:38.187  I  		mn_conn_off_not_available: None
+2021-01-27 19:36:38.203  I  		mn_conn_switch_closed_status: True
+2021-01-27 19:36:38.203  I  		mn_conn_switch_closed_movement: None
+2021-01-27 19:36:38.209  I  	Operational State (bool) [mn_st] : False
+2021-01-27 19:36:38.209  I  	Alarm Status (dict) [mn_alrm] : 
+2021-01-27 19:36:38.388  I  		mn_alm_system_comm_error: None
+2021-01-27 19:36:38.388  I  		mn_alm_priority_1: None
+2021-01-27 19:36:38.388  I  		mn_alm_priority_2: None
+2021-01-27 19:36:38.388  I  		mn_alm_priority_3: None
+2021-01-27 19:36:38.388  I  		mn_alm_storage_chg_max: None
+2021-01-27 19:36:38.403  I  		mn_alm_storage_chg_high: None
+2021-01-27 19:36:38.410  I  		mn_alm_storage_chg_low: None
+2021-01-27 19:36:38.410  I  		mn_alm_storage_chg_depleted: None
+2021-01-27 19:36:38.410  I  		mn_alm_internal_temp_high: None
+2021-01-27 19:36:38.410  I  		mn_alm_internal_temp_low: None
+2021-01-27 19:36:38.588  I  Starting Monitoring Assessment. Active Power reported from the EUT is: 250000.0 W
+2021-01-27 19:36:38.588  I  
+2021-01-27 19:36:38.588  I  **** Active Power Monitoring Test ****
+2021-01-27 19:36:38.588  D      ****Configuring Experiment. Executing: p_lim = 0.25
+2021-01-27 19:36:42.613  D  LAP write: {'p_lim_mode_enable': 'SUCCESS', 'p_lim_w': 'SUCCESS'}
+2021-01-27 19:36:44.640  I      EUT Active Power is currently 25.0% Prated, waiting another 4.0 sec
+2021-01-27 19:36:44.640  I      EUT has recorded power +/- 5.0% as required by IEEE 1547-2018.
+2021-01-27 19:36:44.640  I      Returning EUT to rated power.
+2021-01-27 19:36:44.640  I  RESULT = PASS
+2021-01-27 19:36:44.640  D      ****Configuring Experiment. Executing: p_lim = 0.95
+2021-01-27 19:36:48.649  D  LAP write: {'p_lim_mode_enable': 'SUCCESS', 'p_lim_w': 'SUCCESS'}
+2021-01-27 19:36:50.654  I      EUT Active Power is currently 95.0% Prated, waiting another 4.0 sec
+2021-01-27 19:36:50.654  I      EUT has recorded power +/- 5.0% as required by IEEE 1547-2018.
+2021-01-27 19:36:50.654  I      Returning EUT to rated power.
+2021-01-27 19:36:50.654  I  RESULT = PASS
+2021-01-27 19:36:50.654  D      ****Resetting Function p_lim
+2021-01-27 19:36:54.663  D  LAP write: {'p_lim_mode_enable': 'SUCCESS', 'p_lim_w': 'SUCCESS'}
+2021-01-27 19:36:54.663  I  Starting Monitoring Assessment. Reactive Power reported from the EUT is: 0.0
+2021-01-27 19:36:54.663  I  
+2021-01-27 19:36:54.663  I  **** Reactive Power Monitoring Test ****
+2021-01-27 19:36:54.663  W  Unable to use CRP: This DER does not include the fixed var function. Using CPF.
+2021-01-27 19:36:54.663  D       ****Configuring Experiment. Executing: Const PF = 0.25
+2021-01-27 19:37:00.677  D  PF results: {'const_pf_mode_enable': 'SUCCESS', 'const_pf_excitation': 'SUCCESS', 'const_pf': 'SUCCESS'}
+2021-01-27 19:37:02.682  I      EUT Reactive Power is currently 28.0%, waiting another 4.0 sec
+2021-01-27 19:37:02.682  I      EUT has recorded value of +/- 5.0% as required by IEEE 1547-2018.
+2021-01-27 19:37:02.682  I  RESULT = PASS
+2021-01-27 19:37:02.682  W  Unable to use CRP: This DER does not include the fixed var function. Using CPF.
+2021-01-27 19:37:02.682  D       ****Configuring Experiment. Executing: Const PF = 0.95
+2021-01-27 19:37:08.704  D  PF results: {'const_pf_mode_enable': 'SUCCESS', 'const_pf_excitation': 'SUCCESS', 'const_pf': 'SUCCESS'}
+2021-01-27 19:37:10.709  I      EUT Reactive Power is currently 95.1%, waiting another 4.0 sec
+2021-01-27 19:37:10.709  I      EUT has recorded value of +/- 5.0% as required by IEEE 1547-2018.
+2021-01-27 19:37:10.709  I  RESULT = PASS
+2021-01-27 19:37:10.715  W  Unable to use CRP: This DER does not include the fixed var function. Using CPF.
+2021-01-27 19:37:10.715  D       ****Configuring Experiment. Executing: Const PF = -0.25
+2021-01-27 19:37:16.745  D  PF results: {'const_pf_mode_enable': 'SUCCESS', 'const_pf_excitation': 'SUCCESS', 'const_pf': 'SUCCESS'}
+2021-01-27 19:37:18.750  I      EUT Reactive Power is currently 28.0%, waiting another 4.0 sec
+2021-01-27 19:37:18.750  I      EUT has recorded value of +/- 5.0% as required by IEEE 1547-2018.
+2021-01-27 19:37:18.750  I  RESULT = PASS
+2021-01-27 19:37:18.750  W  Unable to use CRP: This DER does not include the fixed var function. Using CPF.
+2021-01-27 19:37:18.750  D       ****Configuring Experiment. Executing: Const PF = -0.95
+2021-01-27 19:37:24.763  D  PF results: {'const_pf_mode_enable': 'SUCCESS', 'const_pf_excitation': 'SUCCESS', 'const_pf': 'SUCCESS'}
+2021-01-27 19:37:26.768  I      EUT Reactive Power is currently 95.1%, waiting another 4.0 sec
+2021-01-27 19:37:26.768  I      EUT has recorded value of +/- 5.0% as required by IEEE 1547-2018.
+2021-01-27 19:37:26.768  I  RESULT = PASS
+2021-01-27 19:37:26.768  D      ****Resetting Function **** 
+2021-01-27 19:37:28.773  D  PF results: {'const_pf_mode_enable': 'SUCCESS'}
+2021-01-27 19:37:28.773  I  Starting Monitoring Assessment. Voltage reported from the EUT is: [7200.0]
+2021-01-27 19:37:28.773  I  
+2021-01-27 19:37:28.773  I  **** Voltage Monitoring Test ****
+2021-01-27 19:37:28.773  D  ****Configuring Experiment. Setting grid voltage to 6408.00 V
+2021-01-27 19:37:30.777  I      EUT-reported voltage is currently 100.0%, real voltage = 89.0%, waiting another 4.0 sec
+2021-01-27 19:37:30.777  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [88.0, 90.0], Value = 100.0
+2021-01-27 19:37:31.780  I      EUT-reported voltage is currently 100.0%, real voltage = 89.0%, waiting another 3.0 sec
+2021-01-27 19:37:31.780  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [88.0, 90.0], Value = 100.0
+2021-01-27 19:37:32.782  I      EUT-reported voltage is currently 100.0%, real voltage = 89.0%, waiting another 2.0 sec
+2021-01-27 19:37:32.782  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [88.0, 90.0], Value = 100.0
+2021-01-27 19:37:33.784  I      EUT-reported voltage is currently 100.0%, real voltage = 89.0%, waiting another 1.0 sec
+2021-01-27 19:37:33.784  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [88.0, 90.0], Value = 100.0
+2021-01-27 19:37:34.787  I      EUT-reported voltage is currently 100.0%, real voltage = 89.0%, waiting another 0.0 sec
+2021-01-27 19:37:34.787  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [88.0, 90.0], Value = 100.0
+2021-01-27 19:37:35.789  I  RESULT = FAIL
+2021-01-27 19:37:35.789  D  ****Configuring Experiment. Setting grid voltage to 7848.00 V
+2021-01-27 19:37:37.794  I      EUT-reported voltage is currently 100.0%, real voltage = 109.00000000000001%, waiting another 4.0 sec
+2021-01-27 19:37:37.794  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [108.0, 110.0], Value = 100.0
+2021-01-27 19:37:38.796  I      EUT-reported voltage is currently 100.0%, real voltage = 109.00000000000001%, waiting another 3.0 sec
+2021-01-27 19:37:38.796  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [108.0, 110.0], Value = 100.0
+2021-01-27 19:37:39.799  I      EUT-reported voltage is currently 100.0%, real voltage = 109.00000000000001%, waiting another 2.0 sec
+2021-01-27 19:37:39.799  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [108.0, 110.0], Value = 100.0
+2021-01-27 19:37:40.801  I      EUT-reported voltage is currently 100.0%, real voltage = 109.00000000000001%, waiting another 1.0 sec
+2021-01-27 19:37:40.801  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [108.0, 110.0], Value = 100.0
+2021-01-27 19:37:41.803  I      EUT-reported voltage is currently 100.0%, real voltage = 109.00000000000001%, waiting another 0.0 sec
+2021-01-27 19:37:41.803  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [108.0, 110.0], Value = 100.0
+2021-01-27 19:37:42.805  I  RESULT = FAIL
+2021-01-27 19:37:42.805  I  Starting Monitoring Assessment. Frequency reported from the EUT is: 60.0
+2021-01-27 19:37:42.805  I  
+2021-01-27 19:37:42.805  I  **** Frequency Monitoring Test ****
+2021-01-27 19:37:42.805  D  ****Configuring Experiment. Setting grid frequency to 57.0 Hz
+2021-01-27 19:37:44.810  I      EUT-reported freq is currently 60.000 Hz, real freq = 57.000 Hz, waiting another 4.0 sec
+2021-01-27 19:37:44.810  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [56.990, 57.010], Value = 60.000
+2021-01-27 19:37:45.812  I      EUT-reported freq is currently 60.000 Hz, real freq = 57.000 Hz, waiting another 3.0 sec
+2021-01-27 19:37:45.812  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [56.990, 57.010], Value = 60.000
+2021-01-27 19:37:46.815  I      EUT-reported freq is currently 60.000 Hz, real freq = 57.000 Hz, waiting another 2.0 sec
+2021-01-27 19:37:46.815  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [56.990, 57.010], Value = 60.000
+2021-01-27 19:37:47.817  I      EUT-reported freq is currently 60.000 Hz, real freq = 57.000 Hz, waiting another 1.0 sec
+2021-01-27 19:37:47.817  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [56.990, 57.010], Value = 60.000
+2021-01-27 19:37:48.819  I      EUT-reported freq is currently 60.000 Hz, real freq = 57.000 Hz, waiting another 0.0 sec
+2021-01-27 19:37:48.819  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [56.990, 57.010], Value = 60.000
+2021-01-27 19:37:49.822  I  RESULT = FAIL
+2021-01-27 19:37:49.822  D  ****Configuring Experiment. Setting grid frequency to 61.8 Hz
+2021-01-27 19:37:51.827  I      EUT-reported freq is currently 60.000 Hz, real freq = 61.800 Hz, waiting another 4.0 sec
+2021-01-27 19:37:51.827  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [61.790, 61.810], Value = 60.000
+2021-01-27 19:37:52.829  I      EUT-reported freq is currently 60.000 Hz, real freq = 61.800 Hz, waiting another 3.0 sec
+2021-01-27 19:37:52.829  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [61.790, 61.810], Value = 60.000
+2021-01-27 19:37:53.831  I      EUT-reported freq is currently 60.000 Hz, real freq = 61.800 Hz, waiting another 2.0 sec
+2021-01-27 19:37:53.831  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [61.790, 61.810], Value = 60.000
+2021-01-27 19:37:54.834  I      EUT-reported freq is currently 60.000 Hz, real freq = 61.800 Hz, waiting another 1.0 sec
+2021-01-27 19:37:54.834  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [61.790, 61.810], Value = 60.000
+2021-01-27 19:37:55.836  I      EUT-reported freq is currently 60.000 Hz, real freq = 61.800 Hz, waiting another 0.0 sec
+2021-01-27 19:37:55.836  I      EUT outside the IEEE 1547-2018 requirements. Bounds = [61.790, 61.810], Value = 60.000
+2021-01-27 19:37:56.839  I  RESULT = FAIL
+2021-01-27 19:37:56.839  I  Starting Monitoring Assessment. State reported from the EUT is: False
+2021-01-27 19:37:56.839  I  
+2021-01-27 19:37:56.839  I  **** Operational State Monitoring Test ****
+2021-01-27 19:37:58.843  D  Conn results: {'conn': 'SUCCESS'}
+2021-01-27 19:37:58.843  D  ****Configuring Experiment. Setting EUT Operational State to True
+2021-01-27 19:38:00.848  I      EUT-reported connection = False, State setting = True, waiting another 4.0 sec
+2021-01-27 19:38:00.848  I      EUT Operational State did not match per IEEE 1547-2018 requirements.
+2021-01-27 19:38:01.850  I      EUT-reported connection = False, State setting = True, waiting another 3.0 sec
+2021-01-27 19:38:01.850  I      EUT Operational State did not match per IEEE 1547-2018 requirements.
+2021-01-27 19:38:02.853  I      EUT-reported connection = False, State setting = True, waiting another 2.0 sec
+2021-01-27 19:38:02.853  I      EUT Operational State did not match per IEEE 1547-2018 requirements.
+2021-01-27 19:38:03.855  I      EUT-reported connection = False, State setting = True, waiting another 1.0 sec
+2021-01-27 19:38:03.855  I      EUT Operational State did not match per IEEE 1547-2018 requirements.
+2021-01-27 19:38:04.858  I      EUT-reported connection = False, State setting = True, waiting another 0.0 sec
+2021-01-27 19:38:04.858  I      EUT Operational State did not match per IEEE 1547-2018 requirements.
+2021-01-27 19:38:05.860  I  RESULT = FAIL
+2021-01-27 19:38:07.865  D  Conn results: {'conn': 'SUCCESS'}
+2021-01-27 19:38:07.865  D  ****Configuring Experiment. Setting EUT Operational State to False
+2021-01-27 19:38:09.869  I      EUT-reported connection = False, State setting = False, waiting another 4.0 sec
+2021-01-27 19:38:09.869  I  RESULT = PASS
+2021-01-27 19:38:11.874  D  Conn results: {'conn': 'SUCCESS'}
+2021-01-27 19:38:11.874  I  Starting Monitoring Assessment. Connection Status reported from the EUT is: True
+2021-01-27 19:38:11.874  I  
+2021-01-27 19:38:11.874  I  **** Connection Status Monitoring Test ****
+2021-01-27 19:38:13.879  D  Conn results: {'conn': 'SUCCESS'}
+2021-01-27 19:38:13.879  D  ****Configuring Experiment. Setting EUT connection status to True
+2021-01-27 19:38:15.883  I      EUT-reported Status = True, Connection Status = True, waiting another 4.0 sec
+2021-01-27 19:38:15.883  I  RESULT = PASS
+2021-01-27 19:38:17.888  D  Conn results: {'conn': 'SUCCESS'}
+2021-01-27 19:38:17.888  D  ****Configuring Experiment. Setting EUT connection status to False
+2021-01-27 19:38:19.893  I      EUT-reported Status = False, Connection Status = False, waiting another 4.0 sec
+2021-01-27 19:38:19.893  I  RESULT = PASS
+2021-01-27 19:38:21.898  D  Conn results: {'conn': 'SUCCESS'}
+2021-01-27 19:38:21.898  I  
+2021-01-27 19:38:21.898  I  **** Alarm Status Monitoring Test ****
+2021-01-27 19:38:21.898  D  ****Configuring Experiment. Setting EUT error to True
+2021-01-27 19:38:23.902  I      EUT-reported Status = None, Error Status = True, waiting another 4.0 sec
+2021-01-27 19:38:23.902  I      EUT Overvoltage Alarm did not match per IEEE 1547-2018 requirements.
+2021-01-27 19:38:24.905  I      EUT-reported Status = None, Error Status = True, waiting another 3.0 sec
+2021-01-27 19:38:24.905  I      EUT Overvoltage Alarm did not match per IEEE 1547-2018 requirements.
+2021-01-27 19:38:25.907  I      EUT-reported Status = None, Error Status = True, waiting another 2.0 sec
+2021-01-27 19:38:25.907  I      EUT Overvoltage Alarm did not match per IEEE 1547-2018 requirements.
+2021-01-27 19:38:26.910  I      EUT-reported Status = None, Error Status = True, waiting another 1.0 sec
+2021-01-27 19:38:26.910  I      EUT Overvoltage Alarm did not match per IEEE 1547-2018 requirements.
+2021-01-27 19:38:27.912  I      EUT-reported Status = None, Error Status = True, waiting another 0.0 sec
+2021-01-27 19:38:27.912  I      EUT Overvoltage Alarm did not match per IEEE 1547-2018 requirements.
+2021-01-27 19:38:28.914  I  RESULT = FAIL
+2021-01-27 19:38:28.914  D  ****Configuring Experiment. Setting EUT error to False
+2021-01-27 19:38:30.919  I      EUT-reported Status = None, Error Status = False, waiting another 4.0 sec
+2021-01-27 19:38:30.919  I      EUT Overvoltage Alarm did not match per IEEE 1547-2018 requirements.
+2021-01-27 19:38:31.921  I      EUT-reported Status = None, Error Status = False, waiting another 3.0 sec
+2021-01-27 19:38:31.921  I      EUT Overvoltage Alarm did not match per IEEE 1547-2018 requirements.
+2021-01-27 19:38:32.923  I      EUT-reported Status = None, Error Status = False, waiting another 2.0 sec
+2021-01-27 19:38:32.923  I      EUT Overvoltage Alarm did not match per IEEE 1547-2018 requirements.
+2021-01-27 19:38:33.926  I      EUT-reported Status = None, Error Status = False, waiting another 1.0 sec
+2021-01-27 19:38:33.926  I      EUT Overvoltage Alarm did not match per IEEE 1547-2018 requirements.
+2021-01-27 19:38:34.928  I      EUT-reported Status = None, Error Status = False, waiting another 0.0 sec
+2021-01-27 19:38:34.928  I      EUT Overvoltage Alarm did not match per IEEE 1547-2018 requirements.
+2021-01-27 19:38:35.930  I  RESULT = FAIL
+2021-01-27 19:38:35.930  I  
+2021-01-27 19:38:35.930  I  ********* Constant PF Spot Check *********
+2021-01-27 19:38:35.930  W  No excitation provided by DER. Using PF sign to determine excitation.
+2021-01-27 19:38:35.930  I  Test PF Read: {'const_pf_mode_enable': False, 'const_pf_excitation': 'abs', 'const_pf_inj': 1.0}
+2021-01-27 19:38:41.945  D  PF results: {'const_pf_mode_enable': 'SUCCESS', 'const_pf_excitation': 'SUCCESS', 'const_pf': 'SUCCESS'}
+2021-01-27 19:38:41.945  I  Test PF Write: {'const_pf_mode_enable': True, 'const_pf_excitation': False, 'const_pf': 90}
+2021-01-27 19:38:46.956  W  No excitation provided by DER. Using PF sign to determine excitation.
+2021-01-27 19:38:46.956  I  Test PF Read: {'const_pf_mode_enable': True, 'const_pf_excitation': 'abs', 'const_pf_inj': 0.8999999761581421}
+2021-01-27 19:38:46.956  I  Measured reactive power: 108.9724765625 kVar
+2021-01-27 19:38:46.956  I  DER reactive power is 43.59% of var max
+2021-01-27 19:38:46.956  I  ----
+2021-01-27 19:38:46.956  W  No excitation provided by DER. Using PF sign to determine excitation.
+2021-01-27 19:38:46.956  I  Test PF Read: {'const_pf_mode_enable': True, 'const_pf_excitation': 'abs', 'const_pf_inj': 0.8999999761581421}
+2021-01-27 19:38:52.971  D  PF results: {'const_pf_mode_enable': 'SUCCESS', 'const_pf_excitation': 'SUCCESS', 'const_pf': 'SUCCESS'}
+2021-01-27 19:38:52.971  I  Test PF Write: {'const_pf_mode_enable': True, 'const_pf_excitation': True, 'const_pf': -90}
+2021-01-27 19:38:57.983  W  No excitation provided by DER. Using PF sign to determine excitation.
+2021-01-27 19:38:57.983  I  Test PF Read: {'const_pf_mode_enable': True, 'const_pf_excitation': 'inj', 'const_pf_inj': 0.8999999761581421}
+2021-01-27 19:38:57.983  I  Measured reactive power: -108.9724765625 kVar
+2021-01-27 19:38:57.983  I  DER reactive power is -43.59% of var max
+2021-01-27 19:38:57.983  I  ----
+2021-01-27 19:38:57.983  W  No excitation provided by DER. Using PF sign to determine excitation.
+2021-01-27 19:38:57.983  I  Test PF Read: {'const_pf_mode_enable': True, 'const_pf_excitation': 'inj', 'const_pf_inj': 0.8999999761581421}
+2021-01-27 19:39:03.997  D  PF results: {'const_pf_mode_enable': 'SUCCESS', 'const_pf_excitation': 'SUCCESS', 'const_pf': 'SUCCESS'}
+2021-01-27 19:39:03.997  I  Test PF Write: {'const_pf_mode_enable': True, 'const_pf_excitation': False, 'const_pf': 85}
+2021-01-27 19:39:09.009  W  No excitation provided by DER. Using PF sign to determine excitation.
+2021-01-27 19:39:09.009  I  Test PF Read: {'const_pf_mode_enable': True, 'const_pf_excitation': 'abs', 'const_pf_inj': 0.8500000238418579}
+2021-01-27 19:39:09.009  I  Measured reactive power: 131.695671875 kVar
+2021-01-27 19:39:09.009  I  DER reactive power is 52.68% of var max
+2021-01-27 19:39:09.009  I  ----
+2021-01-27 19:39:09.009  I  Disabling PF
+2021-01-27 19:39:11.013  D  PF results: {'const_pf_mode_enable': 'SUCCESS'}
+2021-01-27 19:39:11.013  W  No excitation provided by DER. Using PF sign to determine excitation.
+2021-01-27 19:39:11.013  I  Test PF Read: {'const_pf_mode_enable': True, 'const_pf_excitation': 'abs', 'const_pf_inj': 0.8500000238418579}
+2021-01-27 19:39:11.013  I  
+2021-01-27 19:39:11.013  I  ********* VV Spot Check *********
+2021-01-27 19:39:11.013  I  	qv_mode_enable: False
+2021-01-27 19:39:11.013  I  	qv_vref: 72000.0
+2021-01-27 19:39:11.013  I  	qv_vref_auto_mode: None
+2021-01-27 19:39:11.013  I  	qv_vref_olrt: None
+2021-01-27 19:39:11.013  I  	qv_olrt: None
+2021-01-27 19:39:11.013  I  	qv_curve_dnp3_data: 
+2021-01-27 19:39:11.013  I  		curve_index: None
+2021-01-27 19:39:11.013  I  		curve_edit_selector: None
+2021-01-27 19:39:11.013  I  		curve_mode_type: VW
+2021-01-27 19:39:11.013  I  		no_of_points: 2.0
+2021-01-27 19:39:11.013  I  		x_value: Volt_Pct
+2021-01-27 19:39:11.013  I  		y_value: WMaxPct
+2021-01-27 19:39:11.013  I  	qv_curve_v_pts: <list>
+2021-01-27 19:39:11.013  I  		<list item 0>: 1.05
+2021-01-27 19:39:11.013  I  		<list item 1>: 1.08
+2021-01-27 19:39:11.013  I  	qv_curve_q_pts: <list>
+2021-01-27 19:39:11.013  I  		<list item 0>: 1.0
+2021-01-27 19:39:11.013  I  		<list item 1>: 0.5
+2021-01-27 19:39:11.013  I  VV Write:
+2021-01-27 19:39:11.013  I  	qv_mode_enable: True
+2021-01-27 19:39:11.013  I  	qv_vref: 7200.0
+2021-01-27 19:39:11.013  I  	qv_vref_auto_mode: False
+2021-01-27 19:39:11.029  I  	qv_vref_olrt: 1.0
+2021-01-27 19:39:11.029  I  	qv_curve_v_pts: <list>
+2021-01-27 19:39:11.029  I  		<list item 0>: 0.95
+2021-01-27 19:39:11.029  I  		<list item 1>: 0.99
+2021-01-27 19:39:11.029  I  		<list item 2>: 1.01
+2021-01-27 19:39:11.029  I  		<list item 3>: 1.05
+2021-01-27 19:39:11.029  I  	qv_curve_q_pts: <list>
+2021-01-27 19:39:11.029  I  		<list item 0>: 1.0
+2021-01-27 19:39:11.029  I  		<list item 1>: 0.0
+2021-01-27 19:39:11.029  I  		<list item 2>: 0.0
+2021-01-27 19:39:11.029  I  		<list item 3>: -1.0
+2021-01-27 19:39:11.029  I  	qv_olrt: 5.0
+2021-01-27 19:39:45.105  D  VV results: {'qv_mode_enable': 'SUCCESS', 'qv_vref': 'SUCCESS', 'qv_vref_auto_mode': 'ERROR', 'qv_vref_olrt': 'SUCCESS', 'qv_olrt': 'SUCCESS', 'curve_index': 'SUCCESS', 'curve_edit_selector': 'OUT_OF_RANGE', 'no_of_points': 'SUCCESS', 'x_value': 'SUCCESS', 'y_value': 'SUCCESS', 'x1': 'SUCCESS', 'x2': 'SUCCESS', 'x3': 'SUCCESS', 'x4': 'SUCCESS', 'y1': 'SUCCESS', 'y2': 'SUCCESS', 'y3': 'SUCCESS', 'y4': 'SUCCESS'}
+2021-01-27 19:39:50.117  I  VV Readback:
+2021-01-27 19:39:50.117  I  	qv_mode_enable: True
+2021-01-27 19:39:50.117  I  	qv_vref: 72000.0
+2021-01-27 19:39:50.117  I  	qv_vref_auto_mode: None
+2021-01-27 19:39:50.117  I  	qv_vref_olrt: None
+2021-01-27 19:39:50.117  I  	qv_olrt: None
+2021-01-27 19:39:50.117  I  	qv_curve_dnp3_data: 
+2021-01-27 19:39:50.117  I  		curve_index: None
+2021-01-27 19:39:50.117  I  		curve_edit_selector: None
+2021-01-27 19:39:50.117  I  		curve_mode_type: VV
+2021-01-27 19:39:50.117  I  		no_of_points: 4.0
+2021-01-27 19:39:50.117  I  		x_value: Volt_Pct
+2021-01-27 19:39:50.117  I  		y_value: VArMax
+2021-01-27 19:39:50.117  I  	qv_curve_v_pts: <list>
+2021-01-27 19:39:50.117  I  		<list item 0>: 0.92
+2021-01-27 19:39:50.117  I  		<list item 1>: 0.98
+2021-01-27 19:39:50.117  I  		<list item 2>: 1.02
+2021-01-27 19:39:50.117  I  		<list item 3>: 1.08
+2021-01-27 19:39:50.117  I  	qv_curve_q_pts: <list>
+2021-01-27 19:39:50.117  I  		<list item 0>: 0.44
+2021-01-27 19:39:50.117  I  		<list item 1>: 0.0
+2021-01-27 19:39:50.117  I  		<list item 2>: 0.0
+2021-01-27 19:39:50.117  I  		<list item 3>: -0.44
+2021-01-27 19:39:50.117  I  ----
+2021-01-27 19:39:50.117  I  VV Write:
+2021-01-27 19:39:50.117  I  	qv_mode_enable: True
+2021-01-27 19:39:50.117  I  	qv_curve_v_pts: <list>
+2021-01-27 19:39:50.117  I  		<list item 0>: 0.93
+2021-01-27 19:39:50.117  I  		<list item 1>: 0.98
+2021-01-27 19:39:50.117  I  		<list item 2>: 1.02
+2021-01-27 19:39:50.117  I  		<list item 3>: 1.08
+2021-01-27 19:39:50.117  I  	qv_curve_q_pts: <list>
+2021-01-27 19:39:50.117  I  		<list item 0>: 0.3
+2021-01-27 19:39:50.117  I  		<list item 1>: 0.0
+2021-01-27 19:39:50.133  I  		<list item 2>: 0.0
+2021-01-27 19:39:50.133  I  		<list item 3>: -0.5
+2021-01-27 19:40:18.199  D  VV results: {'qv_mode_enable': 'SUCCESS', 'curve_index': 'SUCCESS', 'curve_edit_selector': 'OUT_OF_RANGE', 'no_of_points': 'SUCCESS', 'x_value': 'SUCCESS', 'y_value': 'SUCCESS', 'x1': 'SUCCESS', 'x2': 'SUCCESS', 'x3': 'SUCCESS', 'x4': 'SUCCESS', 'y1': 'SUCCESS', 'y2': 'SUCCESS', 'y3': 'SUCCESS', 'y4': 'SUCCESS'}
+2021-01-27 19:40:23.211  I  VV Readback:
+2021-01-27 19:40:23.211  I  	qv_mode_enable: True
+2021-01-27 19:40:23.211  I  	qv_vref: 72000.0
+2021-01-27 19:40:23.211  I  	qv_vref_auto_mode: None
+2021-01-27 19:40:23.211  I  	qv_vref_olrt: None
+2021-01-27 19:40:23.211  I  	qv_olrt: None
+2021-01-27 19:40:23.211  I  	qv_curve_dnp3_data: 
+2021-01-27 19:40:23.211  I  		curve_index: None
+2021-01-27 19:40:23.217  I  		curve_edit_selector: None
+2021-01-27 19:40:23.217  I  		curve_mode_type: VV
+2021-01-27 19:40:23.217  I  		no_of_points: 4.0
+2021-01-27 19:40:23.217  I  		x_value: Volt_Pct
+2021-01-27 19:40:23.217  I  		y_value: VArMax
+2021-01-27 19:40:23.217  I  	qv_curve_v_pts: <list>
+2021-01-27 19:40:23.217  I  		<list item 0>: 0.93
+2021-01-27 19:40:23.217  I  		<list item 1>: 0.98
+2021-01-27 19:40:23.217  I  		<list item 2>: 1.02
+2021-01-27 19:40:23.217  I  		<list item 3>: 1.08
+2021-01-27 19:40:23.217  I  	qv_curve_q_pts: <list>
+2021-01-27 19:40:23.217  I  		<list item 0>: 0.3
+2021-01-27 19:40:23.217  I  		<list item 1>: 0.0
+2021-01-27 19:40:23.217  I  		<list item 2>: 0.0
+2021-01-27 19:40:23.217  I  		<list item 3>: -0.5
+2021-01-27 19:40:23.217  I  ----
+2021-01-27 19:40:23.217  I  Disabling VV...
+2021-01-27 19:40:23.217  I  	qv_mode_enable: False
+2021-01-27 19:40:25.238  D  VV results: {'qv_mode_enable': 'SUCCESS'}
+2021-01-27 19:40:30.249  I  VV Readback:
+2021-01-27 19:40:30.249  I  	qv_mode_enable: False
+2021-01-27 19:40:30.249  I  	qv_vref: 72000.0
+2021-01-27 19:40:30.249  I  	qv_vref_auto_mode: None
+2021-01-27 19:40:30.249  I  	qv_vref_olrt: None
+2021-01-27 19:40:30.249  I  	qv_olrt: None
+2021-01-27 19:40:30.249  I  	qv_curve_dnp3_data: 
+2021-01-27 19:40:30.249  I  		curve_index: None
+2021-01-27 19:40:30.249  I  		curve_edit_selector: None
+2021-01-27 19:40:30.249  I  		curve_mode_type: VV
+2021-01-27 19:40:30.249  I  		no_of_points: 4.0
+2021-01-27 19:40:30.249  I  		x_value: Volt_Pct
+2021-01-27 19:40:30.249  I  		y_value: VArMax
+2021-01-27 19:40:30.249  I  	qv_curve_v_pts: <list>
+2021-01-27 19:40:30.249  I  		<list item 0>: 0.93
+2021-01-27 19:40:30.249  I  		<list item 1>: 0.98
+2021-01-27 19:40:30.249  I  		<list item 2>: 1.02
+2021-01-27 19:40:30.249  I  		<list item 3>: 1.08
+2021-01-27 19:40:30.249  I  	qv_curve_q_pts: <list>
+2021-01-27 19:40:30.249  I  		<list item 0>: 0.3
+2021-01-27 19:40:30.249  I  		<list item 1>: 0.0
+2021-01-27 19:40:30.249  I  		<list item 2>: 0.0
+2021-01-27 19:40:30.249  I  		<list item 3>: -0.5
+2021-01-27 19:40:30.249  I  
+2021-01-27 19:40:30.249  I  ********* WV Spot Check *********
+2021-01-27 19:40:30.249  I  	watt_var_enable: None
+2021-01-27 19:40:30.249  I  	qp_curve_dnp3_data: 
+2021-01-27 19:40:30.249  I  		curve_index: None
+2021-01-27 19:40:30.249  I  		curve_edit_selector: None
+2021-01-27 19:40:30.265  I  		curve_mode_type: VV
+2021-01-27 19:40:30.265  I  		no_of_points: 4.0
+2021-01-27 19:40:30.265  I  		x_value: Volt_Pct
+2021-01-27 19:40:30.265  I  		y_value: VArMax
+2021-01-27 19:40:30.265  I  	qp_curve_p_gen_pts: <list>
+2021-01-27 19:40:30.265  I  		<list item 0>: 0.93
+2021-01-27 19:40:30.265  I  		<list item 1>: 0.98
+2021-01-27 19:40:30.265  I  		<list item 2>: 1.02
+2021-01-27 19:40:30.265  I  		<list item 3>: 1.08
+2021-01-27 19:40:30.265  I  	qp_curve_q_gen_pts: <list>
+2021-01-27 19:40:30.265  I  		<list item 0>: 0.3
+2021-01-27 19:40:30.265  I  		<list item 1>: 0.0
+2021-01-27 19:40:30.265  I  		<list item 2>: 0.0
+2021-01-27 19:40:30.265  I  		<list item 3>: -0.5
+2021-01-27 19:40:30.265  I  	qp_curve_p_load_pts: <list>
+2021-01-27 19:40:30.265  I  		[]
+2021-01-27 19:40:30.265  I  	qp_curve_q_load_pts: <list>
+2021-01-27 19:40:30.265  I  		[]
+2021-01-27 19:40:30.265  I  ----
+2021-01-27 19:40:30.265  I         New Points:
+2021-01-27 19:40:30.265  I         'qp_curve_p_gen_pts': [0.2, 0.5, 1.0]
+2021-01-27 19:40:30.265  I         'qp_curve_q_gen_pts': [0., 0., -0.44]
+2021-01-27 19:40:30.265  I         'qp_curve_p_load_pts': [-0.2, -0.5, -1.0]
+2021-01-27 19:40:30.265  I         'qp_curve_q_load_pts': [0., 0., 0.44]
+2021-01-27 19:40:30.265  D  Q(P) write: {}
+2021-01-27 19:40:35.277  I  Readback:
+2021-01-27 19:40:35.277  I  	watt_var_enable: None
+2021-01-27 19:40:35.277  I  	qp_curve_dnp3_data: 
+2021-01-27 19:40:35.277  I  		curve_index: None
+2021-01-27 19:40:35.277  I  		curve_edit_selector: None
+2021-01-27 19:40:35.277  I  		curve_mode_type: VV
+2021-01-27 19:40:35.277  I  		no_of_points: 4.0
+2021-01-27 19:40:35.277  I  		x_value: Volt_Pct
+2021-01-27 19:40:35.277  I  		y_value: VArMax
+2021-01-27 19:40:35.277  I  	qp_curve_p_gen_pts: <list>
+2021-01-27 19:40:35.277  I  		<list item 0>: 0.93
+2021-01-27 19:40:35.277  I  		<list item 1>: 0.98
+2021-01-27 19:40:35.277  I  		<list item 2>: 1.02
+2021-01-27 19:40:35.277  I  		<list item 3>: 1.08
+2021-01-27 19:40:35.277  I  	qp_curve_q_gen_pts: <list>
+2021-01-27 19:40:35.277  I  		<list item 0>: 0.3
+2021-01-27 19:40:35.277  I  		<list item 1>: 0.0
+2021-01-27 19:40:35.277  I  		<list item 2>: 0.0
+2021-01-27 19:40:35.277  I  		<list item 3>: -0.5
+2021-01-27 19:40:35.277  I  	qp_curve_p_load_pts: <list>
+2021-01-27 19:40:35.277  I  		[]
+2021-01-27 19:40:35.277  I  	qp_curve_q_load_pts: <list>
+2021-01-27 19:40:35.277  I  		[]
+2021-01-27 19:40:35.277  I  ----
+2021-01-27 19:40:35.277  I         New Points:
+2021-01-27 19:40:35.277  I         'qp_curve_p_gen_pts': [0.1, 0.6, 1.0]
+2021-01-27 19:40:35.277  I         'qp_curve_q_gen_pts': [0., -0.1, -0.25]
+2021-01-27 19:40:35.277  I         'qp_curve_p_load_pts': [-0.1, -0.6, -1.0]
+2021-01-27 19:40:35.277  I         'qp_curve_q_load_pts': [0., 0.1, 0.25]
+2021-01-27 19:40:35.277  D  Q(P) write: {}
+2021-01-27 19:40:40.288  I  Readback:
+2021-01-27 19:40:40.288  I  	watt_var_enable: None
+2021-01-27 19:40:40.288  I  	qp_curve_dnp3_data: 
+2021-01-27 19:40:40.288  I  		curve_index: None
+2021-01-27 19:40:40.288  I  		curve_edit_selector: None
+2021-01-27 19:40:40.288  I  		curve_mode_type: VV
+2021-01-27 19:40:40.288  I  		no_of_points: 4.0
+2021-01-27 19:40:40.288  I  		x_value: Volt_Pct
+2021-01-27 19:40:40.288  I  		y_value: VArMax
+2021-01-27 19:40:40.288  I  	qp_curve_p_gen_pts: <list>
+2021-01-27 19:40:40.288  I  		<list item 0>: 0.93
+2021-01-27 19:40:40.288  I  		<list item 1>: 0.98
+2021-01-27 19:40:40.288  I  		<list item 2>: 1.02
+2021-01-27 19:40:40.288  I  		<list item 3>: 1.08
+2021-01-27 19:40:40.288  I  	qp_curve_q_gen_pts: <list>
+2021-01-27 19:40:40.288  I  		<list item 0>: 0.3
+2021-01-27 19:40:40.288  I  		<list item 1>: 0.0
+2021-01-27 19:40:40.288  I  		<list item 2>: 0.0
+2021-01-27 19:40:40.288  I  		<list item 3>: -0.5
+2021-01-27 19:40:40.288  I  	qp_curve_p_load_pts: <list>
+2021-01-27 19:40:40.288  I  		[]
+2021-01-27 19:40:40.288  I  	qp_curve_q_load_pts: <list>
+2021-01-27 19:40:40.288  I  		[]
+2021-01-27 19:40:40.288  I  ----
+2021-01-27 19:40:40.288  I  Disabling WV...
+2021-01-27 19:40:40.288  D  Q(P) write: {}
+2021-01-27 19:40:40.288  I  
+2021-01-27 19:40:40.288  I  ********* CRP Spot Check *********
+2021-01-27 19:40:40.288  I  CRP Read: {'const_q_mode_enable': False, 'const_q': 0.0}
+2021-01-27 19:40:40.288  I  CRP Write:
+2021-01-27 19:40:40.288  I  	const_q_mode_enable: True
+2021-01-27 19:40:40.288  I  	const_q_mode_excitation: inj
+2021-01-27 19:40:40.304  I  	const_q: 0.25
+2021-01-27 19:40:45.317  I  CRP Read:
+2021-01-27 19:40:45.318  I  	const_q_mode_enable: False
+2021-01-27 19:40:45.318  I  	const_q: 0.0
+2021-01-27 19:40:45.318  I  Reactive Power is currently 0.000% of var max
+2021-01-27 19:40:45.318  I  ----------
+2021-01-27 19:40:45.318  I  CRP Write:
+2021-01-27 19:40:45.318  I  	const_q_mode_enable: True
+2021-01-27 19:40:45.318  I  	const_q_mode_excitation: abs
+2021-01-27 19:40:45.318  I  	const_q: 0.25
+2021-01-27 19:40:50.374  I  CRP Read:
+2021-01-27 19:40:50.374  I  	const_q_mode_enable: False
+2021-01-27 19:40:50.374  I  	const_q: 0.0
+2021-01-27 19:40:50.374  I  Reactive Power is currently 0.000% of var max
+2021-01-27 19:40:50.374  I  ----------
+2021-01-27 19:40:50.374  I  CRP Write:
+2021-01-27 19:40:50.374  I  	const_q_mode_enable: True
+2021-01-27 19:40:50.381  I  	const_q_mode_excitation: inj
+2021-01-27 19:40:50.381  I  	const_q: 0.59
+2021-01-27 19:40:55.408  I  CRP Read:
+2021-01-27 19:40:55.408  I  	const_q_mode_enable: False
+2021-01-27 19:40:55.408  I  	const_q: 0.0
+2021-01-27 19:40:55.408  I  Reactive Power is currently 0.000% of var max
+2021-01-27 19:40:55.408  I  ----------
+2021-01-27 19:40:55.408  I  CRP Write:
+2021-01-27 19:40:55.408  I  	const_q_mode_enable: True
+2021-01-27 19:40:55.408  I  	const_q_mode_excitation: abs
+2021-01-27 19:40:55.408  I  	const_q: 0.59
+2021-01-27 19:41:00.420  I  CRP Read:
+2021-01-27 19:41:00.420  I  	const_q_mode_enable: False
+2021-01-27 19:41:00.420  I  	const_q: 0.0
+2021-01-27 19:41:00.420  I  Reactive Power is currently 0.000% of var max
+2021-01-27 19:41:00.420  I  ----------
+2021-01-27 19:41:00.420  I  CRP Write:
+2021-01-27 19:41:00.420  I  	const_q_mode_enable: True
+2021-01-27 19:41:00.420  I  	const_q_mode_excitation: inj
+2021-01-27 19:41:00.420  I  	const_q: 0.87
+2021-01-27 19:41:05.431  I  CRP Read:
+2021-01-27 19:41:05.431  I  	const_q_mode_enable: False
+2021-01-27 19:41:05.431  I  	const_q: 0.0
+2021-01-27 19:41:05.431  I  Reactive Power is currently 0.000% of var max
+2021-01-27 19:41:05.431  I  ----------
+2021-01-27 19:41:05.431  I  CRP Write:
+2021-01-27 19:41:05.431  I  	const_q_mode_enable: True
+2021-01-27 19:41:05.431  I  	const_q_mode_excitation: abs
+2021-01-27 19:41:05.431  I  	const_q: 0.87
+2021-01-27 19:41:10.443  I  CRP Read:
+2021-01-27 19:41:10.443  I  	const_q_mode_enable: False
+2021-01-27 19:41:10.443  I  	const_q: 0.0
+2021-01-27 19:41:10.443  I  Reactive Power is currently 0.000% of var max
+2021-01-27 19:41:10.443  I  ----------
+2021-01-27 19:41:10.443  I  CRP Write:
+2021-01-27 19:41:10.443  I  	const_q_mode_enable: True
+2021-01-27 19:41:10.443  I  	const_q_mode_excitation: inj
+2021-01-27 19:41:10.443  I  	const_q: 0.45
+2021-01-27 19:41:15.455  I  CRP Read:
+2021-01-27 19:41:15.455  I  	const_q_mode_enable: False
+2021-01-27 19:41:15.455  I  	const_q: 0.0
+2021-01-27 19:41:15.455  I  Reactive Power is currently 0.000% of var max
+2021-01-27 19:41:15.455  I  ----------
+2021-01-27 19:41:15.455  I  CRP Write:
+2021-01-27 19:41:15.455  I  	const_q_mode_enable: True
+2021-01-27 19:41:15.455  I  	const_q_mode_excitation: abs
+2021-01-27 19:41:15.455  I  	const_q: 0.45
+2021-01-27 19:41:20.467  I  CRP Read:
+2021-01-27 19:41:20.467  I  	const_q_mode_enable: False
+2021-01-27 19:41:20.467  I  	const_q: 0.0
+2021-01-27 19:41:20.467  I  Reactive Power is currently 0.000% of var max
+2021-01-27 19:41:20.467  I  ----------
+2021-01-27 19:41:20.467  I  
+2021-01-27 19:41:20.467  I  ********* VW Spot Check *********
+2021-01-27 19:41:20.467  I  VW Read:
+2021-01-27 19:41:20.467  I  	pv_mode_enable: False
+2021-01-27 19:41:20.467  I  	pv_olrt: None
+2021-01-27 19:41:20.467  I  	pv_curve_dnp3_data: 
+2021-01-27 19:41:20.467  I  		curve_index: None
+2021-01-27 19:41:20.467  I  		curve_edit_selector: None
+2021-01-27 19:41:20.467  I  		curve_mode_type: VV
+2021-01-27 19:41:20.467  I  		no_of_points: 4.0
+2021-01-27 19:41:20.467  I  		x_value: Volt_Pct
+2021-01-27 19:41:20.467  I  		y_value: VArMax
+2021-01-27 19:41:20.467  I  	pv_curve_v_pts: <list>
+2021-01-27 19:41:20.467  I  		<list item 0>: 0.93
+2021-01-27 19:41:20.467  I  		<list item 1>: 0.98
+2021-01-27 19:41:20.467  I  		<list item 2>: 1.02
+2021-01-27 19:41:20.467  I  		<list item 3>: 1.08
+2021-01-27 19:41:20.467  I  	pv_curve_p_pts: <list>
+2021-01-27 19:41:20.467  I  		<list item 0>: 0.3
+2021-01-27 19:41:20.467  I  		<list item 1>: 0.0
+2021-01-27 19:41:20.483  I  		<list item 2>: 0.0
+2021-01-27 19:41:20.483  I  		<list item 3>: -0.5
+2021-01-27 19:41:42.539  D  P(V) write: {'pv_mode_enable': 'SUCCESS', 'pv_olrt': 'SUCCESS', 'curve_index': 'SUCCESS', 'curve_edit_selector': 'OUT_OF_RANGE', 'no_of_points': 'SUCCESS', 'x_value': 'SUCCESS', 'y_value': 'SUCCESS', 'x1': 'SUCCESS', 'x2': 'SUCCESS', 'y1': 'SUCCESS', 'y2': 'SUCCESS'}
+2021-01-27 19:41:42.539  I  VW Write: {'pv_mode_enable': True, 'pv_curve_v_pts': [1.03, 1.05], 'pv_curve_p_pts': [1.0, 0.2], 'pv_olrt': 5.0, 'curve_index': '1', 'curve_edit_selector': '1', 'curve_mode_type': 4, 'no_of_points': 2, 'x_value': 129, 'y_value': 5, 'x1': 1030.0, 'x2': 1050.0, 'y1': 1000.0, 'y2': 200.0}
+2021-01-27 19:41:47.551  I  VW Readback
+2021-01-27 19:41:47.551  I  	pv_mode_enable: True
+2021-01-27 19:41:47.551  I  	pv_olrt: None
+2021-01-27 19:41:47.551  I  	pv_curve_dnp3_data: 
+2021-01-27 19:41:47.551  I  		curve_index: None
+2021-01-27 19:41:47.551  I  		curve_edit_selector: None
+2021-01-27 19:41:47.551  I  		curve_mode_type: VW
+2021-01-27 19:41:47.551  I  		no_of_points: 2.0
+2021-01-27 19:41:47.551  I  		x_value: Volt_Pct
+2021-01-27 19:41:47.551  I  		y_value: WMaxPct
+2021-01-27 19:41:47.551  I  	pv_curve_v_pts: <list>
+2021-01-27 19:41:47.551  I  		<list item 0>: 1.06
+2021-01-27 19:41:47.551  I  		<list item 1>: 1.1
+2021-01-27 19:41:47.551  I  	pv_curve_p_pts: <list>
+2021-01-27 19:41:47.551  I  		<list item 0>: 1.0
+2021-01-27 19:41:47.551  I  		<list item 1>: 0.2
+2021-01-27 19:41:47.551  I  ----------
+2021-01-27 19:42:07.598  D  P(V) write: {'pv_mode_enable': 'SUCCESS', 'curve_index': 'SUCCESS', 'curve_edit_selector': 'OUT_OF_RANGE', 'no_of_points': 'SUCCESS', 'x_value': 'SUCCESS', 'y_value': 'SUCCESS', 'x1': 'SUCCESS', 'x2': 'SUCCESS', 'y1': 'SUCCESS', 'y2': 'SUCCESS'}
+2021-01-27 19:42:07.598  I  VW Write: {'pv_mode_enable': True, 'pv_curve_v_pts': [1.05, 1.08], 'pv_curve_p_pts': [1.0, 0.5], 'curve_index': '1', 'curve_edit_selector': '1', 'curve_mode_type': 4, 'no_of_points': 2, 'x_value': 129, 'y_value': 5, 'x1': 1050.0, 'x2': 1080.0, 'y1': 1000.0, 'y2': 500.0}
+2021-01-27 19:42:12.610  I  VW Readback
+2021-01-27 19:42:12.610  I  	pv_mode_enable: True
+2021-01-27 19:42:12.610  I  	pv_olrt: None
+2021-01-27 19:42:12.610  I  	pv_curve_dnp3_data: 
+2021-01-27 19:42:12.610  I  		curve_index: None
+2021-01-27 19:42:12.610  I  		curve_edit_selector: None
+2021-01-27 19:42:12.610  I  		curve_mode_type: VW
+2021-01-27 19:42:12.610  I  		no_of_points: 2.0
+2021-01-27 19:42:12.610  I  		x_value: Volt_Pct
+2021-01-27 19:42:12.610  I  		y_value: WMaxPct
+2021-01-27 19:42:12.610  I  	pv_curve_v_pts: <list>
+2021-01-27 19:42:12.610  I  		<list item 0>: 1.05
+2021-01-27 19:42:12.610  I  		<list item 1>: 1.08
+2021-01-27 19:42:12.610  I  	pv_curve_p_pts: <list>
+2021-01-27 19:42:12.610  I  		<list item 0>: 1.0
+2021-01-27 19:42:12.610  I  		<list item 1>: 0.5
+2021-01-27 19:42:12.610  I  ----------
+2021-01-27 19:42:12.610  I  Disabling VW...
+2021-01-27 19:42:14.614  D  P(V) write: {'pv_mode_enable': 'SUCCESS'}
+2021-01-27 19:42:14.614  I  VW Readback:
+2021-01-27 19:42:14.614  I  	pv_mode_enable: True
+2021-01-27 19:42:14.614  I  	pv_olrt: None
+2021-01-27 19:42:14.614  I  	pv_curve_dnp3_data: 
+2021-01-27 19:42:14.614  I  		curve_index: None
+2021-01-27 19:42:14.614  I  		curve_edit_selector: None
+2021-01-27 19:42:14.614  I  		curve_mode_type: VW
+2021-01-27 19:42:14.614  I  		no_of_points: 2.0
+2021-01-27 19:42:14.614  I  		x_value: Volt_Pct
+2021-01-27 19:42:14.614  I  		y_value: WMaxPct
+2021-01-27 19:42:14.614  I  	pv_curve_v_pts: <list>
+2021-01-27 19:42:14.614  I  		<list item 0>: 1.05
+2021-01-27 19:42:14.614  I  		<list item 1>: 1.08
+2021-01-27 19:42:14.614  I  	pv_curve_p_pts: <list>
+2021-01-27 19:42:14.614  I  		<list item 0>: 1.0
+2021-01-27 19:42:14.614  I  		<list item 1>: 0.5
+2021-01-27 19:42:14.614  I  
+2021-01-27 19:42:14.614  I  ********* Overvoltage VT Spot Check *********
+2021-01-27 19:42:14.614  I  OV Trip Test OV Read: None
+2021-01-27 19:42:14.614  I  ----------
+2021-01-27 19:42:14.614  I  OV Trip Test Write: {'ov_trip_v_pts': [1.1, 1.2], 'ov_trip_t_pts': [13, 0.16]}
+2021-01-27 19:42:19.626  I  OV Trip Test Readback: None
+2021-01-27 19:42:19.626  I  ----------
+2021-01-27 19:42:19.626  I  OV Trip Test Write: {'ov_trip_v_pts': [1.17, 1.25], 'ov_trip_t_pts': [15, 1.2]}
+2021-01-27 19:42:24.638  I  OV Trip Test Readback: None
+2021-01-27 19:42:24.638  I  
+2021-01-27 19:42:24.638  I  ********* Undervoltage VT Spot Check *********
+2021-01-27 19:42:24.638  I  UV Trip Test Read: None
+2021-01-27 19:42:24.638  I  ----------
+2021-01-27 19:42:24.638  I  UV Trip Test Write: {'uv_trip_v_pts': [0.88, 0.5], 'uv_trip_t_pts': [21.0, 2.0]}
+2021-01-27 19:42:29.649  I  UV Trip Test Readback: None
+2021-01-27 19:42:29.649  I  ----------
+2021-01-27 19:42:29.649  I  UV Trip Test Write: {'uv_trip_v_pts': [0.86, 0.55], 'uv_trip_t_pts': [20.0, 3.0]}
+2021-01-27 19:42:34.661  I  UV Trip Test Readback: None
+2021-01-27 19:42:34.661  I  
+2021-01-27 19:42:34.661  I  ********* Overfrequency FT Spot Check *********
+2021-01-27 19:42:34.661  I  OF Trip Test Read: None
+2021-01-27 19:42:34.661  I  ----------
+2021-01-27 19:42:34.661  I  OF Trip Test Write: {'of_trip_f_pts': [61.8, 62.0], 'of_trip_t_pts': [299, 5]}
+2021-01-27 19:42:39.673  I  OF Trip Test Read: None
+2021-01-27 19:42:39.673  I  ----------
+2021-01-27 19:42:39.673  I  OF Trip Test Write: {'of_trip_f_pts': [61.5, 63.8], 'of_trip_t_pts': [384, 0.5]}
+2021-01-27 19:42:44.684  I  OF Trip Test Read: None
+2021-01-27 19:42:44.684  I  
+2021-01-27 19:42:44.684  I  ********* Underfrequency FT Spot Check *********
+2021-01-27 19:42:44.684  I  UF Trip Test Read: None
+2021-01-27 19:42:44.684  I  ----------
+2021-01-27 19:42:44.684  I  UF Trip Test Write: {'uf_trip_f_pts': [59.2, 58.5], 'uf_trip_t_pts': [100, 10]}
+2021-01-27 19:42:49.712  I  UF Trip Test Read: None
+2021-01-27 19:42:49.712  I  ----------
+2021-01-27 19:42:49.712  I  UF Trip Test Write: {'uf_trip_f_pts': [59.6, 57.8], 'uf_trip_t_pts': [299, 5]}
+2021-01-27 19:42:54.723  I  UF Trip Test Read: None
+2021-01-27 19:42:54.723  I  
+2021-01-27 19:42:54.723  I  ********* Freq Droop Spot Check *********
+2021-01-27 19:42:54.723  I  FW Read: {'pf_mode_enable': None, 'pf_dbof': None, 'pf_dbuf': None, 'pf_kof': None, 'pf_kuf': None, 'pf_olrt': None}
+2021-01-27 19:42:54.723  I  ----------
+2021-01-27 19:42:54.723  I  FW Write:
+2021-01-27 19:42:54.723  I  	pf_mode_enable: True
+2021-01-27 19:42:54.723  I  	pf_dbof: 0.02
+2021-01-27 19:42:54.723  I  	pf_dbuf: 0.02
+2021-01-27 19:42:54.723  I  	pf_kof: 0.05
+2021-01-27 19:42:54.723  I  	pf_kuf: 0.05
+2021-01-27 19:42:54.723  I  	pf_olrt: 5.0
+2021-01-27 19:43:06.751  D  PF results: {'pf_mode_enable': 'SUCCESS', 'pf_dbof': 'SUCCESS', 'pf_dbuf': 'SUCCESS', 'pf_kof': 'SUCCESS', 'pf_kuf': 'SUCCESS', 'pf_olrt': 'SUCCESS'}
+2021-01-27 19:43:11.763  I  FW Read:
+2021-01-27 19:43:11.763  I  	pf_mode_enable: None
+2021-01-27 19:43:11.763  I  	pf_dbof: None
+2021-01-27 19:43:11.763  I  	pf_dbuf: None
+2021-01-27 19:43:11.763  I  	pf_kof: None
+2021-01-27 19:43:11.763  I  	pf_kuf: None
+2021-01-27 19:43:11.763  I  	pf_olrt: None
+2021-01-27 19:43:11.763  I  ----------
+2021-01-27 19:43:11.763  I  FW Write:
+2021-01-27 19:43:11.763  I  	pf_mode_enable: True
+2021-01-27 19:43:11.763  I  	pf_dbof: 0.036
+2021-01-27 19:43:11.763  I  	pf_dbuf: 0.036
+2021-01-27 19:43:11.763  I  	pf_kof: 0.08
+2021-01-27 19:43:11.763  I  	pf_kuf: 0.08
+2021-01-27 19:43:11.763  I  	pf_olrt: 5.0
+2021-01-27 19:43:23.815  D  PF results: {'pf_mode_enable': 'SUCCESS', 'pf_dbof': 'SUCCESS', 'pf_dbuf': 'SUCCESS', 'pf_kof': 'SUCCESS', 'pf_kuf': 'SUCCESS', 'pf_olrt': 'SUCCESS'}
+2021-01-27 19:43:28.828  I  FW Read:
+2021-01-27 19:43:28.828  I  	pf_mode_enable: None
+2021-01-27 19:43:28.828  I  	pf_dbof: None
+2021-01-27 19:43:28.828  I  	pf_dbuf: None
+2021-01-27 19:43:28.828  I  	pf_kof: None
+2021-01-27 19:43:28.828  I  	pf_kuf: None
+2021-01-27 19:43:28.828  I  	pf_olrt: None
+2021-01-27 19:43:28.828  I  ----------
+2021-01-27 19:43:28.828  I  Disabling FW...
+2021-01-27 19:43:30.832  D  PF results: {'pf_mode_enable': 'SUCCESS'}
+2021-01-27 19:43:30.832  I  FW Read:
+2021-01-27 19:43:30.832  I  	pf_mode_enable: None
+2021-01-27 19:43:30.832  I  	pf_dbof: None
+2021-01-27 19:43:30.832  I  	pf_dbuf: None
+2021-01-27 19:43:30.832  I  	pf_kof: None
+2021-01-27 19:43:30.832  I  	pf_kuf: None
+2021-01-27 19:43:30.832  I  	pf_olrt: None
+2021-01-27 19:43:30.832  I  
+2021-01-27 19:43:30.832  I  ********* ES Spot Check *********
+2021-01-27 19:43:30.832  I  ES Read:
+2021-01-27 19:43:30.832  I  ----------
+2021-01-27 19:43:30.832  I  ES Write:
+2021-01-27 19:43:30.832  I  	es_permit_service: True
+2021-01-27 19:43:30.832  I  	es_v_low: 0.917
+2021-01-27 19:43:30.832  I  	es_v_high: 1.05
+2021-01-27 19:43:30.832  I  	es_f_low: 59.5
+2021-01-27 19:43:30.832  I  	es_f_high: 60.1
+2021-01-27 19:43:30.832  I  	es_randomized_delay: 300
+2021-01-27 19:43:30.832  I  	es_delay: 300
+2021-01-27 19:43:30.832  I  	es_ramp_rate: 300
+2021-01-27 19:43:35.844  I  ES Read:
+2021-01-27 19:43:35.844  I  ----------
+2021-01-27 19:43:35.844  I  ES Write:
+2021-01-27 19:43:35.844  I  	es_permit_service: True
+2021-01-27 19:43:35.844  I  	es_v_low: 0.88
+2021-01-27 19:43:35.844  I  	es_v_high: 1.06
+2021-01-27 19:43:35.844  I  	es_f_low: 59.9
+2021-01-27 19:43:35.844  I  	es_f_high: 61.0
+2021-01-27 19:43:35.844  I  	es_randomized_delay: 600
+2021-01-27 19:43:35.844  I  	es_delay: 1
+2021-01-27 19:43:35.844  I  	es_ramp_rate: 1000
+2021-01-27 19:43:40.856  I  ES Read:
+2021-01-27 19:43:40.856  I  ----------
+2021-01-27 19:43:40.856  I  Disabling ES...
+2021-01-27 19:43:45.867  I  ES Read:
+2021-01-27 19:43:45.867  I  
+2021-01-27 19:43:45.867  I  ********* Momentary Cessation / Cease to Energize Spot Check *********
+2021-01-27 19:43:45.867  I  OV MC Test Read: None
+2021-01-27 19:43:45.867  I  ----------
+2021-01-27 19:43:45.867  I  OV MC Test Write: {'ov_mc_v_pts': [1.1, 1.2], 'ov_mc_t_pts': [13, 0.16]}
+2021-01-27 19:43:50.879  I  OV MC Test Read: None
+2021-01-27 19:43:50.879  I  ----------
+2021-01-27 19:43:50.879  I  OV MC Test Write: {'ov_mc_v_pts': [1.15, 1.25], 'ov_mc_t_pts': [15, 1.2]}
+2021-01-27 19:43:55.891  I  OV MC Test Read: None
+2021-01-27 19:43:55.891  I  ----------
+2021-01-27 19:43:55.891  I  UV MC Test Read: None
+2021-01-27 19:43:55.891  I  ----------
+2021-01-27 19:43:55.891  I  UV MC Test Write: {'uv_mc_v_pts': [0.88, 0.5], 'uv_mc_t_pts': [21.0, 2.0]}
+2021-01-27 19:44:00.916  I  UV MC Test Read: None
+2021-01-27 19:44:00.916  I  ----------
+2021-01-27 19:44:00.916  I  UV MC Test Write: {'uv_mc_v_pts': [0.86, 0.55], 'uv_mc_t_pts': [20.0, 3.0]}
+2021-01-27 19:44:05.923  I  UV MC Test Read: None
+2021-01-27 19:44:05.923  I  
+2021-01-27 19:44:05.923  I  ********* LAP Spot Check *********
+2021-01-27 19:44:05.925  I  LAP Read: {'p_lim_mode_enable': False, 'p_lim_w': None}
+2021-01-27 19:44:05.926  I  ----------
+2021-01-27 19:44:09.928  D  LAP write: {'p_lim_mode_enable': 'SUCCESS', 'p_lim_w': 'SUCCESS'}
+2021-01-27 19:44:09.929  I  LAP Write: {'p_lim_mode_enable': True, 'p_lim_w': 250}
+2021-01-27 19:44:14.938  I  LAP Readback: {'p_lim_mode_enable': True, 'p_lim_w': None}
+2021-01-27 19:44:14.941  I  Active Power is 25.000% of nameplate capacity
+2021-01-27 19:44:14.942  I  ----------
+2021-01-27 19:44:18.944  D  LAP write: {'p_lim_mode_enable': 'SUCCESS', 'p_lim_w': 'SUCCESS'}
+2021-01-27 19:44:18.945  I  LAP Write: {'p_lim_mode_enable': True, 'p_lim_w': 590}
+2021-01-27 19:44:23.954  I  LAP Readback: {'p_lim_mode_enable': True, 'p_lim_w': None}
+2021-01-27 19:44:23.957  I  Active Power is 59.000% of nameplate capacity
+2021-01-27 19:44:23.958  I  ----------
+2021-01-27 19:44:27.959  D  LAP write: {'p_lim_mode_enable': 'SUCCESS', 'p_lim_w': 'SUCCESS'}
+2021-01-27 19:44:27.960  I  LAP Write: {'p_lim_mode_enable': True, 'p_lim_w': 870}
+2021-01-27 19:44:32.968  I  LAP Readback: {'p_lim_mode_enable': True, 'p_lim_w': None}
+2021-01-27 19:44:32.971  I  Active Power is 87.000% of nameplate capacity
+2021-01-27 19:44:32.972  I  ----------
+2021-01-27 19:44:36.975  D  LAP write: {'p_lim_mode_enable': 'SUCCESS', 'p_lim_w': 'SUCCESS'}
+2021-01-27 19:44:36.976  I  LAP Write: {'p_lim_mode_enable': True, 'p_lim_w': 450}
+2021-01-27 19:44:41.984  I  LAP Readback: {'p_lim_mode_enable': True, 'p_lim_w': None}
+2021-01-27 19:44:41.987  I  Active Power is 45.000% of nameplate capacity
+2021-01-27 19:44:41.987  I  ----------
+2021-01-27 19:44:46.995  I  Disabling LAP...
+2021-01-27 19:44:50.998  D  LAP write: {'p_lim_mode_enable': 'SUCCESS', 'p_lim_w': 'SUCCESS'}
+2021-01-27 19:44:56.007  I  LAP Readback: {'p_lim_mode_enable': False, 'p_lim_w': None}
+2021-01-27 19:44:56.008  I  ********* Connect/Disconnect Spot Check *********
+2021-01-27 19:44:56.009  I  Conn/Disconn Read: {'conn': None}
+2021-01-27 19:44:58.011  D  Conn results: {'conn': 'SUCCESS'}
+2021-01-27 19:44:58.011  I  Conn/Disconn Write: {'conn': False}
+2021-01-27 19:45:03.020  I  Conn/Disconn Read: {'conn': None}
+2021-01-27 19:45:03.023  I  Active Power is 100.000% of nameplate capacity
+2021-01-27 19:45:03.023  I  ----------
+2021-01-27 19:45:05.025  D  Conn results: {'conn': 'SUCCESS'}
+2021-01-27 19:45:05.025  I  Conn/Disconn Write: {'conn': True}
+2021-01-27 19:45:10.034  I  Conn/Disconn Read: {'conn': None}
+2021-01-27 19:45:10.037  I  Active Power is 100.000% of nameplate capacity
+2021-01-27 19:45:13.183  I  Test result - Complete
