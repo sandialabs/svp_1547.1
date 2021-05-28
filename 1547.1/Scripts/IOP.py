@@ -427,6 +427,11 @@ def test_run():
                                                                                 is supported in the protocol being 
                                                                                 tested can be set and cleared.
             '''
+            timeout_duration = 5
+            if hasattr(eut, 'metering_post_time'):
+                ts.log('Timeout duration extended %0.2f sec to account for the client metering post time' %
+                       eut.metering_post_time)
+                timeout_duration += eut.metering_post_time
 
             m = eut.get_monitoring()
             if m is not None:
@@ -457,7 +462,7 @@ def test_run():
                         eut.set_p_lim(params={"p_lim_mode_enable": True, "p_lim_w": setpoint})
                         ts.sleep(2)
                         inaccurate_measurement = True
-                        timeout = 5
+                        timeout = timeout_duration
                         test_pass_fail = 'FAIL'
                         while inaccurate_measurement and timeout > 0:
                             timeout -= 1
@@ -526,7 +531,7 @@ def test_run():
                                                          "const_pf_excitation": excitation})
                             ts.sleep(2)
                             inaccurate_measurement = True
-                            timeout = 5
+                            timeout = timeout_duration
                             test_pass_fail = 'FAIL'
                             while inaccurate_measurement and timeout > 0:
                                 timeout -= 1
@@ -580,7 +585,7 @@ def test_run():
                         ts.log_debug('****Configuring Experiment. Setting grid voltage to %0.2f V' % v_grid)
                         ts.sleep(2)
                         inaccurate_measurement = True
-                        timeout = 5
+                        timeout = timeout_duration
                         test_pass_fail = 'FAIL'
                         while inaccurate_measurement and timeout > 0:
                             timeout -= 1
@@ -633,7 +638,7 @@ def test_run():
                         ts.log_debug('****Configuring Experiment. Setting grid frequency to %s Hz' % setpoint)
                         ts.sleep(2)
                         inaccurate_measurement = True
-                        timeout = 5
+                        timeout = timeout_duration
                         test_pass_fail = 'FAIL'
                         while inaccurate_measurement and timeout > 0:
                             timeout -= 1
@@ -682,7 +687,7 @@ def test_run():
                         ts.log_debug('****Configuring Experiment. Setting EUT Operational State to %s' % state)
                         ts.sleep(2)
                         inaccurate_measurement = True
-                        timeout = 5
+                        timeout = timeout_duration
                         test_pass_fail = 'FAIL'
                         while inaccurate_measurement and timeout > 0:
                             timeout -= 1
@@ -728,7 +733,7 @@ def test_run():
                         ts.log_debug('****Configuring Experiment. Setting EUT connection status to %s' % conn)
                         ts.sleep(2)
                         inaccurate_measurement = True
-                        timeout = 5
+                        timeout = timeout_duration
                         test_pass_fail = 'FAIL'
                         while inaccurate_measurement and timeout > 0:
                             timeout -= 1
@@ -778,7 +783,7 @@ def test_run():
                         ts.log_debug('****Configuring Experiment. Setting EUT error to %s' % error)
                         ts.sleep(2)
                         inaccurate_measurement = True
-                        timeout = 5.
+                        timeout = timeout_duration
                         test_pass_fail = 'FAIL'
                         while inaccurate_measurement and timeout > 0:
                             timeout -= 1
@@ -1213,9 +1218,10 @@ def test_run():
             eut.close()
             if eut.close() != 'No Agent':
                 try:
-                    eut.stop_agent()
+                    if 'DNP' in str(type(eut)):
+                        eut.stop_agent()
                 except Exception as e:
-                    ts.log('Did not stop server agent, if one was running.')
+                    ts.log('Did not stop server agent, if one was running. Error: %s' % e)
         if result_summary is not None:
             result_summary.close()
 
@@ -1282,7 +1288,7 @@ info.param('spot_checks.conn', label='Connect/Disconnect', default='No', values=
 info.param_group('eut', label='EUT Parameters', glob=True)
 info.param('eut.wait_time', label='Wait time required for DER writes to go into effect.', default=5.0)
 info.param('eut.p_rated', label='Output power rating (W)', default=10000.0)
-info.param('eut.p_min', label='Output power rating (W)', default=100.0)
+info.param('eut.p_min', label='Minimum power rating (W)', default=100.0)
 info.param('eut.s_rated', label='Output apparent power rating (VA)', default=10000.0)
 info.param('eut.var_rated', label='Output var rating (vars)', default=4400.0)
 info.param('eut.v_nom', label='Nominal AC voltage (V)', default=120.0)
