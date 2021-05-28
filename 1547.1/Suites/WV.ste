@@ -1,8 +1,8 @@
 <suite globals="True" name="WV">
   <members>
-    <member name="WV_1.tst" />
-    <member name="WV_2.tst" />
-    <member name="WV_3.tst" />
+    <member name="WV/WV_1.tst" />
+    <member name="WV/WV_2.tst" />
+    <member name="WV/WV_3.tst" />
   </members>
   <params>
     <param name="eut.v_low" type="float">116.0</param>
@@ -15,8 +15,8 @@
     <param name="eut.s_rated" type="float">10000.0</param>
     <param name="der.mode" type="string">Disabled</param>
     <param name="gridsim.mode" type="string">Disabled</param>
-    <param name="pvsim.mode" type="string">Disabled</param>
     <param name="gridsim.auto_config" type="string">Disabled</param>
+    <param name="pvsim.mode" type="string">Disabled</param>
     <param name="das.mode" type="string">Disabled</param>
     <param name="hil.mode" type="string">Disabled</param>
     <param name="eut.abs_enable" type="string">No</param>

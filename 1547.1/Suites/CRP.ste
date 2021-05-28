@@ -1,6 +1,9 @@
 <suite globals="True" name="CRP">
   <members>
-    <member name="CRP_FIX.tst" />
+    <member name="CRP/CRP_HALF_ABS.tst" />
+    <member name="CRP/CRP_HALF_INJ.tst" />
+    <member name="CRP/CRP_MAX_ABS.tst" />
+    <member name="CRP/CRP_MAX_INJ.tst" />
   </members>
   <params>
     <param name="eut.f_min" type="float">56.0</param>
@@ -16,12 +19,12 @@
     <param name="eut.var_rated" type="float">2000.0</param>
     <param name="eut.p_rated" type="float">8000.0</param>
     <param name="eut.s_rated" type="float">10000.0</param>
-    <param name="pvsim.mode" type="string">Disabled</param>
-    <param name="hil.mode" type="string">Disabled</param>
-    <param name="gridsim.mode" type="string">Disabled</param>
-    <param name="das.mode" type="string">Disabled</param>
     <param name="der.mode" type="string">Disabled</param>
+    <param name="gridsim.mode" type="string">Disabled</param>
     <param name="gridsim.auto_config" type="string">Disabled</param>
+    <param name="pvsim.mode" type="string">Disabled</param>
+    <param name="das.mode" type="string">Disabled</param>
+    <param name="hil.mode" type="string">Disabled</param>
     <param name="eut.imbalance_resp" type="string">EUT response to the average of the three-phase effective (RMS)</param>
     <param name="eut_crp.sink_power" type="string">No</param>
     <param name="eut.phases" type="string">Single phase</param>

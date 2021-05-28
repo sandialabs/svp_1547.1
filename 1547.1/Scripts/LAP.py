@@ -29,7 +29,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 Questions can be directed to support@sunspec.org
 """
-
 import sys
 import os
 import traceback
@@ -49,6 +48,9 @@ import collections
 import cmath
 import math
 
+LAP = 'LAP'
+VW = 'VW'
+FW = 'FW'
 
 def test_run():
 
@@ -120,11 +122,14 @@ def test_run():
         """
         A separate module has been create for the 1547.1 Standard
         """
-        lib_1547 = p1547.module_1547(ts=ts, aif='LAP', absorb=absorb)
-        ts.log_debug("1547.1 Library configured for %s" % lib_1547.get_test_name())
+        ActiveFunction = p1547.ActiveFunction(ts=ts,
+                                              functions=[LAP, FW, VW],
+                                              script_name='Limit Active Power',
+                                              criteria_mode=[True, True, True])
+        ts.log_debug("1547.1 Library configured for %s" % ActiveFunction.get_script_name())
 
         # result params
-        result_params = lib_1547.get_rslt_param_plot()
+        result_params = ActiveFunction.get_rslt_param_plot()
 
 
         #  Set Test parameter
@@ -140,13 +145,13 @@ def test_run():
             act_pwrs_limits = [0.66]
         else:
             act_pwrs_limits = [0.66, 0.33, 0.0]
+
         # 5.13.2 Procedure asks for three repetitions
-        n_iters = range(1, int(ts.param_value('lap.iter'))+1)
+        n_iters = list(range(1, int(ts.param_value('lap.iter'))+1))
 
         # Take the highest value for the steady state wait time
-        tr_min = min(ts.param_value('fw.test_1_tr'),ts.param_value('vw.test_1_tr'))
-        tr_vw = ts.param_value('vw.test_1_tr')
-
+        tr_min = min(ts.param_value('lap.test_vw_1_tr'), ts.param_value('lap.test_fw_1_tr'))
+        tr_vw = ts.param_value('lap.test_vw_1_tr')
 
         """
         a) - Connect the EUT according to the instructions and specifications provided by the manufacturer.
@@ -174,7 +179,7 @@ def test_run():
             pv.power_on()  # Turn on DC so the EUT can be initialized
 
         # DAS soft channels
-        das_points = lib_1547.get_sc_points()
+        das_points = ActiveFunction.get_sc_points()
         ts.log(das_points)
         # initialize data acquisition
         daq = das.das_init(ts, sc_points=das_points['sc'], support_interfaces={'pvsim': pv, 'hil': chil})
@@ -182,33 +187,48 @@ def test_run():
         if daq is not None:
             ts.log('DAS device: %s' % daq.info())
 
-        eut = der.der_init(ts)
+        eut = der.der_init(ts, support_interfaces={'hil': chil}) 
         if eut is not None:
             eut.config()
             # Enable volt/watt curve and configure default settings
-            eut.volt_watt(params={'Ena': True, 'curve': {'ActPt': 2,
-                                      'v': [106, 110], 'w': [100, 0], 'DeptRef': 'W_MAX_PCT',
-                                      'RmpPtTms': 10, 'RmpDecTmm': 0, 'RmpIncTmm': 0}})
-            eut.freq_watt(params={'Ena': True, 'curve': 1, 'dbf': 0.036, 'kof': 0.05, 'RspTms': 5})
+            v_pairs = ActiveFunction.get_params(curve=1, function=VW)
+            vw_curve_params = {'v': (round(v_pairs['V1']/v_nom,2),
+                                    round(v_pairs['V2']/v_nom,2)),
+                                'w': (round(v_pairs['P1']/p_rated,2),
+                                        round(v_pairs['P2']/p_rated,2)),
+                                       'DeptRef': 'W_MAX_PCT',
+                                       'RmpTms':tr_vw}
+            vw_params = {'Ena': True, 'ActCrv': 1, 'curve': vw_curve_params}
+            eut.volt_watt(params=vw_params)
+            # Enable freq/watt curve and configure default settings
+            fw_curve_params = ActiveFunction.get_params(function=FW, curve=1)
+            fw_params = {
+                                'Ena': True,
+                                'curve': 1,
+                                'dbf': fw_curve_params['dbf'],
+                                'kof': fw_curve_params['kof'],
+                                'RspTms': fw_curve_params['TR']
+                            }
+            eut.freq_watt(fw_params)    
             try:
                 eut.vrt_stay_connected_high(params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000,
                                                     'V1': v_max, 'Tms2': 0.16, 'V2': v_max})
-            except Exception, e:
+            except Exception as e:
                 ts.log_error('Could not set VRT Stay Connected High curve. %s' % e)
             try:
                 eut.frt_stay_connected_high(params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000,
                                                     'Hz1': f_max, 'Tms2': 160, 'Hz2': f_max})
-            except Exception, e:
+            except Exception as e:
                 ts.log_error('Could not set FRT Stay Connected High curve. %s' % e)
             try:
                 eut.vrt_stay_connected_low(params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000,
                                                    'V1': v_min, 'Tms2': 0.16, 'V2': v_min})
-            except Exception, e:
+            except Exception as e:
                 ts.log_error('Could not set VRT Stay Connected Low curve. %s' % e)
             try:
                 eut.frt_stay_connected_low(params={'Ena': True, 'ActCrv': 0, 'Tms1': 3000,
                                                     'Hz1': f_min, 'Tms2': 160, 'Hz2': f_min})
-            except Exception, e:
+            except Exception as e:
                 ts.log_error('Could not set FRT Stay Connected Low curve. %s' % e)
 
             ts.log_debug('If not done already, set L/HVRT and trip parameters to the widest range of adjustability.')
@@ -242,13 +262,16 @@ def test_run():
         result_summary_filename = 'result_summary.csv'
         result_summary = open(ts.result_file_path(result_summary_filename), 'a+')
         ts.result_file(result_summary_filename)
-        result_summary.write(lib_1547.get_rslt_sum_col_name())
+        result_summary.write(ActiveFunction.get_rslt_sum_col_name())
 
         """
         g) Repeat steps b) through f using active power limits of 33% and zero
 
         h) Repeat steps b) through g) twice for a total of three repetitions
         """
+        if chil is not None:
+            ts.log('Start simulation of CHIL')
+            chil.start_simulation()
 
         for n_iter in n_iters:
             for act_pwrs_limit in act_pwrs_limits:
@@ -260,6 +283,8 @@ def test_run():
                     - Begin recording EUT active power
                  """
                 ts.log('Starting test no. %s with active power limit to %s ' % (n_iter, act_pwrs_limit))
+                ActiveFunction.reset_pwr(pwr=act_pwrs_limit)
+                ActiveFunction.reset_time_settings(tr=tr_min)
 
                 # For PV systems, this requires that Vmpp = Vin_nom and Pmpp = Prated.
                 if pv is not None:
@@ -269,14 +294,15 @@ def test_run():
                 ts.log('EUT Config: setting Active Power Limit to 100%')
                 if eut is not None:
                     # limit maximum power
-                    eut.limit_max_power(params={'MaxLimWEna': True,
-                                                'MaxLimW_PCT': 100,
+                    eut.limit_max_power(params={'Ena': True,
+                                                'WMaxPct': 100,
                                                 'WinTms': 0,
                                                 'RmpTms': 0,
                                                 'RvrtTms': 0.0})
                 ts.sleep(2 * tr_min)
                 daq.data_capture(True)
-                filename = ('LAP_{0}_{1}'.format(act_pwrs_limit,n_iter))
+                filename = ('LAP_{0}_{1}'.format(act_pwrs_limit, n_iter))
+                ActiveFunction.reset_filename(filename=filename)
                 ts.log('------------{}------------'.format(filename))
 
                 """
@@ -284,10 +310,11 @@ def test_run():
                     - Wait until the EUT active power reaches a new steady state
                 """
                 # Setting up step label
-                lib_1547.set_step_label(starting_label='C')
-                step = lib_1547.get_step_label()
+                ActiveFunction.set_step_label(starting_label='C')
+                step_label = ActiveFunction.get_step_label()
                 daq.sc['event'] = step
-                initial_values = lib_1547.get_initial_value(daq=daq, step=step)
+                ActiveFunction.start(daq=daq, step_label=step_label)
+                #initial_values = ActiveFunction.get_initial_value(daq=daq, step=step)
                 ts.log('EUT Config: setting Active Power Limit to %s (%s)' % (act_pwrs_limit, step))
                 if eut is not None:
                     # limit maximum power
@@ -300,73 +327,52 @@ def test_run():
                             'RvrtTms': 0.0
                         }
                     )
-                step_dict = {'V': v_nom, 'F': f_nom}
-                target_dict = {'P': act_pwrs_limit}
-                lib_1547.process_data(
-                    daq=daq,
-                    tr=tr_min,
-                    step=step,
-                    initial_value=initial_values,
-                    pwr_lvl=act_pwrs_limit,
-                    x_target=step_dict,
-                    y_target=target_dict,
-                    result_summary=result_summary,
-                    filename=filename
-                )
+                step_dict = {'V': v_nom, 'F': f_nom, 'P': act_pwrs_limit}
+                #target_dict = {'P': act_pwrs_limit}
+                ActiveFunction.record_timeresponse(daq=daq)
+                ts.log_debug(f'daq={daq}')
+                ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict, y_criterias_mod={'P': LAP})
+                result_summary.write(ActiveFunction.write_rslt_sum())
 
                 """
                 d)  - Reduce the frequency of the AC test to 59 Hz and hold until EUT active power reaches a new steady 
                       state
                     - Return AC test frequency to nominal and Hold until new states reached
                 """
-                f_steps = [59, f_nom]
-                step = lib_1547.get_step_label()
+                f_steps = [59.0, f_nom]
+                step_label = ActiveFunction.get_step_label()
                 if grid is not None:
                     for f_step in f_steps:
-                        step_ = step + "_" + str(f_step)
+                        step_ = step_label + "_" + str(f_step)
                         ts.log('Frequency step: setting Grid simulator frequency to %s (%s)' % (f_step, step_))
-                        initial_values = lib_1547.get_initial_value(daq=daq,step=step_)
+                        ActiveFunction.start(daq=daq, step_label=step_)
+                        #initial_values = ActiveFunction.get_initial_value(daq=daq,step=step_)
                         grid.freq(f_step)
-                        step_dict = {'V': v_nom, 'F': f_step}
-                        #target_dict = {'P': None}
-                        lib_1547.process_data(
-                            daq=daq,
-                            tr=tr_min,
-                            step=step_,
-                            initial_value=initial_values,
-                            pwr_lvl=act_pwrs_limit,
-                            x_target=step_dict,
-                            #y_target=target_dict,
-                            result_summary=result_summary,
-                            filename=filename
-                        )
+                        step_dict = {'V': v_nom, 'F': f_step, 'P': act_pwrs_limit}
+                        ActiveFunction.record_timeresponse(daq=daq)
+                        ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict, y_criterias_mod={'P': FW})
+                        result_summary.write(ActiveFunction.write_rslt_sum())
+
 
                 """
                 e)  - Increase the frequency of the AC test to 61 Hz and hold until EUT active power reaches a new steady 
                       state
                     - Return AC test frequency to nominal and Hold until new states reached
                 """
-                f_steps = [61, f_nom]
-                step = lib_1547.get_step_label()
+                f_steps = [61.0, f_nom]
+                step_label = ActiveFunction.get_step_label()
                 if grid is not None:
                     for f_step in f_steps:
-                        step_ = step + "_" + str(f_step)
+                        step_ = step_label + "_" + str(f_step)
                         ts.log('Frequency step: setting Grid simulator frequency to %s (%s)' % (f_step, step_))
-                        initial_values = lib_1547.get_initial_value(daq=daq,step=step_)
+                        ActiveFunction.start(daq=daq, step_label=step_)
+                        #initial_values = ActiveFunction.get_initial_value(daq=daq,step=step_)
                         grid.freq(f_step)
-                        step_dict = {'V': v_nom, 'F': f_step}
-                        target_dict = {'P': None}
-                        lib_1547.process_data(
-                            daq=daq,
-                            tr=tr_min,
-                            step=step_,
-                            initial_value=initial_values,
-                            pwr_lvl=act_pwrs_limit,
-                            x_target=step_dict,
-                            y_target=None,  # Calculated directly in P1547 lib
-                            result_summary=result_summary,
-                            filename=filename
-                        )
+                        step_dict = {'V': v_nom, 'F': f_step, 'P': act_pwrs_limit}
+                        ActiveFunction.record_timeresponse(daq=daq)
+                        ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict, y_criterias_mod={'P': FW})
+                        result_summary.write(ActiveFunction.write_rslt_sum())
+
 
                 """
                 f)  - Increase the voltage of the AC test to 1.08 times nominal and hold until EUT active power 
@@ -374,24 +380,18 @@ def test_run():
                     - Return AC test voltage to nominal and Hold until new states reached
                 """
                 v_steps = [1.08*v_nom, v_nom]
-                step = lib_1547.get_step_label()
+                step_label = ActiveFunction.get_step_label()
                 if grid is not None:
                     for v_step in v_steps:
-                        step_ = step + "_" + str(v_step)
+                        step_ = step_label + "_" + str(v_step)
                         ts.log('Voltage step: setting Grid simulator voltage to %s (%s)' % (v_step, step_))
-                        initial_values = lib_1547.get_initial_value(daq=daq,step=step_)
+                        #initial_values = ActiveFunction.get_initial_value(daq=daq,step=step_)
+                        ActiveFunction.start(daq=daq, step_label=step_)
                         grid.voltage(v_step)
-                        lib_1547.process_data(
-                            daq=daq,
-                            tr=tr_vw,
-                            step=step_,
-                            initial_value=initial_values,
-                            pwr_lvl=act_pwrs_limit,
-                            x_target=v_step,
-                            y_target=None,  # Calculated directly in P1547 lib
-                            result_summary=result_summary,
-                            filename=filename
-                        )
+                        step_dict = {'V': v_step, 'F': f_nom, 'P': act_pwrs_limit}
+                        ActiveFunction.record_timeresponse(daq=daq)
+                        ActiveFunction.evaluate_criterias(daq=daq, step_dict=step_dict, y_criterias_mod={'P': VW})
+                        result_summary.write(ActiveFunction.write_rslt_sum())
 
                 ts.log('Sampling complete')
                 dataset_filename = filename + ".csv"
@@ -403,7 +403,7 @@ def test_run():
                 ts.result_file(dataset_filename, params=result_params)
                 result = script.RESULT_COMPLETE
 
-    except script.ScriptFail, e:
+    except script.ScriptFail as e:
         reason = str(e)
         if reason:
             ts.log_error(reason)
@@ -429,7 +429,7 @@ def test_run():
         if daq is not None:
             daq.close()
         if eut is not None:
-            eut.fixed_pf(params={'Ena': False, 'PF': 1.0})
+            #eut.fixed_pf(params={'Ena': False, 'PF': 1.0})
             eut.close()
         if rs is not None:
             rs.close()
@@ -465,7 +465,7 @@ def run(test_script):
         if result == script.RESULT_FAIL:
             rc = 1
 
-    except Exception, e:
+    except Exception as e:
         ts.log_error('Test script exception: %s' % traceback.format_exc())
         rc = 1
 
@@ -480,10 +480,10 @@ info.param('lap.act_pwr', label='Active Power limits iteration', default='All', 
 info.param('lap.iter', label='Number of repetitions', default=3)
 # FW test parameters
 info.param_group('fw', label='FW - Test Parameters', glob=True)
-info.param('fw.test_1_tr', label='Response time (s) for default', default=5.0)
+info.param('lap.test_fw_1_tr', label='Response time (s) for default', default=5.0)
 # VW test parameters
 info.param_group('vw', label='VW - Test Parameters', glob=True)
-info.param('vw.test_1_tr', label='Response time (s) for default', default=10.0)
+info.param('lap.test_vw_1_tr', label='Response time (s) for default', default=10.0)
 
 # EUT general parameters
 info.param_group('eut', label='EUT Parameters', glob=True)
