@@ -730,7 +730,7 @@ def run(test_script):
 
     sys.exit(rc)
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.4.2')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.4.3')
 
 # VW test parameters
 info.param_group('vw', label='Test Parameters')

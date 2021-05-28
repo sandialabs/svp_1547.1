@@ -45,8 +45,8 @@ Current compliance test scripts available:
 
 #### Ride-Through support
 - [X] Phase-Change Ride-Through
-- [ ] High/Low Frequency Ride-Through (Ongoing)
-- [ ] Voltage Ride-Through
+- [X] High/Low Frequency Ride-Through (Ongoing)
+- [X] Voltage Ride-Through
 
 #### Prioritization of DER responses
 - [x] Test for voltage and frequency regulation priority (PRI)
