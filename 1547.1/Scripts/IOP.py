@@ -317,6 +317,11 @@ def test_run():
                     print_params(eut.get_settings().get('np_supported_modes'))
                     ts.log('-' * 10)
 
+                    if daq is not None:
+                        # todo - add electrical tests of the control functions
+                        # configure operating modes
+                        # determine if the mode is operational with an electrical test
+
                     ctrl_dict = {}
                     ctrl_dict['max_w'] = False
                     ctrl_dict['fixed_w'] = True
@@ -339,6 +344,11 @@ def test_run():
                     print_params(eut.get_settings().get('np_supported_modes'))
                     ts.log('-' * 10)
 
+                    if daq is not None:
+                        # todo - add electrical tests of the control functions
+                        # configure operating modes
+                        # determine if the mode is operational with an electrical test
+
                     ctrl_dict = {}
                     ctrl_dict['max_w'] = True
                     ctrl_dict['fixed_w'] = True
@@ -359,6 +369,7 @@ def test_run():
                     print_params(ctrl_dict)
                     ts.log('--> Readback of control mode functions:')
                     print_params(eut.get_settings().get('np_supported_modes'))
+
                 else:
                     ts.log_warning('DER Settings does not include np_control_modes')
             else:
