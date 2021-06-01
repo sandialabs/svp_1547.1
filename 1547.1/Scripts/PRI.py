@@ -488,7 +488,7 @@ def run(test_script):
 
     sys.exit(rc)
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.4.2')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.4.3')
 
 # PRI test parameters
 info.param_group('pri', label='Test Parameters')

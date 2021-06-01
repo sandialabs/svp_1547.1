@@ -49,8 +49,8 @@ import random
 # import glob
 # import importlib
 
-VERSION = '1.4.2'
-LATEST_MODIFICATION = '17th July 2020'
+VERSION = '1.4.3'
+LATEST_MODIFICATION = '13th January 2020'
 
 FW = 'FW'  # Frequency-Watt
 CPF = 'CPF'  # Constant Power Factor
