@@ -402,12 +402,11 @@ class DataLogging:
         :return:            (list of str) List of labeled measurements, e.g., ['AC_VRMS_1', 'AC_VRMS_2', 'AC_VRMS_3']
         """
         meas_root = self.type_meas[type_meas]
-
-        if self.phases == 'Single phase':
+        if self.phases.lower() == 'single phase':
             meas_label = [meas_root + '_1']
-        elif self.phases == 'Split phase':
+        elif self.phases.lower() == 'split phase':
             meas_label = [meas_root + '_1', meas_root + '_2']
-        elif self.phases == 'Three phase':
+        elif self.phases.lower() == 'three phase':
             meas_label = [meas_root + '_1', meas_root + '_2', meas_root + '_3']
 
         return meas_label
