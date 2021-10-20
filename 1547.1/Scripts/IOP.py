@@ -310,7 +310,10 @@ def test_run():
                     ctrl_dict['scheduled'] = False
                     ctrl_dict['lf_trip'] = True
                     ctrl_dict['hf_trip'] = False
-                    eut.set_configuration(params={'np_supported_modes': ctrl_dict})
+                    try:
+                        eut.set_configuration(params={'np_supported_modes': ctrl_dict})
+                    except Exception as e:
+                        ts.log_warning('TEST FAILURE: EUT Failed to change the supported modes. %s' % e)
                     ts.log('Set control mode functions:')
                     print_params(ctrl_dict)
                     ts.log('--> Readback of control mode functions:')
@@ -321,6 +324,7 @@ def test_run():
                         # todo - add electrical tests of the control functions
                         # configure operating modes
                         # determine if the mode is operational with an electrical test
+                        pass
 
                     ctrl_dict = {}
                     ctrl_dict['max_w'] = False
@@ -337,7 +341,11 @@ def test_run():
                     ctrl_dict['scheduled'] = True
                     ctrl_dict['lf_trip'] = False
                     ctrl_dict['hf_trip'] = True
-                    eut.set_configuration(params={'np_supported_modes': ctrl_dict})
+                    try:
+                        eut.set_configuration(params={'np_supported_modes': ctrl_dict})
+                    except Exception as e:
+                        ts.log_warning('TEST FAILURE: EUT Failed to change the supported modes. %s' % e)
+
                     ts.log('Set control mode functions:')
                     print_params(ctrl_dict)
                     ts.log('--> Readback of control mode functions:')
@@ -348,6 +356,7 @@ def test_run():
                         # todo - add electrical tests of the control functions
                         # configure operating modes
                         # determine if the mode is operational with an electrical test
+                        pass
 
                     ctrl_dict = {}
                     ctrl_dict['max_w'] = True
@@ -364,7 +373,10 @@ def test_run():
                     ctrl_dict['scheduled'] = True
                     ctrl_dict['lf_trip'] = True
                     ctrl_dict['hf_trip'] = True
-                    eut.set_configuration(params={'np_supported_modes': ctrl_dict})
+                    try:
+                        eut.set_configuration(params={'np_supported_modes': ctrl_dict})
+                    except Exception as e:
+                        ts.log_warning('TEST FAILURE: EUT Failed to change the supported modes. %s' % e)
                     ts.log('Set control mode functions:')
                     print_params(ctrl_dict)
                     ts.log('--> Readback of control mode functions:')
@@ -470,7 +482,10 @@ def test_run():
                     for setpoint in [0.25, 0.95]:  # test_pts (pu)
                         setpoint_pct = setpoint * 100.
                         ts.log_debug('    ****Configuring Experiment. Executing: p_lim = %s' % setpoint)
-                        eut.set_p_lim(params={"p_lim_mode_enable": True, "p_lim_w": setpoint})
+                        try:
+                            eut.set_p_lim(params={"p_lim_mode_enable": True, "p_lim_w": setpoint})
+                        except Exception as e:
+                            ts.log_warning('TEST FAILURE: EUT Failed to change p_lim_mode. %s' % e)
                         ts.sleep(2)
                         inaccurate_measurement = True
                         timeout = timeout_duration
@@ -494,7 +509,11 @@ def test_run():
                         ts.log('RESULT = %s' % test_pass_fail)
 
                     ts.log_debug('    ****Resetting Function p_lim')
-                    eut.set_p_lim(params={"p_lim_mode_enable": False, "p_lim_w": 1.})
+                    try:
+                        eut.set_p_lim(params={"p_lim_mode_enable": False, "p_lim_w": 1.})
+                    except Exception as e:
+                        ts.log_warning('TEST FAILURE: EUT Failed to change p_lim_mode. %s' % e)
+
 
                 '''
                 ________________________________________________________________________________________________________
