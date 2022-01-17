@@ -471,7 +471,7 @@ def run(test_script):
 
     sys.exit(rc)
 
-info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.3.0')
+info = script.ScriptInfo(name=os.path.basename(__file__), run=run, version='1.4.3')
 
 # CPF test parameters
 info.param_group('lap', label='Test Parameters')
