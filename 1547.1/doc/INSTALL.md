@@ -4,9 +4,9 @@
 
 Requirements:
 
-Sunspec Validation Platform software [OpenSVP][opensvp-url] version python 3.7
-[svpelab][svpelab-url] version python 3.7 
-
+Sunspec Validation Platform software 
+[OpenSVP][opensvp-url] version python 3.7 branch 'master3.7'
+[svpelab][svpelab-url] version python 3.7 branch 'dev_canmet_python37'
 
 How to use the P1547.1 scripts:
 
